@@ -1,122 +1,109 @@
-import { Tour } from '@mantine/core';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import type { ReactElement } from 'react';
-import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { type ReactElement, useState } from 'react';
 
 import { useLocalizedPath } from '~hooks/use-localized-path';
 import { useProfile } from '~hooks/use-profile';
-import { BRAND_COLORS } from '~theme';
 
-import { useSteps } from './helpers';
+import { saveProfile, setProfessionalRole } from '../../app/actions';
+import { GuidedTour } from './guided-tour';
+import { Welcome } from './welcome';
 
 export const Onboarding = (): ReactElement | null => {
-    const { t } = useTranslation();
-    const router = useRouter();
-    const localize = useLocalizedPath();
-    const { profile, updateProfile } = useProfile();
-    const [shouldRun, setShouldRun] = useState(false);
-    const [stepIndex, setStepIndex] = useState(0);
-    const [hasTourEnded, setHasTourEnded] = useState(false);
-    const [isBrowser, setIsBrowser] = useState(false);
+    const { profile } = useProfile();
 
-    const steps = useSteps();
-
-    useEffect(() => {
-        setIsBrowser(true);
-    }, []);
-
-    const currentTarget = steps[stepIndex]?.target;
-
-    useEffect(() => {
-        if (!isBrowser || hasTourEnded || typeof currentTarget !== 'string') {
-            return;
-        }
-
-        const startWhenTargetIsReady = (): boolean => {
-            if (!document.querySelector(currentTarget)) {
-                return false;
-            }
-
-            setShouldRun(true);
-
-            return true;
-        };
-
-        if (startWhenTargetIsReady()) {
-            return;
-        }
-
-        setShouldRun(false);
-
-        const observer = new MutationObserver(() => {
-            if (startWhenTargetIsReady()) {
-                observer.disconnect();
-            }
-        });
-
-        observer.observe(document.body, { childList: true, subtree: true });
-
-        return (): void => {
-            observer.disconnect();
-        };
-    }, [currentTarget, hasTourEnded, isBrowser]);
-
-    const handleStepChange = (nextStepIndex: number): void => {
-        const currentStep = steps[stepIndex];
-        const nextStep = steps[nextStepIndex];
-
-        setStepIndex(nextStepIndex);
-
-        if (currentStep && nextStep && currentStep.route !== nextStep.route) {
-            setShouldRun(false);
-            router.push(localize(nextStep.route));
-        }
-    };
-
-    const handleTourClose = (): void => {
-        setShouldRun(false);
-        setHasTourEnded(true);
-
-        updateProfile({
-            hasCompletedOnboarding: true,
-            silent: true,
-        });
-    };
-
-    if (!isBrowser || profile?.has_completed_onboarding) {
+    if (!profile || profile.has_completed_onboarding) {
         return null;
     }
 
     return (
-        <Tour
-            active={shouldRun}
-            attributes={{
-                closeButton: {
-                    'aria-label': t('generic.actions.close'),
-                },
-            }}
-            color={BRAND_COLORS[5]}
-            labels={{
-                back: t('generic.misc.back'),
-                close: t('generic.misc.done'),
-                next: t('generic.misc.next'),
-                skip: t('generic.misc.skip'),
-            }}
-            onClose={handleTourClose}
-            onStepChange={handleStepChange}
-            step={stepIndex}
-            styles={{
-                body: {
-                    paddingInlineEnd:
-                        'calc(var(--mantine-spacing-lg) + var(--mantine-spacing-xs))',
-                },
-            }}
-            withScrollIntoView
-        >
-            {steps.map(({ route: _route, ...step }) => (
-                <Tour.Step key={step.target} {...step} />
-            ))}
-        </Tour>
+        <OnboardingFlow
+            isProfessional={profile.roles.includes('professional')}
+        />
+    );
+};
+
+type OnboardingFlowProps = Readonly<{
+    isProfessional: boolean;
+}>;
+
+const OnboardingFlow = ({
+    isProfessional,
+}: OnboardingFlowProps): ReactElement | null => {
+    const [phase, setPhase] = useState<'welcome' | 'choice' | 'tour' | 'done'>(
+        'welcome',
+    );
+    const [professional, setProfessional] = useState(isProfessional);
+    const queryClient = useQueryClient();
+    const router = useRouter();
+    const localize = useLocalizedPath();
+
+    const roleMutation = useMutation({
+        mutationFn: async (): Promise<void> => {
+            if (professional === isProfessional) {
+                return;
+            }
+            const result = await setProfessionalRole({ enabled: professional });
+            if (!result.ok) {
+                throw new Error(
+                    result.error ?? 'Could not save professional role',
+                );
+            }
+        },
+        onSuccess: async () => {
+            setPhase('choice');
+            await queryClient.invalidateQueries({ queryKey: ['user'] });
+        },
+    });
+
+    const completionMutation = useMutation({
+        mutationFn: async (): Promise<void> => {
+            const result = await saveProfile({ hasCompletedOnboarding: true });
+            if (!result.ok) {
+                throw new Error('Could not complete onboarding');
+            }
+        },
+        onSuccess: async () => {
+            setPhase('done');
+            await queryClient.invalidateQueries({ queryKey: ['user'] });
+        },
+    });
+
+    const handleComplete = (): void => {
+        setPhase('choice');
+        completionMutation.mutate();
+    };
+
+    const handleStartTour = (): void => {
+        router.push(localize('/home'));
+        setPhase('tour');
+    };
+
+    const handleContinue = (): void => {
+        roleMutation.mutate();
+    };
+
+    if (phase === 'done') {
+        return null;
+    }
+    if (phase === 'tour') {
+        return <GuidedTour onComplete={handleComplete} />;
+    }
+
+    return (
+        <Welcome
+            error={
+                phase === 'welcome'
+                    ? roleMutation.error
+                    : completionMutation.error
+            }
+            isBusy={roleMutation.isPending || completionMutation.isPending}
+            onComplete={handleComplete}
+            onContinue={handleContinue}
+            onProfessionalChange={setProfessional}
+            onStartTour={handleStartTour}
+            phase={phase}
+            professional={professional}
+        />
     );
 };

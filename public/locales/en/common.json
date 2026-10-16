@@ -512,6 +512,19 @@
     "file_types_info": "We currently accept only .docx files. More coming soon!",
     "import_success": "We managed to extract the following from you file. Review and create all the meals below in one action!",
     "onboarding": {
+        "welcome": {
+            "title": "Small habits. A healthier rhythm.",
+            "description": "Plan your meals, follow your progress, and get support—all in one place.",
+            "professional_label": "I’m a health or nutrition professional",
+            "professional_description": "Enable tools to manage client meal plans alongside your own.",
+            "settings_hint": "You can change this later in Settings. Your client discoverability setting stays unchanged.",
+            "continue": "Continue",
+            "tour_title": "Make yourself at home",
+            "tour_description": "Take a quick tour of your meals, progress, and settings—or jump straight in.",
+            "start_tour": "Show me around",
+            "explore": "Explore on my own",
+            "save_error": "We couldn’t save your choice. Please try again."
+        },
         "content": {
             "daily_meals": "Here you can see your meals for the day.",
             "health_trend": "Here you can follow your latest weight and body fat trends.",

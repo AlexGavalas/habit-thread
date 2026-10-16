@@ -1,0 +1,35 @@
+.artwork {
+    background: var(--mantine-color-brand-light);
+    border-radius: var(--mantine-radius-lg);
+}
+
+.image {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 11rem;
+    object-fit: contain;
+}
+
+.introduction {
+    text-align: center;
+    text-wrap: balance;
+}
+
+.title {
+    font-size: var(--mantine-font-size-xl);
+    font-weight: var(--mantine-font-weight-bold);
+    line-height: 1.3;
+}
+
+.role {
+    border: 1px solid var(--mantine-color-default-border);
+    border-radius: var(--mantine-radius-md);
+    padding: var(--mantine-spacing-md);
+}
+
+@media (max-width: 30em) {
+    .image {
+        max-height: 7rem;
+    }
+}
