@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { authenticateE2eUser } from '../support/auth';
+import { E2E_USER, authenticateE2eUser } from '../support/auth';
 import { expectNoHorizontalOverflow } from '../support/layout';
 
 for (const viewport of [
@@ -9,12 +9,12 @@ for (const viewport of [
 ]) {
     test(`illustrated onboarding saves the professional choice on ${viewport.name}`, async ({
         page,
-    }) => {
+    }, testInfo) => {
         await page.setViewportSize(viewport);
         await authenticateE2eUser(
             page,
             {
-                EMAIL: `onboarding-${viewport.name}@example.test`,
+                EMAIL: `onboarding-${viewport.name}-${testInfo.retry}-${E2E_USER.EMAIL}`,
                 FULL_NAME: 'Onboarding User',
                 PASSWORD: 'onboarding-e2e-password',
             },
@@ -72,11 +72,11 @@ for (const viewport of [
 
 test('the optional tour still navigates and persists completion', async ({
     page,
-}) => {
+}, testInfo) => {
     await authenticateE2eUser(
         page,
         {
-            EMAIL: 'onboarding-tour@example.test',
+            EMAIL: `onboarding-tour-${testInfo.retry}-${E2E_USER.EMAIL}`,
             FULL_NAME: 'Tour User',
             PASSWORD: 'onboarding-e2e-password',
         },
