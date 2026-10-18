@@ -1,13 +1,11 @@
 import {
     ActionIcon,
     type ActionIconProps,
-    Center,
     Overlay,
-    SimpleGrid,
     Tooltip,
 } from '@mantine/core';
 import { EditPencil, Notes, ThreeStars } from 'iconoir-react';
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { CopyButton } from '~components/copy-button';
@@ -20,6 +18,8 @@ import {
 import { useOpenContextModal } from '~util/modal';
 
 import { MEAL_MODAL_OPTIONS } from '../../modals/meal/meal-modal-options';
+import styles from './cell.module.css';
+
 type CellOverlayProps = Readonly<{
     canEditAnnotations?: boolean;
     onDelete: () => Promise<void> | void;
@@ -36,10 +36,35 @@ const isFilledMeal = (meal?: Meal | EditedMeal): meal is Meal => {
     return Boolean(meal?.meal);
 };
 
-const commonButtonProps = {
-    size: 'lg',
+const commonButtonProps: ActionIconProps = {
+    radius: 'xl',
+    size: 36,
     variant: 'outline',
-} satisfies ActionIconProps;
+};
+
+const tooltipEvents = { focus: true, hover: true, touch: false };
+
+const FanAction = ({
+    children,
+    label,
+    onClick,
+}: Readonly<{
+    children: ReactNode;
+    label: string;
+    onClick: () => void;
+}>): ReactElement => (
+    <div className={styles.fanItem}>
+        <Tooltip events={tooltipEvents} withArrow label={label} position="top">
+            <ActionIcon
+                {...commonButtonProps}
+                aria-label={label}
+                onClick={onClick}
+            >
+                {children}
+            </ActionIcon>
+        </Tooltip>
+    </div>
+);
 
 export const CellOverlay = ({
     canEditAnnotations = true,
@@ -125,67 +150,46 @@ export const CellOverlay = ({
         });
     };
 
-    const shouldShowColumnLayout = isMealSaved || isMealFilled;
     const editLabel = isMealFilled
         ? t('generic.actions.edit')
         : t('meal_plan.plan_meal');
 
     return (
-        <Overlay style={{ background: 'var(--app-color-surface-overlay)' }}>
-            <Center style={{ height: '100%' }}>
-                <SimpleGrid
-                    cols={shouldShowColumnLayout ? 2 : 1}
-                    spacing="xxs"
-                    verticalSpacing="xxs"
-                >
-                    <Tooltip
-                        withArrow
-                        label={editLabel}
-                        position={shouldShowColumnLayout ? 'left' : 'top'}
-                    >
-                        <ActionIcon
-                            {...commonButtonProps}
-                            aria-label={editLabel}
-                            onClick={handleEditClick}
-                        >
-                            <EditPencil />
-                        </ActionIcon>
-                    </Tooltip>
+        <Overlay className={styles.overlay}>
+            <div className={styles.overlayContent}>
+                <div className={styles.fan}>
+                    <div aria-hidden className={styles.fanSurface} />
+                    <FanAction label={editLabel} onClick={handleEditClick}>
+                        <EditPencil />
+                    </FanAction>
                     {isMealSaved && canEditAnnotations && (
                         <>
-                            <Tooltip
-                                withArrow
+                            <FanAction
                                 label={t('tooltip.edit_note')}
-                                position="right"
+                                onClick={handleNoteClick}
                             >
-                                <ActionIcon
-                                    {...commonButtonProps}
-                                    aria-label={t('tooltip.edit_note')}
-                                    onClick={handleNoteClick}
-                                >
-                                    <Notes />
-                                </ActionIcon>
-                            </Tooltip>
-                            <Tooltip
-                                withArrow
+                                <Notes />
+                            </FanAction>
+                            <FanAction
                                 label={t('tooltip.rate')}
-                                position="left"
+                                onClick={handleRateClick}
                             >
-                                <ActionIcon
-                                    {...commonButtonProps}
-                                    aria-label={t('tooltip.rate')}
-                                    onClick={handleRateClick}
-                                >
-                                    <ThreeStars />
-                                </ActionIcon>
-                            </Tooltip>
+                                <ThreeStars />
+                            </FanAction>
                         </>
                     )}
                     {isMealFilled && (
-                        <CopyButton tooltipPosition="right" value={meal.meal} />
+                        <div className={styles.fanItem}>
+                            <CopyButton
+                                radius="xl"
+                                size={36}
+                                tooltipPosition="top"
+                                value={meal.meal}
+                            />
+                        </div>
                     )}
-                </SimpleGrid>
-            </Center>
+                </div>
+            </div>
         </Overlay>
     );
 };
