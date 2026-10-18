@@ -15,7 +15,7 @@ describe('<CopyButton />', () => {
 
             const { user } = renderWithUser(<CopyButton value="test" />);
 
-            const button = screen.getByRole('button');
+            const button = screen.getByRole('button', { name: 'Copy' });
 
             await user.hover(button);
 
@@ -37,7 +37,7 @@ describe('<CopyButton />', () => {
 
             const { user } = renderWithUser(<CopyButton value="test" />);
 
-            const button = screen.getByRole('button');
+            const button = screen.getByRole('button', { name: 'Copy' });
 
             await user.click(button);
 
