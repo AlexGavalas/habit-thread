@@ -27,11 +27,13 @@ export const Welcome = ({
     professional,
 }: WelcomeProps): ReactElement => {
     const { t } = useTranslation();
+
     const isWelcome = phase === 'welcome';
+
     const handleProfessionalChange = (
         event: ChangeEvent<HTMLInputElement>,
     ): void => {
-        onProfessionalChange(event.currentTarget.checked);
+        onProfessionalChange(event.target.checked);
     };
 
     return (

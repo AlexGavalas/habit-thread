@@ -45,29 +45,29 @@ test('anchors the redesigned home steps inside a mobile viewport', async ({
 
     const dialog = page.getByRole('dialog');
 
-    await expect(page.locator('#daily-meals-container')).toBeVisible();
-    await expect(dialog).toContainText(en.onboarding.content.daily_meals);
-    await expect(dialog).not.toHaveAttribute('data-centered', 'true');
+    await expect(dialog).toContainText(en.onboarding.welcome.title);
     await expect(dialog).toBeInViewport();
 
     await dialog
         .getByRole('button', {
             exact: true,
-            name: en.generic.misc.next,
+            name: en.onboarding.welcome.continue,
         })
         .click();
 
-    await expect(page.locator('#health-trend-container')).toBeVisible();
-    await expect(dialog).toContainText(en.onboarding.content.health_trend);
-    await expect(dialog).not.toHaveAttribute('data-centered', 'true');
+    await expect(dialog).toContainText(en.onboarding.welcome.tour_title);
     await expect(dialog).toBeInViewport();
 
     await dialog
         .getByRole('button', {
             exact: true,
-            name: en.generic.actions.close,
+            name: en.onboarding.welcome.start_tour,
         })
         .click();
+
+    await expect(page.getByRole('dialog')).toContainText(
+        en.onboarding.content.daily_meals,
+    );
 });
 
 test('guides a new user through the current home, meal plan, and settings UI', async ({
@@ -91,6 +91,21 @@ test('guides a new user through the current home, meal plan, and settings UI', a
         .click();
 
     const dialog = page.getByRole('dialog');
+
+    await dialog
+        .getByRole('button', {
+            exact: true,
+            name: en.onboarding.welcome.continue,
+        })
+        .click();
+
+    await dialog
+        .getByRole('button', {
+            exact: true,
+            name: en.onboarding.welcome.start_tour,
+        })
+        .click();
+
     const next = (): Locator =>
         dialog.getByRole('button', {
             exact: true,

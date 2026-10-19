@@ -23,6 +23,8 @@ export const Onboarding = (): ReactElement | null => {
     );
 };
 
+type Phase = 'welcome' | 'choice' | 'tour' | 'done';
+
 type OnboardingFlowProps = Readonly<{
     isProfessional: boolean;
 }>;
@@ -30,9 +32,7 @@ type OnboardingFlowProps = Readonly<{
 const OnboardingFlow = ({
     isProfessional,
 }: OnboardingFlowProps): ReactElement | null => {
-    const [phase, setPhase] = useState<'welcome' | 'choice' | 'tour' | 'done'>(
-        'welcome',
-    );
+    const [phase, setPhase] = useState<Phase>('welcome');
     const [professional, setProfessional] = useState(isProfessional);
     const queryClient = useQueryClient();
     const router = useRouter();
@@ -43,7 +43,9 @@ const OnboardingFlow = ({
             if (professional === isProfessional) {
                 return;
             }
+
             const result = await setProfessionalRole({ enabled: professional });
+
             if (!result.ok) {
                 throw new Error(
                     result.error ?? 'Could not save professional role',
@@ -59,6 +61,7 @@ const OnboardingFlow = ({
     const completionMutation = useMutation({
         mutationFn: async (): Promise<void> => {
             const result = await saveProfile({ hasCompletedOnboarding: true });
+
             if (!result.ok) {
                 throw new Error('Could not complete onboarding');
             }
@@ -69,14 +72,13 @@ const OnboardingFlow = ({
         },
     });
 
-    const handleComplete = (): void => {
-        setPhase('choice');
-        completionMutation.mutate();
+    const handleStartTour = (): void => {
+        setPhase('tour');
+        router.push(localize('/home'));
     };
 
-    const handleStartTour = (): void => {
-        router.push(localize('/home'));
-        setPhase('tour');
+    const handleComplete = (): void => {
+        completionMutation.mutate();
     };
 
     const handleContinue = (): void => {
@@ -86,6 +88,7 @@ const OnboardingFlow = ({
     if (phase === 'done') {
         return null;
     }
+
     if (phase === 'tour') {
         return <GuidedTour onComplete={handleComplete} />;
     }

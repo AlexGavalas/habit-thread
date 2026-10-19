@@ -443,10 +443,6 @@
     },
     "professional": {
         "navigation": "Professional dashboard",
-        "registration": {
-            "label": "Register as a professional",
-            "description": "Manage client meal plans in addition to your own account."
-        },
         "settings": {
             "title": "Professional account",
             "description": "Enable professional tools while keeping your normal HabitThread experience.",

@@ -1,7 +1,6 @@
 import {
     Alert,
     Button,
-    Checkbox,
     Divider,
     PasswordInput,
     Stack,
@@ -71,15 +70,6 @@ export const AuthForm = ({
                         minLength={8}
                         name="password"
                     />
-                    {isRegistering && (
-                        <Checkbox
-                            description={t(
-                                'professional.registration.description',
-                            )}
-                            label={t('professional.registration.label')}
-                            name="professional"
-                        />
-                    )}
                     {error && (
                         <Alert color="danger" variant="outline">
                             {error}
