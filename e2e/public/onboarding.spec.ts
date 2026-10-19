@@ -1,7 +1,26 @@
-import { expect, test } from '@playwright/test';
+import { type Page, expect, test } from '@playwright/test';
+import { z } from 'zod';
 
 import { E2E_USER, authenticateE2eUser } from '../support/auth';
 import { expectNoHorizontalOverflow } from '../support/layout';
+
+const completionResponseSchema = z.object({
+    data: z.object({ has_completed_onboarding: z.boolean() }),
+});
+
+const expectOnboardingCompleted = async (page: Page): Promise<void> => {
+    // The tour closes before its save finishes. Wait for persistence before reload.
+    await expect
+        .poll(async () => {
+            const response = await page.request.get('/api/v1/user');
+            await expect(response).toBeOK();
+            const { data } = completionResponseSchema.parse(
+                await response.json(),
+            );
+            return data.has_completed_onboarding;
+        })
+        .toBe(true);
+};
 
 for (const viewport of [
     { height: 900, name: 'desktop', width: 1280 },
@@ -51,6 +70,7 @@ for (const viewport of [
         );
         await choice.getByRole('button', { name: 'Explore on my own' }).click();
         await expect(choice).toBeHidden();
+        await expectOnboardingCompleted(page);
         await page.reload();
         await expect(
             page.getByRole('heading', { name: 'Today’s meals' }),
@@ -98,8 +118,16 @@ test('the optional tour still navigates and persists completion', async ({
             { exact: true },
         ),
     ).toBeVisible();
+    // Reproduce the latency of a preview deployment when persisting completion.
+    await page.route('**/meal-plan', async (route) => {
+        if (route.request().method() === 'POST') {
+            await new Promise((resolve) => setTimeout(resolve, 5000));
+        }
+        await route.continue();
+    });
     await page.getByRole('button', { exact: true, name: 'Skip' }).click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expectOnboardingCompleted(page);
     await page.reload();
     await expect(
         page.getByRole('heading', { exact: true, name: 'Meal plan' }),
