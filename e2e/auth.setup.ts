@@ -29,7 +29,9 @@ setup('authenticate the test user', async ({ page }) => {
         expect(response.ok()).toBe(true);
     }
 
-    await expect(page.getByRole('link', { name: 'Meal plan' })).toBeVisible();
+    await expect(
+        page.getByRole('link', { exact: true, name: 'Meal plan' }),
+    ).toBeVisible();
 
     await mkdir(dirname(AUTH_STATE_PATH), { recursive: true });
     await page.context().storageState({ path: AUTH_STATE_PATH });

@@ -1,35 +1,49 @@
-import { type TourProps } from '@mantine/core';
-import mockRouter from 'next-router-mock';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { type ReactElement } from 'react';
 
-import { useLocalizedPath } from '~hooks/use-localized-path';
 import { useProfile } from '~hooks/use-profile';
-import { act, renderWithUser, waitFor } from '~test/utils';
+import { renderWithUser, screen, waitFor } from '~test/utils';
+import { type UserProfile } from '~types/user';
 
+import { saveProfile, setProfessionalRole } from '../../app/actions';
 import { Onboarding } from './onboarding';
 
-const mockTour = jest.fn<null, [TourProps]>(() => null);
-
-jest.mock('@mantine/core', () => {
-    const actual =
-        jest.requireActual<typeof import('@mantine/core')>('@mantine/core');
-
-    return {
-        ...actual,
-        Tour: Object.assign((props: TourProps) => mockTour(props), {
-            Step: actual.Tour.Step,
-        }),
-    };
-});
-
-jest.mock('~hooks/use-localized-path');
 jest.mock('~hooks/use-profile');
+jest.mock('./guided-tour', () => ({
+    GuidedTour: ({ onComplete }: { onComplete: () => void }): ReactElement => (
+        <button onClick={onComplete} type="button">
+            Finish tour
+        </button>
+    ),
+}));
+
+const renderOnboarding = (): ReturnType<typeof renderWithUser> => {
+    const client = new QueryClient({
+        defaultOptions: {
+            mutations: { retry: false },
+            queries: { retry: false },
+        },
+    });
+    return renderWithUser(<Onboarding />, {
+        Wrapper: ({ children }) => (
+            <QueryClientProvider client={client}>
+                {children}
+            </QueryClientProvider>
+        ),
+    });
+};
+
+const getProfile = (profile: UserProfile | undefined): UserProfile => {
+    if (!profile) {
+        throw new Error('Expected a profile fixture');
+    }
+    return profile;
+};
 
 describe('<Onboarding />', () => {
-    const updateProfile = jest.fn();
-
     beforeEach(() => {
-        mockRouter.setCurrentUrl('/home');
-        jest.mocked(useLocalizedPath).mockReturnValue((path) => path);
+        jest.mocked(saveProfile).mockResolvedValue({ ok: true });
+        jest.mocked(setProfessionalRole).mockResolvedValue({ ok: true });
         jest.mocked(useProfile).mockReturnValue({
             deleteProfile: jest.fn(),
             isDeleting: false,
@@ -49,117 +63,121 @@ describe('<Onboarding />', () => {
                 roles: [],
                 target_weight: null,
             },
-            updateProfile,
-            user: {
-                email: 'user@example.test',
-                name: 'Test User',
+            updateProfile: jest.fn(),
+            user: { email: 'user@example.test', name: 'Test User' },
+        });
+    });
+
+    it('waits for the profile before opening onboarding', () => {
+        jest.mocked(useProfile).mockReturnValue({
+            ...useProfile(),
+            profile: undefined,
+        });
+        renderOnboarding();
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('does not reopen onboarding for completed accounts', () => {
+        const result = useProfile();
+        jest.mocked(useProfile).mockReturnValue({
+            ...result,
+            profile: {
+                ...getProfile(result.profile),
+                has_completed_onboarding: true,
             },
         });
+        renderOnboarding();
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
-    it('waits for the current target before running the tour', async () => {
+    it('uses the existing professional role as the checkbox default', () => {
+        const result = useProfile();
+        jest.mocked(useProfile).mockReturnValue({
+            ...result,
+            profile: {
+                ...getProfile(result.profile),
+                roles: ['professional'],
+            },
+        });
+        renderOnboarding();
+        expect(screen.getByRole('checkbox')).toBeChecked();
+    });
+
+    it('saves the professional choice without completing onboarding', async () => {
         expect.hasAssertions();
-
-        renderWithUser(<Onboarding />);
-
-        await waitFor(() => {
-            expect(mockTour).toHaveBeenLastCalledWith(
-                expect.objectContaining({ active: false }),
-            );
-        });
-
-        const target = document.createElement('div');
-        target.id = 'daily-meals-container';
-        document.body.append(target);
-
-        await waitFor(() => {
-            expect(mockTour).toHaveBeenLastCalledWith(
-                expect.objectContaining({ active: true }),
-            );
-        });
+        const { user } = renderOnboarding();
+        await user.click(screen.getByRole('checkbox'));
+        await user.click(screen.getByRole('button', { name: 'Continue' }));
+        await screen.findByRole('button', { name: 'Show me around' });
+        expect(setProfessionalRole).toHaveBeenCalledWith({ enabled: true });
+        expect(saveProfile).not.toHaveBeenCalled();
     });
 
-    it('configures localized guided navigation and target scrolling', async () => {
+    it('keeps the welcome screen and allows retry after a role save failure', async () => {
         expect.hasAssertions();
-
-        const target = document.createElement('div');
-        target.id = 'daily-meals-container';
-        document.body.append(target);
-
-        renderWithUser(<Onboarding />);
-
-        await waitFor(() => {
-            expect(mockTour).toHaveBeenLastCalledWith(
-                expect.objectContaining({
-                    active: true,
-                    attributes: {
-                        closeButton: { 'aria-label': 'Close' },
-                    },
-                    labels: {
-                        back: 'Back',
-                        close: 'Done',
-                        next: 'Next',
-                        skip: 'Skip',
-                    },
-                    onClose: expect.any(Function),
-                    onStepChange: expect.any(Function),
-                    step: 0,
-                    styles: {
-                        body: {
-                            paddingInlineEnd:
-                                'calc(var(--mantine-spacing-lg) + var(--mantine-spacing-xs))',
-                        },
-                    },
-                    withScrollIntoView: true,
-                }),
-            );
-        });
+        jest.mocked(setProfessionalRole).mockResolvedValueOnce({ ok: false });
+        const { user } = renderOnboarding();
+        await user.click(screen.getByRole('checkbox'));
+        await user.click(screen.getByRole('button', { name: 'Continue' }));
+        await expect(screen.findByRole('alert')).resolves.toHaveTextContent(
+            'Please try again',
+        );
+        await user.click(screen.getByRole('button', { name: 'Continue' }));
+        await expect(
+            screen.findByRole('button', { name: 'Show me around' }),
+        ).resolves.toBeVisible();
     });
 
-    it('pauses the tour and navigates when the next step is on another route', async () => {
-        expect.assertions(2);
-
-        const target = document.createElement('div');
-        target.id = 'daily-meals-container';
-        document.body.append(target);
-
-        renderWithUser(<Onboarding />);
-
+    it('completes onboarding when exploring without a tour', async () => {
+        expect.hasAssertions();
+        const { user } = renderOnboarding();
+        await user.click(screen.getByRole('button', { name: 'Continue' }));
+        await user.click(
+            await screen.findByRole('button', { name: 'Explore on my own' }),
+        );
         await waitFor(() => {
-            expect(mockTour).toHaveBeenLastCalledWith(
-                expect.objectContaining({ active: true }),
-            );
+            expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
         });
-
-        act(() => {
-            mockTour.mock.lastCall?.[0].onStepChange?.(2);
-        });
-
-        expect(mockRouter.asPath).toBe('/meal-plan');
-    });
-
-    it('completes onboarding when the tour is closed', async () => {
-        expect.assertions(2);
-
-        const target = document.createElement('div');
-        target.id = 'daily-meals-container';
-        document.body.append(target);
-
-        renderWithUser(<Onboarding />);
-
-        await waitFor(() => {
-            expect(mockTour).toHaveBeenLastCalledWith(
-                expect.objectContaining({ active: true }),
-            );
-        });
-
-        act(() => {
-            mockTour.mock.lastCall?.[0].onClose?.();
-        });
-
-        expect(updateProfile).toHaveBeenCalledWith({
+        expect(setProfessionalRole).not.toHaveBeenCalled();
+        expect(saveProfile).toHaveBeenCalledWith({
             hasCompletedOnboarding: true,
-            silent: true,
+        });
+    });
+
+    it('keeps the choice available after a completion failure', async () => {
+        expect.hasAssertions();
+        jest.mocked(saveProfile).mockRejectedValueOnce(
+            new Error('Network failure'),
+        );
+        const { user } = renderOnboarding();
+        await user.click(screen.getByRole('button', { name: 'Continue' }));
+        await user.click(
+            await screen.findByRole('button', { name: 'Explore on my own' }),
+        );
+        await expect(screen.findByRole('alert')).resolves.toHaveTextContent(
+            'Please try again',
+        );
+        await user.click(
+            screen.getByRole('button', { name: 'Explore on my own' }),
+        );
+        await waitFor(() => {
+            expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+        });
+    });
+
+    it('starts the optional tour and completes only when it ends', async () => {
+        expect.hasAssertions();
+        const { user } = renderOnboarding();
+        await user.click(screen.getByRole('button', { name: 'Continue' }));
+        await user.click(
+            await screen.findByRole('button', { name: 'Show me around' }),
+        );
+        expect(saveProfile).not.toHaveBeenCalled();
+        await user.click(screen.getByRole('button', { name: 'Finish tour' }));
+        await waitFor(() => {
+            expect(saveProfile).toHaveBeenCalledWith({
+                hasCompletedOnboarding: true,
+            });
         });
     });
 });

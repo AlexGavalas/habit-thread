@@ -24,7 +24,6 @@ const loginSchema = z.object({
 
 const registerSchema = loginSchema.extend({
     fullName: z.string(),
-    professional: z.string().optional().transform(Boolean),
 });
 
 export const AuthDialog = (): ReactElement => {
@@ -68,18 +67,13 @@ export const AuthDialog = (): ReactElement => {
 
         try {
             if (isRegistering) {
-                const {
-                    email,
-                    fullName,
-                    password,
-                    professional: isProfessional,
-                } = registerSchema.parse(formData);
+                const { email, fullName, password } =
+                    registerSchema.parse(formData);
                 const response = await fetch('/api/auth/register', {
                     body: JSON.stringify({
                         email,
                         fullName,
                         password,
-                        professional: isProfessional,
                     }),
                     headers: { 'Content-Type': 'application/json' },
                     method: 'POST',
