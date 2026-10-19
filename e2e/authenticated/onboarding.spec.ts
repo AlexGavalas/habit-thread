@@ -30,19 +30,6 @@ test('anchors the redesigned home steps inside a mobile viewport', async ({
     await setOnboardingCompletion(request, false);
     await page.goto('/home');
 
-    await page
-        .getByRole('button', {
-            exact: true,
-            name: en.onboarding.welcome.continue,
-        })
-        .click();
-    await page
-        .getByRole('button', {
-            exact: true,
-            name: en.onboarding.welcome.start_tour,
-        })
-        .click();
-
     const dialog = page.getByRole('dialog');
 
     await expect(dialog).toContainText(en.onboarding.welcome.title);
@@ -76,19 +63,6 @@ test('guides a new user through the current home, meal plan, and settings UI', a
 }) => {
     await setOnboardingCompletion(request, false);
     await page.goto('/home');
-
-    await page
-        .getByRole('button', {
-            exact: true,
-            name: en.onboarding.welcome.continue,
-        })
-        .click();
-    await page
-        .getByRole('button', {
-            exact: true,
-            name: en.onboarding.welcome.start_tour,
-        })
-        .click();
 
     const dialog = page.getByRole('dialog');
 
