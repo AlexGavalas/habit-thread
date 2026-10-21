@@ -1,7 +1,7 @@
 .carousel {
     max-width: 100%;
     min-width: 0;
-    padding-top: calc(1.75rem + var(--mantine-spacing-compact));
+    position: static;
 }
 
 .carouselViewport,
@@ -9,8 +9,52 @@
     min-width: 0;
 }
 
+.carouselViewport {
+    isolation: isolate;
+    position: relative;
+}
+
+.carouselViewport::before,
+.carouselViewport::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 3rem;
+    z-index: 2;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--app-motion-fast) ease-out;
+}
+
+.carouselViewport::before {
+    left: 0;
+    border-left: 2px solid var(--mantine-primary-color-filled);
+    background: linear-gradient(
+        to right,
+        var(--mantine-primary-color-light),
+        transparent
+    );
+}
+
+.carouselViewport::after {
+    right: 0;
+    border-right: 2px solid var(--mantine-primary-color-filled);
+    background: linear-gradient(
+        to left,
+        var(--mantine-primary-color-light),
+        transparent
+    );
+}
+
+.carousel[data-scroll-edge='left'] .carouselViewport::before,
+.carousel[data-scroll-edge='right'] .carouselViewport::after {
+    opacity: 0.7;
+}
+
 .carouselControls {
     gap: var(--mantine-spacing-xs);
+    inset-inline: auto 0;
     justify-content: flex-end;
     padding: 0;
     top: 0;
@@ -56,8 +100,9 @@
 }
 
 @media print {
-    .carousel {
-        padding-top: 0;
+    .carouselViewport::before,
+    .carouselViewport::after {
+        display: none;
     }
 
     .carouselControls {
@@ -77,5 +122,12 @@
 
     .carouselSlide {
         padding: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .carouselViewport::before,
+    .carouselViewport::after {
+        transition: none;
     }
 }

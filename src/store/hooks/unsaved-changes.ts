@@ -17,6 +17,11 @@ type UseUnsavedChanges = () => {
     removeChange: RemoveChange;
     removeChanges: RemoveChanges;
     hasUnsavedChanges: boolean;
+    updateChanges: (
+        update: (
+            changes: Record<string, Meal | EditedMeal>,
+        ) => Record<string, Meal | EditedMeal>,
+    ) => void;
 };
 
 export const useUnsavedChanges = (
@@ -38,6 +43,15 @@ export const useUnsavedChanges = (
         }));
     };
 
+    const updateChanges: ReturnType<UseUnsavedChanges>['updateChanges'] = (
+        update,
+    ) => {
+        setUnsavedChanges((prevChanges) => ({
+            ...prevChanges,
+            [ownerKey]: update(prevChanges[ownerKey] ?? {}),
+        }));
+    };
+
     const removeChange: RemoveChange = (key) => {
         setUnsavedChanges((prevChanges) => ({
             ...prevChanges,
@@ -55,5 +69,6 @@ export const useUnsavedChanges = (
         removeChange,
         removeChanges,
         unsavedChanges,
+        updateChanges,
     };
 };

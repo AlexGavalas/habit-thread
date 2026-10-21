@@ -77,6 +77,7 @@ export const Cell = ({
             )}
             <Box
                 className={styles.cell}
+                data-edited={isEdited || undefined}
                 style={{
                     ...(hasNote && { gridTemplateRows: 'auto 1fr' }),
                     ...(isEdited && {

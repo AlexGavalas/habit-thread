@@ -1,0 +1,152 @@
+.board {
+    position: relative;
+}
+
+.instructions {
+    margin-bottom: var(--mantine-spacing-xs);
+    min-height: 1.75rem;
+}
+
+.board:has([data-has-day-controls]) .instructions {
+    padding-inline-end: calc(3.5rem + 2 * var(--mantine-spacing-xs));
+}
+
+.instructionText {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cancel {
+    flex-shrink: 0;
+    visibility: hidden;
+}
+
+.cancel[data-active] {
+    visibility: visible;
+}
+
+.meal {
+    position: relative;
+    display: grid;
+    gap: var(--mantine-spacing-compact);
+    min-width: 0;
+    height: 100%;
+    border-radius: var(--mantine-radius-sm);
+    transition: box-shadow var(--app-motion-fast) ease;
+}
+
+.header,
+.headerActions {
+    display: flex;
+    align-items: center;
+    gap: var(--mantine-spacing-xs);
+}
+
+.header {
+    justify-content: space-between;
+    min-height: 1.75rem;
+}
+
+.slotLabel {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.headerActions {
+    flex-shrink: 0;
+}
+
+.body {
+    position: relative;
+    isolation: isolate;
+}
+
+.meal[data-selected] {
+    box-shadow: 0 0 0 2px var(--mantine-primary-color-filled);
+}
+
+.meal[data-over] {
+    box-shadow: 0 0 0 3px var(--mantine-primary-color-filled);
+}
+
+.handle {
+    cursor: grab;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.meal:hover .handle,
+.meal:focus-within .handle,
+.meal[data-selected] .handle {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.handle[data-unavailable] {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+@media (hover: none) {
+    .handle {
+        opacity: 1;
+        pointer-events: auto;
+    }
+}
+
+.handle:active {
+    cursor: grabbing;
+}
+
+.target {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: var(--mantine-spacing-xs);
+    border: 2px dashed var(--mantine-primary-color-filled);
+    border-radius: inherit;
+    background: transparent;
+    color: var(--mantine-primary-color-light-color);
+    cursor: pointer;
+    font: inherit;
+}
+
+.target span {
+    opacity: 0;
+    border-radius: var(--mantine-radius-sm);
+    background: var(--app-color-surface-default);
+    padding: 0.125rem 0.5rem;
+    font-size: var(--mantine-font-size-xs);
+    font-weight: 600;
+}
+
+.target:hover span,
+.target:focus-visible span,
+.meal[data-over] .target span {
+    opacity: 1;
+}
+
+.target:focus-visible {
+    outline: 2px solid var(--mantine-primary-color-filled);
+    outline-offset: 3px;
+}
+
+@media print {
+    .instructions,
+    .handle,
+    .target {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .meal {
+        transition: none;
+    }
+}
