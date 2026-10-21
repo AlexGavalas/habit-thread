@@ -104,6 +104,17 @@
         "select_day": "Select a day",
         "today": "Today",
         "week_board": "Weekly meal plan",
+        "swap": {
+            "choose": "Choose a slot for “{{meal}}”. Hold near a calendar edge while dragging to see more days, or use the arrows. Escape to cancel.",
+            "handle_hint": "Drag to swap or move. Click to choose a destination.",
+            "hint": "Drag a meal handle to swap meals, or click it and choose a slot. Empty slots move the meal.",
+            "move": "Move here",
+            "move_here": "Move meal to {{slot}}",
+            "select": "Swap or move {{meal}} from {{slot}}",
+            "swap": "Swap meals",
+            "swap_here": "Swap meals with {{meal}} in {{slot}}",
+            "updated": "Meal plan updated. Save to keep your changes."
+        },
         "schedule": {
             "add_slot": "Add meal slot",
             "copy": "Copy schedule",

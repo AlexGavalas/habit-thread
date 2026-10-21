@@ -13,6 +13,8 @@ import { getDaysOfWeek } from '~util/date';
 
 import styles from './content.module.css';
 import { DayLane } from './day-lane';
+import { useMealSwap } from './meal-swap-board';
+import { useDragEdgeScroll } from './use-drag-edge-scroll';
 
 type Props = Readonly<{
     onEditSchedule: (day?: string) => void;
@@ -31,6 +33,7 @@ export const Content = ({ onEditSchedule, zones }: Props): ReactElement => {
     const { currentWeek } = useCurrentWeek();
     const { unsavedChanges } = useUnsavedChanges();
     const { meals } = useMeals();
+    const swap = useMealSwap();
     const mealsMap = meals.reduce<MealsMap>((acc, meal) => {
         acc[meal.section_key] = meal;
         return acc;
@@ -48,6 +51,11 @@ export const Content = ({ onEditSchedule, zones }: Props): ReactElement => {
             ? 4
             : 3;
     const lastSlide = Math.max(0, days.length - visibleSlides);
+    const activeEdge = useDragEdgeScroll(
+        carouselApi,
+        Boolean(swap?.selection?.dragging),
+        lastSlide,
+    );
     const canScrollNext = selectedSlide < lastSlide;
     const canScrollPrevious = lastSlide > 0 && selectedSlide > 0;
     const onCarouselReady = useCallback((api: EmblaCarouselType) => {
@@ -77,6 +85,14 @@ export const Content = ({ onEditSchedule, zones }: Props): ReactElement => {
     return (
         <Carousel
             aria-label={t('meal_plan.week_board')}
+            data-has-day-controls={lastSlide > 0 || undefined}
+            data-scroll-edge={
+                activeEdge === -1
+                    ? 'left'
+                    : activeEdge === 1
+                      ? 'right'
+                      : undefined
+            }
             classNames={{
                 container: styles.carouselContainer,
                 control: styles.carouselControl,
@@ -86,7 +102,15 @@ export const Content = ({ onEditSchedule, zones }: Props): ReactElement => {
                 viewport: styles.carouselViewport,
             }}
             controlSize={28}
-            emblaOptions={{ align: 'start', slidesToScroll: 1 }}
+            emblaOptions={{
+                align: 'start',
+                slidesToScroll: 1,
+                watchDrag: (_api, event) =>
+                    !(
+                        event.target instanceof Element &&
+                        event.target.closest('[data-meal-drag-handle]')
+                    ),
+            }}
             getEmblaApi={onCarouselReady}
             nextControlProps={nextControlProps}
             onSlideChange={setSelectedSlide}
@@ -98,6 +122,7 @@ export const Content = ({ onEditSchedule, zones }: Props): ReactElement => {
                 md: '25%',
                 xl: '14.285714%',
             }}
+            withControls={lastSlide > 0}
             withIndicators={false}
         >
             {days.map(({ label, timestamp }) => (

@@ -14,12 +14,13 @@ import { EditPencil, Plus } from 'iconoir-react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { isMealSlotEdited } from '~store/hooks/meal-operations';
 import { type MealsMap } from '~types/meal';
 import { type WeeklyMealZone } from '~types/meal-zone';
 
-import { Cell } from './cell';
 import styles from './content.module.css';
 import { NutritionSummary } from './nutrition-summary';
+import { SwappableMeal } from './swappable-meal';
 
 type Props = Readonly<{
     label: string;
@@ -104,28 +105,22 @@ export const DayLane = ({
                 {dayZones.map((zone) => {
                     const meal =
                         unsavedChanges[zone.zoneKey] ?? meals[zone.zoneKey];
+                    const slotLabel = zone.legacyKey
+                        ? t(`meal_zone_settings.labels.${zone.legacyKey}`)
+                        : zone.label;
                     return (
                         <article className={styles.slot} key={zone.zoneKey}>
-                            <Group
-                                gap="xs"
-                                justify="space-between"
-                                wrap="nowrap"
-                            >
-                                <Text fw={600} size="sm">
-                                    {zone.legacyKey
-                                        ? t(
-                                              `meal_zone_settings.labels.${zone.legacyKey}`,
-                                          )
-                                        : zone.label}
-                                </Text>
-                                <Text c="dimmed" size="xs">
-                                    {zone.time}
-                                </Text>
-                            </Group>
-                            <Cell
+                            <SwappableMeal
+                                day={zone.day}
                                 id={zone.zoneKey}
-                                isEdited={Boolean(unsavedChanges[zone.zoneKey])}
+                                isEdited={isMealSlotEdited(
+                                    unsavedChanges,
+                                    zone.zoneKey,
+                                )}
+                                label={`${label}, ${slotLabel}, ${zone.time}`}
                                 meal={meal}
+                                slotLabel={slotLabel}
+                                time={zone.time}
                                 timestamp={parseISO(zone.day)}
                             />
                         </article>

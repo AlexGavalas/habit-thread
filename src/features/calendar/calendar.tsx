@@ -6,6 +6,7 @@ import { useReactToPrint } from 'react-to-print';
 
 import { Card } from '~components/card';
 import { LoadingOverlay } from '~components/loading-overlay';
+import { useMealPlanOwnerId } from '~features/meal-plan-owner';
 import { useWeeklyMealZones } from '~hooks/use-weekly-meal-zones';
 import { useCurrentWeek, useMeals } from '~store/hooks';
 import { type WeeklyMealZone } from '~types/meal-zone';
@@ -13,6 +14,7 @@ import { type WeeklyMealZone } from '~types/meal-zone';
 import styles from './calendar.module.css';
 import { Content } from './content';
 import { Controls } from './controls';
+import { MealSwapBoard } from './meal-swap-board';
 import { MobileContent } from './mobile-content';
 import { ScheduleEditor } from './schedule-editor';
 
@@ -31,6 +33,7 @@ export const Calendar = ({
     const [scheduleDay, setScheduleDay] = useState(initialDate);
     const closeScheduleEditor = scheduleHandlers.close;
     const { currentWeek } = useCurrentWeek();
+    const ownerUserId = useMealPlanOwnerId();
     const { isLoading: mealsLoading, meals } = useMeals();
     const schedule = useWeeklyMealZones(currentWeek, initialSchedule);
     const handleSaveSchedule = schedule.save;
@@ -57,10 +60,15 @@ export const Calendar = ({
             <Space h="md" />
             <div ref={ref} className={styles.desktopCalendar}>
                 <Card>
-                    <Content
-                        onEditSchedule={openScheduleEditor}
+                    <MealSwapBoard
+                        key={`${ownerUserId}-${currentWeek.toISOString()}-${schedule.zones.map((zone) => `${zone.zoneKey}:${zone.day}`).join(',')}`}
                         zones={schedule.zones}
-                    />
+                    >
+                        <Content
+                            onEditSchedule={openScheduleEditor}
+                            zones={schedule.zones}
+                        />
+                    </MealSwapBoard>
                 </Card>
             </div>
             <div className={styles.mobileCalendar}>

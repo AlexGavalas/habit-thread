@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useMeals, useUnsavedChanges } from '~store/hooks';
+import { isMealSlotEdited } from '~store/hooks/meal-operations';
 import { type MealsMap } from '~types/meal';
 import { type WeeklyMealZone } from '~types/meal-zone';
 import { getDaysOfWeek } from '~util/date';
@@ -83,7 +84,10 @@ export const MobileContent = ({
                 {dayZones.map((zone) => (
                     <MobileMeal
                         id={zone.zoneKey}
-                        isEdited={Boolean(unsavedChanges[zone.zoneKey])}
+                        isEdited={isMealSlotEdited(
+                            unsavedChanges,
+                            zone.zoneKey,
+                        )}
                         isRow={false}
                         key={zone.zoneKey}
                         label={

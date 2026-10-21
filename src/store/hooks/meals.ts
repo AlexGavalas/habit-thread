@@ -22,10 +22,13 @@ import {
     type DeleteEntryRow,
     type SaveEntryCell,
     type SaveEntryRow,
+    type SwapEntries,
     type UseMeals,
+    createMealChange,
     getMealPlanChanges,
     getMealsMap,
     getWeekRange,
+    swapMealSlots,
 } from './meal-operations';
 import { useUnsavedChanges } from './unsaved-changes';
 
@@ -35,7 +38,7 @@ export const useMeals: UseMeals = (explicitOwnerUserId) => {
     const queryClient = useQueryClient();
 
     const ownerUserId = useMealPlanOwnerId(explicitOwnerUserId);
-    const { unsavedChanges, removeChanges, addChange } =
+    const { unsavedChanges, removeChanges, addChange, updateChanges } =
         useUnsavedChanges(ownerUserId);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -126,30 +129,8 @@ export const useMeals: UseMeals = (explicitOwnerUserId) => {
         }
     };
 
-    const saveEntryCell: SaveEntryCell = ({
-        meal,
-        sectionKey,
-        timestamp,
-        userId,
-        value,
-        items,
-        note,
-        rating,
-    }) => {
-        const day = format(timestamp, 'yyyy-MM-dd');
-
-        const editedMeal = {
-            ...meal,
-            day,
-            items: items ?? meal?.items ?? [],
-            meal: value,
-            note,
-            rating,
-            section_key: sectionKey,
-            user_id: userId,
-        };
-
-        addChange(editedMeal);
+    const saveEntryCell: SaveEntryCell = (params) => {
+        addChange(createMealChange(params));
     };
 
     const saveEntryRow: SaveEntryRow = ({
@@ -181,6 +162,22 @@ export const useMeals: UseMeals = (explicitOwnerUserId) => {
         }
     };
 
+    const swapEntries: SwapEntries = (source, destination) => {
+        if (!ownerUserId) {
+            return;
+        }
+
+        updateChanges((changes) =>
+            swapMealSlots({
+                changes,
+                destination,
+                meals: mealsMap,
+                source,
+                userId: ownerUserId,
+            }),
+        );
+    };
+
     return {
         deleteEntryCell,
         deleteEntryRow,
@@ -190,5 +187,6 @@ export const useMeals: UseMeals = (explicitOwnerUserId) => {
         saveEntryCell,
         saveEntryRow,
         savePlan,
+        swapEntries,
     };
 };
