@@ -8,16 +8,16 @@ import {
 const FONT_FAMILY = "'Noto Sans Variable', sans-serif";
 
 export const BRAND_COLORS = [
-    '#e6f7f1',
-    '#ccefe3',
-    '#99dfc7',
-    '#66cea8',
-    '#33be8a',
-    '#04a670',
-    '#047d55',
-    '#046745',
-    '#045438',
-    '#033c28',
+    '#eef7f2',
+    '#dcece2',
+    '#c2dfd0',
+    '#9fc9b3',
+    '#7ab494',
+    '#559d7c',
+    '#418463',
+    '#306b50',
+    '#285a43',
+    '#214936',
 ] satisfies MantineColorsTuple;
 
 export const HEALTH_RANGE_COLORS = [
