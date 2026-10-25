@@ -1,13 +1,16 @@
 import { expect, test } from '@playwright/test';
 
 import en from '../../public/locales/en/common.json';
+import { E2E_USER, authenticateE2eUser } from '../support/auth';
+import { readFixtureProfile } from '../support/provision';
 
 test('rejects unauthenticated API access and preserves the not-found page', async ({
     browser,
     baseURL,
-}) => {
+}, testInfo) => {
     const context = await browser.newContext({
         baseURL,
+        extraHTTPHeaders: testInfo.project.use.extraHTTPHeaders,
         storageState: { cookies: [], origins: [] },
     });
     const response = await context.request.get(
@@ -63,31 +66,23 @@ test('accepts a connection request atomically and removes the connection', async
     page,
     browser,
     baseURL,
-}) => {
+}, testInfo) => {
     const other = await browser.newContext({
         baseURL,
+        extraHTTPHeaders: testInfo.project.use.extraHTTPHeaders,
         storageState: { cookies: [], origins: [] },
     });
-    const email = `connection-${Date.now()}@example.com`;
-    const password = 'HabitThreadTestPassword123!';
-    const register = await other.request.post('/api/auth/register', {
-        data: { email, fullName: 'Connection migration test', password },
+    await authenticateE2eUser(await other.newPage(), {
+        email: `connection-${testInfo.retry}-${E2E_USER.email}`,
+        fullName: 'Connection migration test',
+        password: 'HabitThreadTestPassword123!',
+        professional: false,
     });
-    expect(register.status()).toBe(201);
-
-    const csrf = (await (await other.request.get('/api/auth/csrf')).json()) as {
-        csrfToken: string;
-    };
-    await other.request.post('/api/auth/callback/credentials', {
-        form: { csrfToken: csrf.csrfToken, email, json: 'true', password },
-    });
-    const user = (await (await page.request.get('/api/v1/user')).json()) as {
-        data: { id: number };
-    };
+    const user = await readFixtureProfile(page.request);
     expect(
         (
             await other.request.post('/api/v1/notification', {
-                data: { targetUserId: user.data.id },
+                data: { targetUserId: user.id },
             })
         ).ok(),
     ).toBe(true);
@@ -122,7 +117,6 @@ test('accepts a connection request atomically and removes the connection', async
     await expect(
         page.getByText('Connection migration test', { exact: true }),
     ).toBeHidden();
-    await other.request.delete('/api/v1/user');
     await other.close();
 });
 

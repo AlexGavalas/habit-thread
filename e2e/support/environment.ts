@@ -1,13 +1,16 @@
 import { config as loadDotenv } from 'dotenv';
+import { randomBytes } from 'node:crypto';
 import { resolve } from 'path';
 
 import { DEFAULT_E2E_REQUEST_DATE } from '../../src/constants/e2e';
+import { runIdSchema } from './fixtures';
 
 export type E2eEnvironment = {
     baseUrl: string;
     databaseUrl?: string;
     mode: 'local' | 'preview';
     requestDate: string;
+    runId: string;
     serverEnvironment: Record<string, string>;
 };
 
@@ -48,13 +51,19 @@ export const loadE2eEnvironment = (): E2eEnvironment => {
     );
 
     const mode = process.env.E2E_MODE === 'preview' ? 'preview' : 'local';
+    const runId = runIdSchema.parse(
+        process.env.E2E_RUN_ID ?? randomBytes(6).toString('hex'),
+    );
+    // Config loads before workers and the server start. Inherit one namespace
+    // across all of them, even when a worker is restarted for a test retry.
+    process.env.E2E_RUN_ID = runId;
     const requestDate = getEnvironmentValue(
         'E2E_REQUEST_DATE',
         DEFAULT_E2E_REQUEST_DATE,
     );
 
     if (mode === 'preview') {
-        return { baseUrl, mode, requestDate, serverEnvironment: {} };
+        return { baseUrl, mode, requestDate, runId, serverEnvironment: {} };
     }
 
     const databaseUrl = getEnvironmentValue('E2E_DATABASE_URL');
@@ -93,5 +102,12 @@ export const loadE2eEnvironment = (): E2eEnvironment => {
         DATABASE_URL: databaseUrl,
     });
 
-    return { baseUrl, databaseUrl, mode, requestDate, serverEnvironment };
+    return {
+        baseUrl,
+        databaseUrl,
+        mode,
+        requestDate,
+        runId,
+        serverEnvironment,
+    };
 };

@@ -1,7 +1,8 @@
+import { axe } from 'jest-axe';
 import { signIn } from 'next-auth/react';
 import mockRouter from 'next-router-mock';
 
-import { renderWithUser, screen } from '~test/utils';
+import { act, renderWithUser, screen } from '~test/utils';
 
 import { UserActions } from './user-actions';
 
@@ -56,5 +57,20 @@ describe('<UserActions />', () => {
             redirect: false,
         });
         expect(mockRouter.asPath).toBe('/');
+    });
+
+    it('names the login dialog and close button for assistive technology', async () => {
+        expect.hasAssertions();
+        const { baseElement, user } = renderWithUser(
+            <UserActions hasUser={false} />,
+        );
+        await user.click(screen.getByRole('button', { name: 'Log in' }));
+        expect(
+            screen.getByRole('dialog', { name: 'Log in to HabitThread' }),
+        ).toBeVisible();
+        expect(screen.getByRole('button', { name: 'Close' })).toBeEnabled();
+        await act(async () => {
+            await expect(axe(baseElement)).resolves.toHaveNoViolations();
+        });
     });
 });

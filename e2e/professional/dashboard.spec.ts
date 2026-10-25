@@ -1,125 +1,144 @@
 import { expect, test } from '@playwright/test';
 
-import { AUTH_STATE_PATH } from '../support/auth';
+import { getResponseSchema } from '../../src/schemas/meal';
+import { expectAccessible } from '../support/accessibility';
+import {
+    AUTH_STATE_PATH,
+    E2E_USER,
+    PROFESSIONAL_E2E_USER,
+} from '../support/auth';
+import { readFixtureProfile } from '../support/provision';
 
-test('accepts an invitation and opens the assigned client meal plan', async ({
-    baseURL,
-    browser,
-    page,
-}) => {
-    const clientContext = await browser.newContext({
-        baseURL,
-        storageState: AUTH_STATE_PATH,
-    });
-    const clientPage = await clientContext.newPage();
+test(
+    'accepts an invitation and opens the assigned client meal plan',
+    { tag: '@a11y' },
+    async ({ baseURL, browser, page }, testInfo) => {
+        const clientContext = await browser.newContext({
+            baseURL,
+            extraHTTPHeaders: testInfo.project.use.extraHTTPHeaders,
+            storageState: AUTH_STATE_PATH,
+        });
+        const clientPage = await clientContext.newPage();
 
-    await clientPage.goto('/connections');
-    await clientPage
-        .getByRole('button', { name: 'Find a professional' })
-        .click();
-    await clientPage
-        .getByLabel('Search professionals')
-        .fill('professional-e2e-user@');
-    await expect(
-        clientPage.getByText('professional-e2e-user@example.test'),
-    ).toBeVisible();
-    await clientPage
-        .getByRole('button', { exact: true, name: 'Invite' })
-        .click();
-    await expect(
-        clientPage.getByRole('button', {
-            exact: true,
-            name: 'Invitation pending',
-        }),
-    ).toBeDisabled();
-    await page.goto('/connections');
-    await expect(page.getByText('e2e-user@example.test')).toBeVisible();
-    await page.getByRole('button', { exact: true, name: 'Accept' }).click();
-    await expect(page.getByText('e2e-user@example.test')).not.toBeVisible();
+        await clientPage.goto('/connections');
+        await clientPage
+            .getByRole('button', { name: 'Find a professional' })
+            .click();
+        await clientPage
+            .getByLabel('Search professionals')
+            .fill(PROFESSIONAL_E2E_USER.email);
+        await expect(
+            clientPage.getByText(PROFESSIONAL_E2E_USER.email),
+        ).toBeVisible();
+        await clientPage
+            .getByRole('button', { exact: true, name: 'Invite' })
+            .click();
+        await expect(
+            clientPage.getByRole('button', {
+                exact: true,
+                name: 'Invitation pending',
+            }),
+        ).toBeDisabled();
+        await page.goto('/connections');
+        await expect(page.getByText(E2E_USER.email)).toBeVisible();
+        await page.getByRole('button', { exact: true, name: 'Accept' }).click();
+        await expect(page.getByText(E2E_USER.email)).not.toBeVisible();
 
-    const profileResponse = await clientPage.request.get('/api/v1/user');
-    const profile = (await profileResponse.json()) as { data: { id: number } };
-    const originalMeal = {
-        day: '2026-01-12',
-        meal: 'Client meal',
-        note: 'Client note',
-        rating: 4,
-        section_key: 'morning_12/01/2026',
-        user_id: profile.data.id,
-    };
-    const createResponse = await clientPage.request.patch('/api/v1/meal', {
-        data: { deletedIds: [], editedMeals: [], newMeals: [originalMeal] },
-    });
-    expect(createResponse.ok()).toBe(true);
+        const profile = await readFixtureProfile(clientPage.request);
+        const originalMeal = {
+            day: '2026-01-12',
+            meal: 'Client meal',
+            note: 'Client note',
+            rating: 4,
+            section_key: 'morning_12/01/2026',
+            user_id: profile.id,
+        };
+        const createResponse = await clientPage.request.patch('/api/v1/meal', {
+            data: { deletedIds: [], editedMeals: [], newMeals: [originalMeal] },
+        });
+        expect(createResponse.ok()).toBe(true);
 
-    const mealsUrl = '/api/v1/meal?startDate=2026-01-12&endDate=2026-01-18';
-    const mealsResponse = await clientPage.request.get(mealsUrl);
-    const meals = (await mealsResponse.json()) as {
-        data: (typeof originalMeal & { id: string })[];
-    };
-    const clientMeal = meals.data.find(
-        ({ section_key }) => section_key === originalMeal.section_key,
-    );
-    expect(clientMeal).toBeDefined();
-
-    const delegatedResponse = await page.request.patch('/api/v1/meal', {
-        data: {
-            deletedIds: [],
-            editedMeals: [
-                {
-                    ...clientMeal,
-                    meal: 'Professional edit',
-                    note: 'Professional note',
-                    rating: 1,
-                },
-            ],
-            newMeals: [],
-            ownerUserId: profile.data.id,
-        },
-    });
-    expect(delegatedResponse.ok()).toBe(true);
-
-    const updatedMealsResponse = await clientPage.request.get(mealsUrl);
-    const updatedMeals = (await updatedMealsResponse.json()) as {
-        data: (typeof originalMeal & { id: string })[];
-    };
-    expect(
-        updatedMeals.data.find(
+        const mealsUrl = '/api/v1/meal?startDate=2026-01-12&endDate=2026-01-18';
+        const mealsResponse = await clientPage.request.get(mealsUrl);
+        await expect(mealsResponse).toBeOK();
+        const meals = getResponseSchema.parse(await mealsResponse.json());
+        const clientMeal = meals.data?.find(
             ({ section_key }) => section_key === originalMeal.section_key,
-        ),
-    ).toMatchObject({
-        meal: 'Professional edit',
-        note: 'Client note',
-        rating: 4,
-    });
+        );
+        expect(clientMeal).toBeDefined();
 
-    await page.goto('/professional');
+        const delegatedResponse = await page.request.patch('/api/v1/meal', {
+            data: {
+                deletedIds: [],
+                editedMeals: [
+                    {
+                        ...clientMeal,
+                        meal: 'Professional edit',
+                        note: 'Professional note',
+                        rating: 1,
+                    },
+                ],
+                newMeals: [],
+                ownerUserId: profile.id,
+            },
+        });
+        expect(delegatedResponse.ok()).toBe(true);
 
-    await expect(page.getByText('1 of 10 clients')).toBeVisible();
-    await expect(page.getByText('e2e-user@example.test')).toBeVisible();
+        const updatedMealsResponse = await clientPage.request.get(mealsUrl);
+        await expect(updatedMealsResponse).toBeOK();
+        const updatedMeals = getResponseSchema.parse(
+            await updatedMealsResponse.json(),
+        );
+        expect(
+            updatedMeals.data?.find(
+                ({ section_key }) => section_key === originalMeal.section_key,
+            ),
+        ).toMatchObject({
+            meal: 'Professional edit',
+            note: 'Client note',
+            rating: 4,
+        });
 
-    await page.getByLabel('Search clients').fill('e2e-user@');
-    await page.getByRole('button', { name: 'Search' }).click();
-    await expect(page).toHaveURL(/q=e2e-user%40/);
+        await page.goto('/professional');
 
-    await page.getByRole('button', { name: 'E2E User' }).click();
+        await expect(page.getByText('1 of 10 clients')).toBeVisible();
+        await expect(page.getByText(E2E_USER.email)).toBeVisible();
+        await expectAccessible(page, 'professional-dashboard');
 
-    const drawer = page.getByRole('dialog');
+        await page.getByLabel('Search clients').fill(E2E_USER.email);
+        await page.getByRole('button', { name: 'Search' }).click();
+        await expect
+            .poll(() => new URL(page.url()).searchParams.get('q'))
+            .toBe(E2E_USER.email);
 
-    await expect(drawer).toBeVisible();
-    await expect(
-        drawer.getByRole('heading', { exact: true, name: 'E2E User' }),
-    ).toBeVisible();
-    await expect(
-        drawer.getByRole('button', { name: 'Previous week' }),
-    ).toBeVisible();
-    await expect(
-        drawer.getByRole('heading', { name: 'Meal schedule' }),
-    ).toBeVisible();
+        await page
+            .getByRole('button', {
+                exact: true,
+                name: `${E2E_USER.fullName} ${E2E_USER.email}`,
+            })
+            .click();
 
-    await page.keyboard.press('Escape');
-    await expect(drawer).toBeHidden();
-    await expect(page).not.toHaveURL(/client=/);
+        const drawer = page.getByRole('dialog');
 
-    await clientContext.close();
-});
+        await expect(drawer).toBeVisible();
+        await expect(
+            drawer.getByRole('heading', {
+                exact: true,
+                name: E2E_USER.fullName,
+            }),
+        ).toBeVisible();
+        await expect(
+            drawer.getByRole('button', { name: 'Previous week' }),
+        ).toBeVisible();
+        await expect(
+            drawer.getByRole('heading', { name: 'Meal schedule' }),
+        ).toBeVisible();
+        await expectAccessible(page, 'professional-client-drawer');
+
+        await page.keyboard.press('Escape');
+        await expect(drawer).toBeHidden();
+        await expect(page).not.toHaveURL(/client=/);
+
+        await clientContext.close();
+    },
+);

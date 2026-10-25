@@ -64,9 +64,39 @@ mise exec -- pnpm db:e2e:up
 mise exec -- pnpm test:e2e
 ```
 
-The test setup applies the committed Drizzle migrations, clears the e2e
-database, and seeds a credentials user before each suite. The reset is guarded
-and refuses to run unless the configured database name contains `e2e`.
+Local preparation applies the committed Drizzle migrations and clears only the
+dedicated e2e database. The reset refuses to run unless the database name contains
+`e2e`. Fixture provisioning then uses exactly the same application flows locally
+and against previews: public registration, credentials login, profile and
+measurement APIs, and professional discoverability settings.
+
+`e2e/support/fixtures.ts` defines the client, professional, and visual scenarios.
+Setup verifies persisted profiles, roles, and all measurement rows before tests
+start; it does not infer readiness from a summary value or assume database IDs.
+Relationships begin empty and are established by the journeys that test them.
+
+Each invocation generates an `E2E_RUN_ID`, inherited by all workers. It scopes
+account emails, discoverable client names, and ignored authentication files.
+CI uses its workflow run ID and attempt number. To choose a namespace explicitly:
+
+```sh
+E2E_RUN_ID=my-isolated-run mise exec -- pnpm test:e2e
+```
+
+Use 1–32 lowercase letters, digits, or hyphens, starting with a letter or digit.
+Do not share a namespace between simultaneous runs. `E2E_RUN_ID` replaces the
+old `E2E_USER_EMAIL` and `VISUAL_E2E_USER_EMAIL` overrides. Setup fails on an
+existing account rather than reusing possibly dirty state and does not retry
+provisioning. Rerun with a fresh namespace after interrupted setup.
+
+All test projects depend on `fixtures-setup`. Its `fixtures-cleanup` teardown
+deletes run-owned accounts through their authenticated user API, verifying the
+exact email before deletion, then removes their local session files. This also
+covers accounts created by onboarding and connection journeys. Cleanup runs
+after failed tests as well, but forced cancellation or failure before successful
+login can leave accounts behind. Those accounts remain isolated by namespace;
+dispose of the ephemeral preview database branch to remove such leftovers.
+Never upload `playwright/.auth` or run the suite against production.
 
 Stop the local e2e database with:
 
@@ -77,9 +107,28 @@ mise exec -- pnpm db:e2e:down
 Vercel preview deployments use the Neon branch injected by the Neon–Vercel
 integration. Preview builds apply committed Drizzle migrations to their isolated
 branch, while production builds apply them to the production branch. After a
-preview deployment succeeds, GitHub Actions runs Playwright against the preview
-URL and registers a unique credentials user through the application; the
-workflow does not need a Neon API key or database connection string.
+preview deployment succeeds, the existing Playwright workflow runs validation,
+Jest, and all browser tests (including accessibility and professional journeys)
+against the preview URL. It requires no Neon API key, database connection string,
+privileged seed endpoint, or database reset.
+
+To test an already-running preview yourself, supply the preview URL and any
+deployment-protection bypass secret in your environment, then run:
+
+```sh
+E2E_MODE=preview PLAYWRIGHT_TEST_BASE_URL=https://your-preview.example \
+    mise exec -- pnpm test:e2e
+```
+
+Preview migrations remain the build's responsibility. Fixture cleanup only
+touches authenticated accounts created by that test invocation; it does not
+enumerate or delete other preview users.
+
+## Accessibility
+
+Run `mise exec -- pnpm test:a11y` with the local e2e environment described above.
+See [Accessibility testing](ACCESSIBILITY.md) for the coverage matrix, CI policy,
+failure reports, and manual assistive-technology checklist.
 
 ## Misc
 

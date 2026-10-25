@@ -16,6 +16,8 @@ import { UserAvatar } from '~components/user-avatar';
 import { InstallApp } from '~features/install-app';
 import { NAV_LINKS, PROFESSIONAL_LINK } from '~features/nav/nav';
 import { useLocalizedPath } from '~hooks/use-localized-path';
+import { useProfile } from '~hooks/use-profile';
+import { getInitials } from '~util/name';
 
 import styles from './user-menu.module.css';
 
@@ -43,6 +45,15 @@ export const UserMenu = ({
     const router = useRouter();
     const queryClient = useQueryClient();
     const { t } = useTranslation();
+    const { user } = useProfile();
+    // Include the visible initials so speech users can name the displayed control.
+    const menuLabel = [
+        getInitials(user?.name),
+        user?.name,
+        t('navigation.open_menu'),
+    ]
+        .filter(Boolean)
+        .join(' ');
     const links = isProfessional
         ? [PROFESSIONAL_LINK, ...NAV_LINKS]
         : NAV_LINKS;
@@ -66,7 +77,7 @@ export const UserMenu = ({
             width={220}
         >
             <Menu.Target>
-                <MenuTrigger aria-label={t('navigation.open_menu')} />
+                <MenuTrigger aria-label={menuLabel} />
             </Menu.Target>
             <Menu.Dropdown>
                 <div className={styles.mobileNavigation}>

@@ -30,15 +30,12 @@ for (const viewport of [
         page,
     }, testInfo) => {
         await page.setViewportSize(viewport);
-        await authenticateE2eUser(
-            page,
-            {
-                EMAIL: `onboarding-${viewport.name}-${testInfo.retry}-${E2E_USER.EMAIL}`,
-                FULL_NAME: 'Onboarding User',
-                PASSWORD: 'onboarding-e2e-password',
-            },
-            'preview',
-        );
+        await authenticateE2eUser(page, {
+            email: `onboarding-${viewport.name}-${testInfo.retry}-${E2E_USER.email}`,
+            fullName: 'Onboarding User',
+            password: 'onboarding-e2e-password',
+            professional: false,
+        });
 
         const welcome = page.getByRole('dialog', {
             name: 'Small habits. A healthier rhythm.',
@@ -93,15 +90,12 @@ for (const viewport of [
 test('the optional tour still navigates and persists completion', async ({
     page,
 }, testInfo) => {
-    await authenticateE2eUser(
-        page,
-        {
-            EMAIL: `onboarding-tour-${testInfo.retry}-${E2E_USER.EMAIL}`,
-            FULL_NAME: 'Tour User',
-            PASSWORD: 'onboarding-e2e-password',
-        },
-        'preview',
-    );
+    await authenticateE2eUser(page, {
+        email: `onboarding-tour-${testInfo.retry}-${E2E_USER.email}`,
+        fullName: 'Tour User',
+        password: 'onboarding-e2e-password',
+        professional: false,
+    });
     await page.getByRole('button', { exact: true, name: 'Continue' }).click();
     await page.getByRole('button', { name: 'Show me around' }).click();
     await expect(

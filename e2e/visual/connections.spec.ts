@@ -1,5 +1,7 @@
 import { type Page, expect, test } from '@playwright/test';
 
+import { E2E_USER } from '../support/auth';
+
 const expectNoHorizontalOverflow = async (page: Page): Promise<void> => {
     expect(
         await page.evaluate(
@@ -27,9 +29,9 @@ test('connections search result stacks on mobile Chrome', async ({ page }) => {
     await expectNoHorizontalOverflow(page);
 
     const search = page.getByRole('combobox', { name: 'Search' });
-    await search.fill('E2E');
+    await search.fill(E2E_USER.fullName);
     await expect(
-        page.getByRole('option', { name: 'E2E User' }).first(),
+        page.getByRole('option', { exact: true, name: E2E_USER.fullName }),
     ).toBeVisible();
     await search.press('ArrowDown');
     await search.press('Enter');
@@ -37,6 +39,20 @@ test('connections search result stacks on mobile Chrome', async ({ page }) => {
         page.getByRole('button', { name: 'Send connection request' }),
     ).toBeVisible();
     await expectNoHorizontalOverflow(page);
+    // Assert the real run-scoped selection, then normalize only run metadata
+    // for the visual baseline. Discovery is not mocked or first-match based.
+    const selectedName = page.getByRole('dialog').getByText(E2E_USER.fullName, {
+        exact: true,
+    });
+    await expect(selectedName).toBeVisible();
+    await search.evaluate((input) => {
+        if (input instanceof HTMLInputElement) {
+            input.value = 'E2E User';
+        }
+    });
+    await selectedName.evaluate((element) => {
+        element.textContent = 'E2E User';
+    });
     await expect(page).toHaveScreenshot('connections-search-mobile.png');
 
     await page.getByRole('button', { name: 'Clear' }).click();

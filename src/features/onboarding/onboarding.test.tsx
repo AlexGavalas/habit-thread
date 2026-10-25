@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { axe } from 'jest-axe';
 import { type ReactElement } from 'react';
 
 import { useProfile } from '~hooks/use-profile';
@@ -75,6 +76,16 @@ describe('<Onboarding />', () => {
         });
         renderOnboarding();
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it('has no detectable accessibility violations in welcome and choice dialogs', async () => {
+        expect.hasAssertions();
+        const { baseElement, user } = renderOnboarding();
+        await screen.findByRole('dialog');
+        await expect(axe(baseElement)).resolves.toHaveNoViolations();
+        await user.click(screen.getByRole('button', { name: 'Continue' }));
+        await screen.findByRole('button', { name: 'Explore on my own' });
+        await expect(axe(baseElement)).resolves.toHaveNoViolations();
     });
 
     it('does not reopen onboarding for completed accounts', () => {
