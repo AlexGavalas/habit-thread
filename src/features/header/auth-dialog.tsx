@@ -127,6 +127,7 @@ export const AuthDialog = (): ReactElement => {
             </Button>
             <Modal
                 centered
+                closeButtonProps={{ 'aria-label': t('generic.actions.close') }}
                 onClose={closeModal}
                 opened={isOpen}
                 title={t(

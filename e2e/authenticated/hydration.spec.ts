@@ -62,7 +62,7 @@ for (const { headings, path } of hydrationCases) {
         await page
             .getByRole('button')
             .filter({
-                has: page.getByRole('img', { name: E2E_USER.FULL_NAME }),
+                has: page.getByRole('img', { name: E2E_USER.fullName }),
             })
             .click();
         await expect(

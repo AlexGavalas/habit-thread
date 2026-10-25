@@ -95,9 +95,11 @@ export const APP_THEME = createTheme({
     },
 });
 
-export const appCssVariablesResolver: CSSVariablesResolver = () => ({
+export const appCssVariablesResolver: CSSVariablesResolver = (theme) => ({
     dark: {},
-    light: {},
+    // Mantine's default gray.6 is only 3.3:1 on white; small secondary
+    // text needs at least 4.5:1, including form descriptions and dividers.
+    light: { '--mantine-color-dimmed': theme.colors.gray[7] },
     variables: {
         '--app-blur-glass': APP_TOKENS.blur.glass,
         '--app-blur-glass-strong': APP_TOKENS.blur.glassStrong,

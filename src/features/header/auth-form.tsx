@@ -40,7 +40,14 @@ export const AuthForm = ({
             >
                 {t('login.google')}
             </Button>
-            <Divider label={t('login.or')} labelPosition="center" />
+            <Divider
+                label={
+                    <Text c="dimmed" component="span" size="xs">
+                        {t('login.or')}
+                    </Text>
+                }
+                labelPosition="center"
+            />
             <form onSubmit={onSubmit}>
                 <Stack gap="sm">
                     {isRegistering && (

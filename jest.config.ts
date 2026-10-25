@@ -36,7 +36,7 @@ const config: Config = {
 
     testEnvironment: 'jsdom',
 
-    testPathIgnorePatterns: ['./e2e/', '.delta'],
+    testPathIgnorePatterns: ['<rootDir>/e2e/', '<rootDir>/.delta/'],
 
     transform: {
         '^.+\\.[jt]sx?$': [

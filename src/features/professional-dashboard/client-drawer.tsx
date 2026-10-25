@@ -25,6 +25,7 @@ export const ClientDrawer = ({
     return (
         <Drawer
             classNames={{ body: styles.drawerBody }}
+            closeButtonProps={{ 'aria-label': t('generic.actions.close') }}
             onClose={onClose}
             opened={Boolean(client)}
             position="right"
@@ -36,7 +37,7 @@ export const ClientDrawer = ({
                     <Group justify="space-between">
                         <Text c="dimmed">{client.email}</Text>
                         <Button
-                            color="danger"
+                            color="danger.9"
                             onClick={onStopManaging}
                             variant="outline"
                         >

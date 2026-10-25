@@ -22,8 +22,8 @@
 }
 
 .dayButton[aria-pressed='true'] {
-    background: var(--mantine-color-brand-6);
-    border-color: var(--mantine-color-brand-6);
+    background: var(--mantine-color-brand-filled);
+    border-color: var(--mantine-color-brand-filled);
     color: var(--mantine-color-white);
 }
 

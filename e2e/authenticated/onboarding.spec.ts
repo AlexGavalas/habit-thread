@@ -86,20 +86,22 @@ test('guides a new user through the current home, meal plan, and settings UI', a
             name: en.generic.misc.next,
         });
 
-    await expect(page.locator('#daily-meals-container')).toBeVisible();
+    // Client navigation can retain hidden route trees. Assert against the
+    // active tour target, not an offscreen copy from a previous visit.
+    await expect(page.locator('#daily-meals-container:visible')).toBeVisible();
     await expect(dialog).toContainText(en.onboarding.content.daily_meals);
     await expect(dialog).toContainText('1 of 6');
     await expect(dialog).not.toHaveAttribute('data-centered', 'true');
 
     await next().click();
-    await expect(page.locator('#health-trend-container')).toBeVisible();
+    await expect(page.locator('#health-trend-container:visible')).toBeVisible();
     await expect(dialog).toContainText(en.onboarding.content.health_trend);
     await expect(dialog).toContainText('2 of 6');
     await expect(dialog).not.toHaveAttribute('data-centered', 'true');
 
     await next().click();
     await expect(page).toHaveURL('/meal-plan');
-    await expect(page.locator('#meal-plan-container')).toBeVisible();
+    await expect(page.locator('#meal-plan-container:visible')).toBeVisible();
     await expect(dialog).toContainText(en.onboarding.content.meal_plan);
     await expect(dialog).toContainText('3 of 6');
     await expect(dialog).not.toHaveAttribute('data-centered', 'true');
@@ -120,19 +122,21 @@ test('guides a new user through the current home, meal plan, and settings UI', a
 
     await next().click();
     await expect(page).toHaveURL('/settings');
-    await expect(page.locator('#settings-tab-measurements')).toBeVisible();
+    await expect(
+        page.locator('#settings-tab-measurements:visible'),
+    ).toBeVisible();
     await expect(dialog).toContainText(en.onboarding.content.measurements);
     await expect(dialog).toContainText('4 of 6');
     await expect(dialog).not.toHaveAttribute('data-centered', 'true');
 
     await next().click();
-    await expect(page.locator('#settings-tab-personal')).toBeVisible();
+    await expect(page.locator('#settings-tab-personal:visible')).toBeVisible();
     await expect(dialog).toContainText(en.onboarding.content.personal_settings);
     await expect(dialog).toContainText('5 of 6');
     await expect(dialog).not.toHaveAttribute('data-centered', 'true');
 
     await next().click();
-    await expect(page.locator('#settings-tab-advanced')).toBeVisible();
+    await expect(page.locator('#settings-tab-advanced:visible')).toBeVisible();
     await expect(dialog).toContainText(en.onboarding.content.advanced_settings);
     await expect(dialog).toContainText('6 of 6');
     await expect(dialog).not.toHaveAttribute('data-centered', 'true');

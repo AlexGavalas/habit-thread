@@ -25,40 +25,35 @@ export default defineConfig({
     globalSetup: './e2e/global.setup.ts',
     projects: [
         {
-            name: 'auth-setup',
-            testMatch: /auth\.setup\.ts/,
+            name: 'fixtures-setup',
+            // Do not retry fresh-account provisioning against dirty partial state.
+            // A rerun gets a new namespace instead.
+            retries: 0,
+            teardown: 'fixtures-cleanup',
+            testMatch: /fixtures\.setup\.ts/,
             use: { ...devices['Desktop Chrome'] },
         },
         {
+            name: 'fixtures-cleanup',
+            testMatch: /fixtures\.teardown\.ts/,
+        },
+        {
+            dependencies: ['fixtures-setup'],
             name: 'public',
             testMatch: /public\/.*\.spec\.ts/,
             use: { ...devices['Desktop Chrome'] },
         },
         {
-            name: 'visual-auth-setup',
-            testMatch: /visual\.setup\.ts/,
-            use: { ...devices['Desktop Chrome'] },
+            dependencies: ['fixtures-setup'],
+            name: 'professional',
+            testMatch: /professional\/.*\.spec\.ts/,
+            use: {
+                ...devices['Desktop Chrome'],
+                storageState: PROFESSIONAL_AUTH_STATE_PATH,
+            },
         },
-        ...(environment.mode === 'local'
-            ? [
-                  {
-                      name: 'professional-auth-setup',
-                      testMatch: /professional\.setup\.ts/,
-                      use: { ...devices['Desktop Chrome'] },
-                  },
-                  {
-                      dependencies: ['auth-setup', 'professional-auth-setup'],
-                      name: 'professional',
-                      testMatch: /professional\/.*\.spec\.ts/,
-                      use: {
-                          ...devices['Desktop Chrome'],
-                          storageState: PROFESSIONAL_AUTH_STATE_PATH,
-                      },
-                  },
-              ]
-            : []),
         {
-            dependencies: ['auth-setup'],
+            dependencies: ['fixtures-setup'],
             name: 'authenticated',
             testMatch: /authenticated\/.*\.spec\.ts/,
             use: {
@@ -67,12 +62,13 @@ export default defineConfig({
             },
         },
         {
+            dependencies: ['fixtures-setup'],
             name: 'mobile-public',
             testMatch: /visual\/public\.spec\.ts/,
             use: { ...devices['Pixel 5'] },
         },
         {
-            dependencies: ['visual-auth-setup'],
+            dependencies: ['fixtures-setup'],
             name: 'mobile-authenticated',
             testMatch: /visual\/(authenticated|connections)\.spec\.ts/,
             use: {
@@ -81,7 +77,7 @@ export default defineConfig({
             },
         },
     ],
-    reporter: 'html',
+    reporter: [['html', { open: 'never' }]],
     retries: isCi ? 2 : 0,
     snapshotPathTemplate: '{testDir}/__snapshots__/{testFilePath}/{arg}{ext}',
     testDir: './e2e',
