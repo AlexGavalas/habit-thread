@@ -1,8 +1,10 @@
 'use client';
 
 import { Center, Loader } from '@mantine/core';
+import { ModalsProvider } from '@mantine/modals';
 import dynamic from 'next/dynamic';
-import { type ReactElement } from 'react';
+import { type ReactElement, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const CenterLoader = (): ReactElement => (
     <Center py="md">
@@ -44,6 +46,25 @@ export const modals = {
         { loading: CenterLoader },
     ),
 } as const;
+
+type ContextModalsProviderProps = Readonly<{
+    children: ReactNode;
+}>;
+
+export const ContextModalsProvider = ({
+    children,
+}: ContextModalsProviderProps): ReactElement => {
+    const { t } = useTranslation();
+    const modalProps = {
+        closeButtonProps: { 'aria-label': t('generic.actions.close') },
+    };
+    return (
+        // @ts-expect-error -- Dynamic modal components lose their specific props.
+        <ModalsProvider modals={modals} modalProps={modalProps}>
+            {children}
+        </ModalsProvider>
+    );
+};
 
 declare module '@mantine/modals' {
     // oxlint-disable-next-line typescript/consistent-type-definitions -- Mantine requires module augmentation.

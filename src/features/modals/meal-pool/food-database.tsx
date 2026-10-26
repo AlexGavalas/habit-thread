@@ -67,7 +67,12 @@ export const FoodDatabaseTab = ({
                 </MealFoodWorkspace>
             </div>
             <Group gap="md" justify="end">
-                <Button color="danger" disabled={isLoading} onClick={onDone}>
+                <Button
+                    disabled={isLoading}
+                    onClick={onDone}
+                    type="button"
+                    variant="default"
+                >
                     {t('generic.actions.cancel')}
                 </Button>
                 <Button

@@ -2,7 +2,6 @@
 'use client';
 
 import { MantineProvider } from '@mantine/core';
-import { ModalsProvider } from '@mantine/modals';
 import { Notifications } from '@mantine/notifications';
 import {
     type DehydratedState,
@@ -28,7 +27,7 @@ import { UserContext } from '~store/user-context';
 import { APP_THEME, appCssVariablesResolver } from '~theme';
 import { createQueryClient } from '~util/query-client';
 
-import { modals } from './context-modals';
+import { ContextModalsProvider } from './context-modals';
 
 type ProvidersProps = PropsWithChildren<
     Readonly<{
@@ -74,11 +73,10 @@ export const Providers = ({
     );
 
     const modalsContent = (
-        // @ts-expect-error - dynamic modal components lose their specific props
-        <ModalsProvider modals={modals}>
+        <ContextModalsProvider>
             {content}
             <Notifications />
-        </ModalsProvider>
+        </ContextModalsProvider>
     );
 
     return (
