@@ -5,7 +5,10 @@ import {
     type FoodSearchResponse,
     type FoodSearchResult,
 } from '../../src/types/food-search';
-import { expectNoHorizontalOverflow } from '../support/layout';
+import {
+    expectModalScreenshot,
+    expectNoHorizontalOverflow,
+} from '../support/layout';
 
 const food = (
     name: string,
@@ -105,9 +108,7 @@ for (const viewport of [
             basket.getByText('875 kcal', { exact: false }),
         ).toBeVisible();
         await expectNoHorizontalOverflow(page);
-        await expect(dialog).toHaveScreenshot(
-            `food-basket-${viewport.name}.png`,
-        );
+        await expectModalScreenshot(dialog, `food-basket-${viewport.name}.png`);
 
         if (viewport.width <= 768) {
             await dialog
@@ -186,7 +187,7 @@ test('meal editor keeps the basket available across searches and source tabs', a
     await dialog.getByRole('button', { exact: true, name: 'Search' }).click();
     await results.getByRole('button', { name: /^Blueberries / }).click();
     await expect(oatsQuantity).toHaveValue('80 g');
-    await expect(dialog).toHaveScreenshot('food-basket-meal-editor.png');
+    await expectModalScreenshot(dialog, 'food-basket-meal-editor.png');
     await dialog.getByRole('button', { name: 'Save changes' }).click();
     await expect(dialog).toBeHidden();
     // Reopen the locally saved meal to verify the existing save contract is intact.

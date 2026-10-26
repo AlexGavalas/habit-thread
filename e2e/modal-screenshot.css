@@ -1,0 +1,6 @@
+/* Keep page data from leaking into isolated modal captures at rounded corners. */
+.mantine-Modal-overlay {
+    background-color: var(--mantine-color-dark-6) !important;
+    backdrop-filter: none !important;
+    opacity: 1 !important;
+}
