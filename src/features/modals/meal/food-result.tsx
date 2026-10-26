@@ -10,6 +10,32 @@ type FoodResultProps = Readonly<{
     onSelect: (food: FoodSearchResult) => void;
 }>;
 
+type FoodResultGroupProps = Readonly<{
+    foods: readonly FoodSearchResult[];
+    onSelect: (food: FoodSearchResult) => void;
+    title: string;
+}>;
+
+export const FoodResultGroup = ({
+    foods,
+    onSelect,
+    title,
+}: FoodResultGroupProps): ReactElement | null => {
+    if (foods.length === 0) {
+        return null;
+    }
+    return (
+        <Stack gap={2}>
+            <Text fw={600} size="sm">
+                {title}
+            </Text>
+            {foods.map((food) => (
+                <FoodResult key={food.id} food={food} onSelect={onSelect} />
+            ))}
+        </Stack>
+    );
+};
+
 export const FoodResult = ({
     food,
     onSelect,

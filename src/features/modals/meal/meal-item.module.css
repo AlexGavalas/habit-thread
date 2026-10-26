@@ -10,6 +10,35 @@
     border-top: 1px solid var(--mantine-color-default-border);
 }
 
+.editor {
+    container-type: inline-size;
+    flex: 1;
+    min-height: 0;
+}
+
+.itemList {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+}
+
+.editor .total {
+    flex-shrink: 0;
+}
+
+@media (max-height: 40em) {
+    .editor {
+        overflow: auto;
+        overscroll-behavior: contain;
+    }
+
+    .itemList {
+        flex: 0 0 auto;
+        overflow: visible;
+    }
+}
+
 .nutrition {
     overflow-wrap: anywhere;
 }
@@ -20,6 +49,27 @@
 
 .total {
     background: var(--mantine-color-brand-light);
+}
+
+@container (max-width: 26rem) {
+    .item {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .nutrition {
+        grid-column: 1 / -1;
+    }
+
+    .quantity {
+        grid-column: 1;
+        grid-row: 2;
+        width: 100%;
+    }
+
+    .delete {
+        grid-column: 2;
+        grid-row: 2;
+    }
 }
 
 @media (max-width: 36em) {

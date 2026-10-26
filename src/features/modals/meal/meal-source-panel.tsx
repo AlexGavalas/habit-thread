@@ -4,6 +4,7 @@ import { type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { type FoodSearchResult } from '~types/food-search';
+import { type EditedMealItem } from '~types/meal';
 
 import { FoodDatabaseSearch } from './food-database-search';
 import styles from './meal.module.css';
@@ -12,18 +13,20 @@ type Props = Readonly<{
     foodDatabaseEnabled: boolean;
     mealSearch: ReactNode;
     onFoodSelect: (food: FoodSearchResult) => void;
+    selectedItems: readonly EditedMealItem[];
 }>;
 
 export const MealSourcePanel = ({
     foodDatabaseEnabled,
     mealSearch,
     onFoodSelect,
+    selectedItems,
 }: Props): ReactElement => {
     const { t } = useTranslation();
 
     return (
         <Paper className={styles.sourcePanel} p="md" withBorder>
-            <Stack gap="sm">
+            <Stack className={styles.sourceStack} gap="sm">
                 <div>
                     <Title order={3} size="h4">
                         {t('modals.meal_edit.source.title')}
@@ -37,7 +40,7 @@ export const MealSourcePanel = ({
                     </Text>
                 </div>
                 {foodDatabaseEnabled ? (
-                    <Tabs defaultValue="my-meals">
+                    <Tabs className={styles.sourceTabs} defaultValue="my-meals">
                         <Tabs.List grow>
                             <Tabs.Tab value="my-meals">
                                 {t('modals.meal_edit.my_meals')}
@@ -46,11 +49,22 @@ export const MealSourcePanel = ({
                                 {t('modals.meal_edit.food_search.tab')}
                             </Tabs.Tab>
                         </Tabs.List>
-                        <Tabs.Panel pt="sm" value="my-meals">
+                        <Tabs.Panel
+                            className={styles.sourceResults}
+                            pt="sm"
+                            value="my-meals"
+                        >
                             {mealSearch}
                         </Tabs.Panel>
-                        <Tabs.Panel pt="sm" value="food-database">
-                            <FoodDatabaseSearch onSelect={onFoodSelect} />
+                        <Tabs.Panel
+                            className={styles.foodPanel}
+                            pt="sm"
+                            value="food-database"
+                        >
+                            <FoodDatabaseSearch
+                                onSelect={onFoodSelect}
+                                selectedItems={selectedItems}
+                            />
                         </Tabs.Panel>
                     </Tabs>
                 ) : (

@@ -2,6 +2,7 @@ import type { ReactElement } from 'react';
 import { type MouseEventHandler } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useFeatureFlags } from '~features/feature-flags';
 import { useMealPlanOwnerId } from '~features/meal-plan-owner';
 import {
     useCurrentWeek,
@@ -12,6 +13,7 @@ import {
 import { type WeeklyMealZone } from '~types/meal-zone';
 import { useOpenContextModal } from '~util/modal';
 
+import { MEAL_MODAL_OPTIONS } from '../../modals/meal/meal-modal-options';
 import { DesktopControls } from './desktop-controls';
 import { MobileControls } from './mobile-controls';
 
@@ -27,6 +29,7 @@ export const Controls = ({
     zones,
 }: ControlsProps): ReactElement => {
     const { t } = useTranslation();
+    const { isFoodDatabaseSearchEnabled } = useFeatureFlags();
     const ownerUserId = useMealPlanOwnerId();
     const { nextWeek: handleNextWeek, previousWeek: handlePreviousWeek } =
         useCurrentWeek();
@@ -54,8 +57,9 @@ export const Controls = ({
 
     const handleMealCreation = (): void => {
         openMealPoolModal({
+            ...(isFoodDatabaseSearchEnabled ? MEAL_MODAL_OPTIONS : {}),
             innerProps: {},
-            size: 'lg',
+            size: isFoodDatabaseSearchEnabled ? '72rem' : 'lg',
             title: t('modals.meal_pool.title'),
         });
     };

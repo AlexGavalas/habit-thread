@@ -25,7 +25,7 @@ const identify = dedupe(async () => {
 });
 
 const localE2eAdapter: Adapter<boolean, Entities> = {
-    decide: () => false,
+    decide: () => process.env.E2E_FOOD_DATABASE_SEARCH === 'true',
 };
 
 export const foodDatabaseSearch = flag<boolean, Entities>({

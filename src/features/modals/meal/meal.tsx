@@ -1,4 +1,4 @@
-import { Grid } from '@mantine/core';
+import { Grid, Textarea } from '@mantine/core';
 import { useDebouncedValue, useMediaQuery } from '@mantine/hooks';
 import { type ContextModalProps } from '@mantine/modals';
 import type { ReactElement } from 'react';
@@ -14,11 +14,12 @@ import { useFeatureFlags } from '~features/feature-flags';
 import { useProfile } from '~hooks/use-profile';
 import { type FoodSearchResult } from '~types/food-search';
 import { type EditedMealItem } from '~types/meal';
-import { foodToMealItem } from '~util/nutrition';
 
 import { useGetMealPool } from '../meal-pool/hooks/use-get-meal-pool';
+import { useMealItems } from './hooks/use-meal-items';
 import { MealActions } from './meal-actions';
 import { MealEditorPanel } from './meal-editor-panel';
+import { MealFoodWorkspace } from './meal-food-workspace';
 import { type OnMealEdit } from './meal-result';
 import { MealSearch } from './meal-search';
 import { MealSourcePanel } from './meal-source-panel';
@@ -49,7 +50,8 @@ export const MealModal = ({
     const isMobile = useMediaQuery('(max-width: 48em)');
     const [error, setError] = useState('');
     const [preview, setPreview] = useState(initialMeal);
-    const [items, setItems] = useState<EditedMealItem[]>(initialItems);
+    const { addFood, items, recentlyAddedIndex, setItems } =
+        useMealItems(initialItems);
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedSearchQuery] = useDebouncedValue(searchQuery, 350);
 
@@ -105,10 +107,7 @@ export const MealModal = ({
     }) satisfies OnMealEdit;
 
     const handleFoodSelect = (food: FoodSearchResult): void => {
-        setItems((current) => [
-            ...current,
-            foodToMealItem(food, current.length),
-        ]);
+        addFood(food);
         if (!preview) {
             setPreview([food.brand, food.name].filter(Boolean).join(' '));
         }
@@ -134,6 +133,7 @@ export const MealModal = ({
             foodDatabaseEnabled={isFoodDatabaseSearchEnabled}
             mealSearch={mealSearch}
             onFoodSelect={handleFoodSelect}
+            selectedItems={items}
         />
     );
     const editor = (
@@ -144,25 +144,40 @@ export const MealModal = ({
             onItemsChange={handleItemsChange}
             onMealChange={handleChange}
             onMealFocus={resetError}
-        />
-    );
-    const mobileEditor = (
-        <MealEditorPanel
-            error={error}
-            items={items}
-            meal={preview}
-            onItemsChange={handleItemsChange}
-            onMealChange={handleChange}
-            onMealFocus={resetError}
-            sourcePanel={sources}
+            sourcePanel={isMobile ? sources : undefined}
         />
     );
 
     return (
         <form className={styles.form} onSubmit={handleSubmit}>
-            <div className={styles.content}>
-                {isMobile ? (
-                    mobileEditor
+            <div
+                className={`${styles.content} ${isFoodDatabaseSearchEnabled ? styles.workspaceContent : ''}`}
+            >
+                {isFoodDatabaseSearchEnabled ? (
+                    <MealFoodWorkspace
+                        details={
+                            <Textarea
+                                autosize
+                                error={error}
+                                label={t('modals.meal_edit.details.label')}
+                                maxRows={3}
+                                minRows={1}
+                                name="meal"
+                                onChange={handleChange}
+                                onFocus={resetError}
+                                placeholder={t('meal_placeholder')}
+                                value={preview}
+                            />
+                        }
+                        detailsInvalid={Boolean(error)}
+                        items={items}
+                        onItemsChange={handleItemsChange}
+                        recentlyAddedIndex={recentlyAddedIndex}
+                    >
+                        {sources}
+                    </MealFoodWorkspace>
+                ) : isMobile ? (
+                    editor
                 ) : (
                     <Grid gap="md">
                         <Grid.Col span={8}>{editor}</Grid.Col>

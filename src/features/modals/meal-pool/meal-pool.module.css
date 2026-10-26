@@ -1,0 +1,22 @@
+.tabs {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
+
+.tabList {
+    flex-shrink: 0;
+    padding-inline: var(--mantine-spacing-md);
+}
+
+.tabs > .panel {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 0 var(--mantine-spacing-md) var(--mantine-spacing-md);
+}
+
+.tabs > .foodPanel {
+    overflow: hidden;
+}
