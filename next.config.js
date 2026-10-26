@@ -5,6 +5,8 @@
  **/
 const config = {
     reactCompiler: true,
+    // Keep PDF.js worker/native dependency resolution in Node, not the Next bundle.
+    serverExternalPackages: ['pdf-parse'],
     experimental: {
         agentUpgrade: 'latest',
         turbopackRustReactCompiler: true,

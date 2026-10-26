@@ -40,3 +40,19 @@ export const foodDatabaseSearch = flag<boolean, Entities>({
         { label: 'Visible', value: true },
     ],
 });
+
+export const mealImport = flag<boolean, Entities>({
+    adapter:
+        process.env.E2E_MODE === 'local'
+            ? { decide: (): boolean => process.env.E2E_MEAL_IMPORT === 'true' }
+            : vercelAdapter(),
+    defaultValue: false,
+    description:
+        'Show file import in the meal library and allow AI meal extraction',
+    identify,
+    key: 'meal-import',
+    options: [
+        { label: 'Hidden', value: false },
+        { label: 'Visible', value: true },
+    ],
+});

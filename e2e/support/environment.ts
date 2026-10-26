@@ -91,12 +91,15 @@ export const loadE2eEnvironment = (): E2eEnvironment => {
         E2E_DATABASE_URL: databaseUrl,
         E2E_FOOD_DATABASE_SEARCH:
             process.env.E2E_FOOD_DATABASE_SEARCH ?? 'false',
+        E2E_MEAL_IMPORT: process.env.E2E_MEAL_IMPORT ?? 'false',
         E2E_MODE: mode,
         E2E_REQUEST_DATE: requestDate,
         GOOGLE_ID: googleId,
         GOOGLE_SECRET: googleSecret,
         NEXTAUTH_SECRET: nextAuthSecret,
         NEXTAUTH_URL: nextAuthUrl,
+        // Local tests must never send uploaded documents to a paid external provider.
+        OPENAI_API_KEY: '',
         PLAYWRIGHT_TEST_BASE_URL: baseUrl,
     };
 

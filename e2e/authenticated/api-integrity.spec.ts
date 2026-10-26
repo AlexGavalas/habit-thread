@@ -124,6 +124,7 @@ test('enforces upload size and missing-file responses', async ({ request }) => {
     const missing = await request.post('/api/v1/pool/upload', {
         multipart: { description: 'No file' },
     });
+    test.skip(missing.status() === 404, 'Meal import is disabled');
     expect(missing.status()).toBe(400);
     const oversized = await request.post('/api/v1/pool/upload', {
         multipart: {

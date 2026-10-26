@@ -15,7 +15,8 @@ export const MealPoolModal = ({
     id,
 }: ContextModalProps): ReactElement => {
     const { t } = useTranslation();
-    const { isFoodDatabaseSearchEnabled } = useFeatureFlags();
+    const { isFoodDatabaseSearchEnabled, isMealImportEnabled } =
+        useFeatureFlags();
     const closeModal = (): void => {
         context.closeContextModal(id);
     };
@@ -40,16 +41,20 @@ export const MealPoolModal = ({
                         {t('modals.meal_pool.tabs.food_database')}
                     </Tabs.Tab>
                 )}
-                <Tabs.Tab value="automatic">
-                    {t('modals.meal_pool.tabs.import')}
-                </Tabs.Tab>
+                {isMealImportEnabled && (
+                    <Tabs.Tab value="automatic">
+                        {t('modals.meal_pool.tabs.import')}
+                    </Tabs.Tab>
+                )}
             </Tabs.List>
             <Tabs.Panel className={styles.panel} value="manually">
                 <ManualInputTab onDone={closeModal} />
             </Tabs.Panel>
-            <Tabs.Panel className={styles.panel} value="automatic">
-                <FileUploadTab />
-            </Tabs.Panel>
+            {isMealImportEnabled && (
+                <Tabs.Panel className={styles.panel} value="automatic">
+                    <FileUploadTab onDone={closeModal} />
+                </Tabs.Panel>
+            )}
             {isFoodDatabaseSearchEnabled && (
                 <Tabs.Panel
                     className={`${styles.panel} ${styles.foodPanel}`}

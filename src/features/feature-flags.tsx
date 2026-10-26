@@ -5,10 +5,12 @@ import { type PropsWithChildren, createContext, useContext } from 'react';
 
 export type FeatureFlags = {
     isFoodDatabaseSearchEnabled: boolean;
+    isMealImportEnabled: boolean;
 };
 
 const FeatureFlagsContext = createContext<FeatureFlags>({
     isFoodDatabaseSearchEnabled: false,
+    isMealImportEnabled: false,
 });
 
 export const FeatureFlagsProvider = ({
