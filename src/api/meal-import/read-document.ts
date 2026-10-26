@@ -1,6 +1,5 @@
 import * as cheerio from 'cheerio';
 import mammoth from 'mammoth';
-import { PDFParse } from 'pdf-parse';
 import 'server-only';
 
 import {
@@ -36,20 +35,24 @@ const readDocx = async (buffer: Buffer): Promise<string> => {
 };
 
 const readPdf = async (buffer: Buffer): Promise<string> => {
-    const parser = new PDFParse({ data: buffer, isEvalSupported: false });
+    // Text extraction uses the serverless PDF.js build, not native canvas rendering.
+    // Load it only for PDFs so DOCX/validation requests do not initialize PDF.js.
+    const { extractText, getDocumentProxy } = await import('unpdf');
+    const document = await getDocumentProxy(new Uint8Array(buffer), {
+        maxImageSize: 16_777_216,
+    });
     try {
-        const info = await parser.getInfo();
-        if (info.total > MAX_IMPORT_PAGES) {
+        if (document.numPages > MAX_IMPORT_PAGES) {
             throw new MealImportError('document_too_large');
         }
-        const result = await parser.getText();
+        const { text } = await extractText(document, { mergePages: false });
         // Reject image-only pages instead of silently importing only part of a plan.
-        if (result.pages.some((page) => !page.text.trim())) {
+        if (text.some((page) => !page.trim())) {
             throw new MealImportError('unreadable_document');
         }
-        return result.pages.map((page) => page.text).join('\n\n');
+        return text.join('\n\n');
     } finally {
-        await parser.destroy();
+        await document.loadingTask.destroy();
     }
 };
 

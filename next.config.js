@@ -5,8 +5,8 @@
  **/
 const config = {
     reactCompiler: true,
-    // Keep PDF.js worker/native dependency resolution in Node, not the Next bundle.
-    serverExternalPackages: ['pdf-parse'],
+    // Keep unpdf's self-resolved, inlined PDF.js worker in its serverless package.
+    serverExternalPackages: ['unpdf'],
     experimental: {
         agentUpgrade: 'latest',
         turbopackRustReactCompiler: true,

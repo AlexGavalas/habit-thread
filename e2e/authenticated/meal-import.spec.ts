@@ -65,7 +65,15 @@ test('reviews, edits and removes imported meals before explicitly saving', async
         .getByRole('button', { exact: true, name: 'Remove meal 2' })
         .click();
     await expect(firstMeal).toHaveValue('Eggs with toast');
-    await expect(dialog).toHaveScreenshot('meal-import-preview.png');
+    // The food-database flag deliberately changes the entire modal's dimensions.
+    const hasFoodDatabase = await dialog
+        .getByRole('tab', { name: en.modals.meal_pool.tabs.food_database })
+        .isVisible();
+    await expect(dialog).toHaveScreenshot(
+        hasFoodDatabase
+            ? 'meal-import-preview-wide.png'
+            : 'meal-import-preview.png',
+    );
     const saved = page.waitForRequest(
         (request) =>
             request.url().endsWith('/api/v1/pool/meal') &&

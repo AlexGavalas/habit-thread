@@ -44,6 +44,17 @@ Apply migrations with `mise exec -- pnpm db:migrate` before importing. The
 UTC day. Provider failures count; invalid/unreadable documents and
 missing configuration do not. There are no automatic provider retries.
 
+PDF text extraction uses `unpdf`'s serverless PDF.js bundle with its worker
+inlined; no native canvas or browser DOM globals are required. The parser loads
+only for PDF requests.
+
+Every production build runs `pnpm check:meal-import-package`: it copies only
+the upload route's traced deployment files into an isolated temporary tree,
+loads the route, and extracts a synthetic PDF without access to the checkout's
+`node_modules`. No API key, database, or external AI call is used.
+Import preview screenshots have separate compact and food-database-enabled
+baselines; verify both locally with `E2E_FOOD_DATABASE_SEARCH=false` and `true`.
+
 Imports accept DOCX and text-based PDF files up to 4 MiB, 40,000 extracted
 characters, and 20 PDF pages. Scanned/image-only and encrypted PDFs are not
 supported; there is no OCR. Image-only PDF pages reject the whole import, but

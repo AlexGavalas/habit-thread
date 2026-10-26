@@ -9,17 +9,31 @@ import { createMealDocx } from '~test/meal-import-fixtures';
 
 import { readMealDocument } from './read-document';
 
-jest.mock('pdf-parse', () => ({
-    PDFParse: jest.fn().mockImplementation(() => ({
-        destroy: jest.fn().mockResolvedValue(undefined),
-        getInfo: jest.fn().mockResolvedValue({ total: 2 }),
-        getText: jest.fn().mockResolvedValue({
-            pages: [{ text: 'Eggs' }, { text: 'Γιαούρτι 200g' }],
-        }),
-    })),
+const mockDestroy = jest.fn<Promise<void>, []>();
+const mockExtractText = jest.fn<
+    Promise<{ text: string[]; totalPages: number }>,
+    []
+>();
+const mockDocument = {
+    loadingTask: { destroy: mockDestroy },
+    numPages: 2,
+};
+
+jest.mock('unpdf', () => ({
+    extractText: jest.fn(() => mockExtractText()),
+    getDocumentProxy: jest.fn(() => Promise.resolve(mockDocument)),
 }));
 
 describe('meal document readers', () => {
+    beforeEach(() => {
+        mockDocument.numPages = 2;
+        mockDestroy.mockResolvedValue(undefined);
+        mockExtractText.mockResolvedValue({
+            text: ['Eggs', 'Γιαούρτι 200g'],
+            totalPages: 2,
+        });
+    });
+
     it('reads paragraphs and every table row/column, including short meals', async () => {
         expect.hasAssertions();
         const buffer = await createMealDocx(
@@ -61,6 +75,37 @@ describe('meal document readers', () => {
                 new File([Buffer.alloc(MAX_IMPORT_FILE_SIZE + 1)], 'plan.pdf'),
             ),
         ).rejects.toMatchObject({ code: 'file_too_large' });
+    });
+
+    it('rejects too many PDF pages before extracting text and releases the document', async () => {
+        expect.hasAssertions();
+        mockDocument.numPages = 21;
+        await expect(
+            readMealDocument(new File(['%PDF-1.4'], 'long.pdf')),
+        ).rejects.toMatchObject({ code: 'document_too_large' });
+        expect(mockExtractText).not.toHaveBeenCalled();
+        expect(mockDestroy).toHaveBeenCalledTimes(1);
+    });
+
+    it('rejects mixed text/image-only pages instead of importing a partial plan', async () => {
+        expect.hasAssertions();
+        mockExtractText.mockResolvedValueOnce({
+            text: ['Eggs', ''],
+            totalPages: 2,
+        });
+        await expect(
+            readMealDocument(new File(['%PDF-1.4'], 'mixed.pdf')),
+        ).rejects.toMatchObject({ code: 'unreadable_document' });
+        expect(mockDestroy).toHaveBeenCalledTimes(1);
+    });
+
+    it('releases the PDF document when text extraction fails', async () => {
+        expect.hasAssertions();
+        mockExtractText.mockRejectedValueOnce(new Error('Corrupt page'));
+        await expect(
+            readMealDocument(new File(['%PDF-1.4'], 'broken.pdf')),
+        ).rejects.toMatchObject({ code: 'unreadable_document' });
+        expect(mockDestroy).toHaveBeenCalledTimes(1);
     });
 
     it('rejects empty and oversized DOCX text without truncation', async () => {
