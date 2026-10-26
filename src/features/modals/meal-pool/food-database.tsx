@@ -1,13 +1,14 @@
-import { Button, Group, Stack, Text, TextInput } from '@mantine/core';
+import { Button, Group, Stack, TextInput } from '@mantine/core';
 import type { ReactElement } from 'react';
 import { type MouseEventHandler, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { type EditedMealItem } from '~types/meal';
-import { foodToMealItem } from '~util/nutrition';
+import { type FoodSearchResult } from '~types/food-search';
 
 import { FoodDatabaseSearch } from '../meal/food-database-search';
-import { MealItemsEditor } from '../meal/meal-items-editor';
+import { useMealItems } from '../meal/hooks/use-meal-items';
+import { MealFoodWorkspace } from '../meal/meal-food-workspace';
+import styles from './food-database.module.css';
 import { useCreateMealPool } from './hooks/use-create-meal-pool';
 
 type FoodDatabaseTabProps = Readonly<{
@@ -19,7 +20,7 @@ export const FoodDatabaseTab = ({
 }: FoodDatabaseTabProps): ReactElement => {
     const { t } = useTranslation();
     const [preview, setPreview] = useState('');
-    const [items, setItems] = useState<EditedMealItem[]>([]);
+    const { addFood, items, recentlyAddedIndex, setItems } = useMealItems();
     const {
         mutate,
         isPending: isLoading,
@@ -30,13 +31,8 @@ export const FoodDatabaseTab = ({
     const handleCreate = ((): void => {
         mutate({ templates: [{ content: preview, items }] });
     }) satisfies MouseEventHandler<HTMLButtonElement>;
-    const handleFoodSelect = (
-        food: Parameters<typeof foodToMealItem>[0],
-    ): void => {
-        setItems((current) => [
-            ...current,
-            foodToMealItem(food, current.length),
-        ]);
+    const handleFoodSelect = (food: FoodSearchResult): void => {
+        addFood(food);
         if (!preview) {
             setPreview([food.brand, food.name].filter(Boolean).join(' '));
         }
@@ -46,33 +42,44 @@ export const FoodDatabaseTab = ({
     ): void => {
         setPreview(event.target.value);
     };
-    const handleItemsChange = (nextItems: EditedMealItem[]): void => {
-        setItems(nextItems);
-    };
-
     return (
-        <Stack gap="md">
-            <FoodDatabaseSearch onSelect={handleFoodSelect} />
-            <Stack gap="sm">
-                <Text>{t('generic.actions.preview')}</Text>
-                <TextInput
-                    withAsterisk
-                    error={error instanceof Error && error.message}
-                    label={t('meal_label')}
-                    onChange={handlePreviewChange}
-                    onFocus={resetCreationState}
-                    value={preview}
-                />
-                <MealItemsEditor
+        <Stack className={styles.tab} gap="md">
+            <div className={styles.workspace}>
+                <MealFoodWorkspace
+                    details={
+                        <TextInput
+                            withAsterisk
+                            error={error instanceof Error && error.message}
+                            label={t('meal_label')}
+                            onChange={handlePreviewChange}
+                            onFocus={resetCreationState}
+                            value={preview}
+                        />
+                    }
                     items={items}
-                    onItemsChange={handleItemsChange}
-                />
-            </Stack>
+                    onItemsChange={setItems}
+                    recentlyAddedIndex={recentlyAddedIndex}
+                >
+                    <FoodDatabaseSearch
+                        onSelect={handleFoodSelect}
+                        selectedItems={items}
+                    />
+                </MealFoodWorkspace>
+            </div>
             <Group gap="md" justify="end">
-                <Button color="danger" disabled={isLoading} onClick={onDone}>
+                <Button
+                    disabled={isLoading}
+                    onClick={onDone}
+                    type="button"
+                    variant="default"
+                >
                     {t('generic.actions.cancel')}
                 </Button>
-                <Button loading={isLoading} onClick={handleCreate}>
+                <Button
+                    disabled={!preview.trim() || items.length === 0}
+                    loading={isLoading}
+                    onClick={handleCreate}
+                >
                     {t('generic.actions.save')}
                 </Button>
             </Group>

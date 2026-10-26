@@ -102,9 +102,21 @@ test('meal plan is touch-friendly on mobile Chrome', async ({ page }) => {
     await expect(
         dialog.getByRole('heading', { name: 'Add to this meal' }),
     ).toBeVisible();
-    await expect(
-        dialog.getByRole('heading', { name: 'Ingredients & nutrition' }),
-    ).toBeVisible();
+    const selectedView = dialog.getByRole('button', {
+        name: /^Selected \(\d+\)$/,
+    });
+    if (await selectedView.isVisible()) {
+        await selectedView.click();
+        await expect(selectedView).toHaveAttribute('aria-pressed', 'true');
+        await expect(
+            dialog.getByRole('heading', { name: 'Selected foods' }),
+        ).toBeVisible();
+    } else {
+        await expect(
+            dialog.getByRole('heading', { name: 'Ingredients & nutrition' }),
+        ).toBeVisible();
+    }
+    await expectNoHorizontalOverflow(page);
     await dialog
         .getByRole('textbox', { name: 'Meal name' })
         .fill('Mobile lunch draft');

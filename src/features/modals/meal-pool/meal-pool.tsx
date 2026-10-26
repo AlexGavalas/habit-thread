@@ -8,6 +8,7 @@ import { useFeatureFlags } from '~features/feature-flags';
 import { FileUploadTab } from './file-upload';
 import { FoodDatabaseTab } from './food-database';
 import { ManualInputTab } from './manual-input';
+import styles from './meal-pool.module.css';
 
 export const MealPoolModal = ({
     context,
@@ -20,8 +21,17 @@ export const MealPoolModal = ({
     };
 
     return (
-        <Tabs defaultValue="manually">
-            <Tabs.List mb="md" mt="sm">
+        <Tabs
+            className={isFoodDatabaseSearchEnabled ? styles.tabs : undefined}
+            defaultValue="manually"
+        >
+            <Tabs.List
+                className={
+                    isFoodDatabaseSearchEnabled ? styles.tabList : undefined
+                }
+                mb="md"
+                mt="sm"
+            >
                 <Tabs.Tab value="manually">
                     {t('modals.meal_pool.tabs.manual')}
                 </Tabs.Tab>
@@ -34,14 +44,17 @@ export const MealPoolModal = ({
                     {t('modals.meal_pool.tabs.import')}
                 </Tabs.Tab>
             </Tabs.List>
-            <Tabs.Panel value="manually">
+            <Tabs.Panel className={styles.panel} value="manually">
                 <ManualInputTab onDone={closeModal} />
             </Tabs.Panel>
-            <Tabs.Panel value="automatic">
+            <Tabs.Panel className={styles.panel} value="automatic">
                 <FileUploadTab />
             </Tabs.Panel>
             {isFoodDatabaseSearchEnabled && (
-                <Tabs.Panel value="food-database">
+                <Tabs.Panel
+                    className={`${styles.panel} ${styles.foodPanel}`}
+                    value="food-database"
+                >
                     <FoodDatabaseTab onDone={closeModal} />
                 </Tabs.Panel>
             )}

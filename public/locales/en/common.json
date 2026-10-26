@@ -328,13 +328,21 @@
             "source": {
                 "title": "Add to this meal"
             },
+            "workspace": {
+                "search": "Search",
+                "selected": "Selected foods",
+                "selected_count": "Selected ({{count}})",
+                "added": "Added {{item}} to Selected foods ({{count}}).",
+                "hint": "Search foods, then edit their portions."
+            },
             "actions": {
                 "delete": "Delete meal",
                 "save": "Save changes"
             },
             "food_search": {
                 "tab": "Food database",
-                "helper": "Search foods or brands. Choose a result to add its name to your meal.",
+                "helper": "Search foods or brands. Choose a result to add it to Selected foods.",
+                "results": "Food search results",
                 "label": "Food or brand",
                 "placeholder": "e.g. oats, feta or Alpro",
                 "country": "Market",
@@ -347,6 +355,7 @@
                 "error": "Food search failed. Please try again.",
                 "off_unavailable": "Open Food Facts is temporarily unavailable. BLS results are still shown.",
                 "no_results": "No matching foods found.",
+                "all_selected": "All matching foods are already selected.",
                 "bls": "German Nutrient Database (BLS)",
                 "open_food_facts": "Branded products · Open Food Facts",
                 "per_100g": "Nutrients are shown per 100 g. Sources:",

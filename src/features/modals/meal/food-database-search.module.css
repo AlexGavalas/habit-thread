@@ -1,16 +1,50 @@
+.search {
+    height: 100%;
+    min-height: 0;
+}
+
+.search > :not(.results) {
+    flex-shrink: 0;
+}
+
+.results {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+}
+
+.results > * + * {
+    margin-top: var(--mantine-spacing-sm);
+}
+
+.credit {
+    overflow-wrap: anywhere;
+}
+
+@media (max-height: 40em) {
+    .helper {
+        display: none;
+    }
+}
+
 .searchControls {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 140px auto;
-    align-items: end;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
     gap: var(--mantine-spacing-xs);
 }
 
-@media (max-width: 48em) {
-    .searchControls {
-        grid-template-columns: 1fr;
-    }
+.searchControls > :first-child {
+    flex: 1 1 14rem;
+    min-width: 0;
+}
 
-    .searchButton {
-        width: 100%;
-    }
+.searchControls > :nth-child(2) {
+    flex: 1 1 9rem;
+    min-width: 0;
+}
+
+.searchButton {
+    flex: 1 0 auto;
 }

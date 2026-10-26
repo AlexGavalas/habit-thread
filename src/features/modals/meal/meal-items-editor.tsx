@@ -8,19 +8,24 @@ import { scaleNutrition, totalNutrition } from '~util/nutrition';
 
 import styles from './meal-item.module.css';
 
-type Props = Readonly<{
+type MealItemsEditorProps = Readonly<{
     items: EditedMealItem[];
     onItemsChange: (items: EditedMealItem[]) => void;
+    recentlyAddedIndex?: number | null;
+    scrollable?: boolean;
 }>;
 
-type RowProps = Readonly<Props & { index: number; item: EditedMealItem }>;
+type MealItemRowProps = Readonly<
+    MealItemsEditorProps & { index: number; item: EditedMealItem }
+>;
 
 const MealItemRow = ({
     index,
     item,
     items,
     onItemsChange,
-}: RowProps): ReactElement => {
+    recentlyAddedIndex,
+}: MealItemRowProps): ReactElement => {
     const { i18n, t } = useTranslation();
     const format = new Intl.NumberFormat(i18n.language, {
         maximumFractionDigits: 1,
@@ -53,7 +58,10 @@ const MealItemRow = ({
     };
 
     return (
-        <div className={styles.item}>
+        <div
+            className={styles.item}
+            data-recently-added={recentlyAddedIndex === index || undefined}
+        >
             <div className={styles.nutrition}>
                 <Text fw={600} size="sm">
                     {[item.brand, item.name].filter(Boolean).join(' · ')}
@@ -104,7 +112,9 @@ const MealItemRow = ({
 export const MealItemsEditor = ({
     items,
     onItemsChange,
-}: Props): ReactElement => {
+    recentlyAddedIndex,
+    scrollable = false,
+}: MealItemsEditorProps): ReactElement => {
     const { i18n, t } = useTranslation();
     const format = new Intl.NumberFormat(i18n.language, {
         maximumFractionDigits: 1,
@@ -112,21 +122,24 @@ export const MealItemsEditor = ({
     const totals = totalNutrition(items);
 
     return (
-        <Stack gap={0}>
-            {items.length === 0 && (
-                <Text c="dimmed" py="sm" size="sm">
-                    {t('modals.meal_edit.items.empty')}
-                </Text>
-            )}
-            {items.map((item, index) => (
-                <MealItemRow
-                    index={index}
-                    item={item}
-                    items={items}
-                    key={`${item.source}:${item.provider_food_id}:${index}`}
-                    onItemsChange={onItemsChange}
-                />
-            ))}
+        <Stack className={scrollable ? styles.editor : undefined} gap={0}>
+            <div className={scrollable ? styles.itemList : undefined}>
+                {items.length === 0 && (
+                    <Text c="dimmed" py="sm" size="sm">
+                        {t('modals.meal_edit.items.empty')}
+                    </Text>
+                )}
+                {items.map((item, index) => (
+                    <MealItemRow
+                        index={index}
+                        item={item}
+                        items={items}
+                        key={`${item.source}:${item.provider_food_id}:${index}`}
+                        onItemsChange={onItemsChange}
+                        recentlyAddedIndex={recentlyAddedIndex}
+                    />
+                ))}
+            </div>
             {items.length > 0 && (
                 <Paper className={styles.total} mt="sm" p="sm">
                     <Text fw={600} mb={4} size="sm">
