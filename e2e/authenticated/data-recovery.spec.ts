@@ -1,6 +1,9 @@
 import { expect, test } from '@playwright/test';
 
-import { measurementSummaryResponseSchema } from '../../src/schemas/measurement';
+import {
+    measurementSummaryResponseSchema,
+    patchRequestSchema,
+} from '../../src/schemas/measurement';
 
 test('shows a failed meal read and recovers without presenting an empty plan', async ({
     page,
@@ -46,7 +49,15 @@ test('retains an offline measurement draft and persists its retry', async ({
     ).toBeEnabled();
     await expect(weight).toHaveValue('79');
     await page.unroute('**/api/v1/measurement');
+    const savedRequest = page.waitForRequest(
+        (request) =>
+            new URL(request.url()).pathname === '/api/v1/measurement' &&
+            request.method() === 'POST',
+    );
     await dialog.getByRole('button', { exact: true, name: 'Save' }).click();
+    const submitted = patchRequestSchema.parse(
+        (await savedRequest).postDataJSON(),
+    );
     await expect(dialog).toBeHidden();
     await page.reload();
     const summary = measurementSummaryResponseSchema.parse(
@@ -54,5 +65,7 @@ test('retains an offline measurement draft and persists its retry', async ({
             await page.request.get('/api/v1/measurement?type=summary')
         ).json(),
     );
-    expect(summary.data.currentWeight).toBe(79);
+    expect(summary.data.weightTimeline).toEqual(
+        expect.arrayContaining([{ x: submitted.date, y: submitted.weight }]),
+    );
 });
