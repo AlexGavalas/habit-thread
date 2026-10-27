@@ -9,6 +9,11 @@ jobs:
         timeout-minutes: 60
         if: github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Preview'
         runs-on: ubuntu-latest
+        container:
+            # Keep the image version aligned with @playwright/test in package.json.
+            # Browsers and Linux dependencies are preinstalled, avoiding apt downloads.
+            image: mcr.microsoft.com/playwright:v1.64.1-noble
+            options: --init --ipc=host
         steps:
             - name: Validate Vercel bypass secret
               env:
@@ -37,7 +42,7 @@ jobs:
                   restore-keys: |
                       ${{ runner.os }}-pnpm-store-
             - name: Install Dependencies
-              run: mise exec -- pnpm install --frozen-lockfile && mise exec -- pnpm exec playwright install --with-deps chromium
+              run: mise exec -- pnpm install --frozen-lockfile
             - name: Validate
               run: mise exec -- pnpm validate
             - name: Unit and component accessibility tests
