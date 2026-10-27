@@ -61,6 +61,7 @@ export const FileActions = ({
             </Button>
             <Button
                 color="danger"
+                disabled={isUploading}
                 onClick={onClear}
                 size="compact-sm"
                 variant="outline"

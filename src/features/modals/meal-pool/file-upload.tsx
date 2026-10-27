@@ -9,25 +9,26 @@ import {
     Textarea,
 } from '@mantine/core';
 import { InfoCircle, Redo, Trash, Undo } from 'iconoir-react';
-import type { ReactElement } from 'react';
 import {
+    type ChangeEventHandler,
     type MouseEventHandler,
+    type ReactElement,
     type SubmitEventHandler,
     useRef,
     useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { z } from 'zod';
 
 import { useHistory } from '~hooks/use-history';
+import { mealImportResponseSchema } from '~schemas/meal-import';
 
 import { FileActions } from './file-actions';
 import { useCreateMealPool } from './hooks/use-create-meal-pool';
 import { useUpload } from './hooks/use-upload';
 
-const formSchema = z.array(z.string());
+type FileUploadTabProps = Readonly<{ onDone: () => void }>;
 
-export const FileUploadTab = (): ReactElement => {
+export const FileUploadTab = ({ onDone }: FileUploadTabProps): ReactElement => {
     const { t } = useTranslation();
     const [file, setFile] = useState<File | null>(null);
     const resetRef = useRef<() => void>(null);
@@ -52,31 +53,24 @@ export const FileUploadTab = (): ReactElement => {
         },
     });
 
-    const { mutate: createMealPool, isPending: isCreating } =
-        useCreateMealPool();
+    const { mutate: createMealPool, isPending: isCreating } = useCreateMealPool(
+        { onSuccess: onDone },
+    );
 
     const handleClear = (): void => {
+        resetUpload();
         setFile(null);
         clearHistory();
         resetRef.current?.();
     };
 
-    const handleUpload = ((): void => {
+    const handleUpload = (): void => {
         mutate({ file });
-    }) satisfies MouseEventHandler;
-
-    const handleReset = (): void => {
-        resetUpload();
-        setFile(null);
     };
 
     const handleSubmit = ((e): void => {
         e.preventDefault();
-
-        const formData = Array.from(new FormData(e.currentTarget));
-
-        const content = formSchema.parse(formData);
-
+        const content = mealImportResponseSchema.shape.data.parse(currentState);
         createMealPool({
             templates: content.map((item) => ({
                 content: item,
@@ -85,13 +79,22 @@ export const FileUploadTab = (): ReactElement => {
         });
     }) satisfies SubmitEventHandler<HTMLFormElement>;
 
-    const handleRemoveItem = ((e): void => {
-        const itemIndex = e.currentTarget.dataset.itemIndex;
+    const handleRemoveItem: MouseEventHandler<HTMLButtonElement> = (event) => {
+        const itemIndex = Number(event.currentTarget.dataset.itemIndex);
+        set((currentState ?? []).filter((_, index) => index !== itemIndex));
+    };
 
-        if (itemIndex && currentState) {
-            set(currentState.filter((_, idx) => idx !== +itemIndex));
+    const handleEditItem: ChangeEventHandler<HTMLTextAreaElement> = (event) => {
+        const { itemIndex } = event.currentTarget.dataset;
+        const { value } = event.currentTarget;
+        if (itemIndex !== undefined && currentState) {
+            set(
+                currentState.map((meal, index) =>
+                    index === +itemIndex ? value : meal,
+                ),
+            );
         }
-    }) satisfies MouseEventHandler<HTMLButtonElement>;
+    };
 
     return (
         <Stack gap="md">
@@ -100,7 +103,8 @@ export const FileUploadTab = (): ReactElement => {
             </Alert>
             {!isSuccess && (
                 <FileButton
-                    accept=".docx"
+                    accept=".docx,.pdf"
+                    disabled={isUploading}
                     onChange={setFile}
                     // oxlint-disable-next-line react/jsx-handler-names
                     resetRef={resetRef}
@@ -113,7 +117,7 @@ export const FileUploadTab = (): ReactElement => {
                 isSuccess={isSuccess}
                 isUploading={isUploading}
                 onClear={handleClear}
-                onReset={handleReset}
+                onReset={handleClear}
                 onUpload={handleUpload}
             />
 
@@ -146,16 +150,25 @@ export const FileUploadTab = (): ReactElement => {
                                 {t('import_success')}
                             </Text>
                             {currentState?.map((result, idx) => (
-                                <Group key={result + idx} gap="sm">
+                                <Group key={idx} gap="sm">
                                     <Textarea
+                                        aria-label={t('upload.meal_label', {
+                                            index: idx + 1,
+                                        })}
                                         autosize
-                                        defaultValue={result}
+                                        data-item-index={idx}
+                                        maxLength={4000}
                                         minRows={1}
                                         name="meal"
+                                        onChange={handleEditItem}
                                         style={{ flexGrow: 1 }}
+                                        value={result}
                                     />
 
                                     <ActionIcon
+                                        aria-label={t('upload.remove_meal', {
+                                            index: idx + 1,
+                                        })}
                                         color="danger"
                                         data-item-index={idx}
                                         onClick={handleRemoveItem}
@@ -165,7 +178,14 @@ export const FileUploadTab = (): ReactElement => {
                                     </ActionIcon>
                                 </Group>
                             ))}
-                            <Button loading={isCreating} type="submit">
+                            <Button
+                                disabled={
+                                    !currentState?.length ||
+                                    currentState.some((meal) => !meal.trim())
+                                }
+                                loading={isCreating}
+                                type="submit"
+                            >
                                 {t('create')}
                             </Button>
                         </Stack>

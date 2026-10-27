@@ -5,6 +5,8 @@
  **/
 const config = {
     reactCompiler: true,
+    // Keep unpdf's self-resolved, inlined PDF.js worker in its serverless package.
+    serverExternalPackages: ['unpdf'],
     experimental: {
         agentUpgrade: 'latest',
         turbopackRustReactCompiler: true,

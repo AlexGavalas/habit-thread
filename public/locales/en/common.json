@@ -523,10 +523,23 @@
         "prompt": "Upload file",
         "file_size": "size {{size}} {{unit}}",
         "reset_prompt": "You can upload another file.",
-        "helper": "If you make a mistake removing an entry, you can always move back/forward in your edits."
+        "helper": "Review every meal before saving. AI can make mistakes. You can edit or remove entries, and undo or redo removals.",
+        "meal_label": "Meal {{index}}",
+        "remove_meal": "Remove meal {{index}}",
+        "errors": {
+            "invalid_file": "Choose a valid PDF or DOCX file.",
+            "unsupported_type": "Only PDF and DOCX files are supported.",
+            "file_too_large": "Choose a file smaller than 4 MB.",
+            "document_too_large": "The document is too long. Use at most 20 PDF pages and 40,000 text characters.",
+            "unreadable_document": "We couldn't read this document. Scanned, image-only and password-protected files are not supported. Upload a text-based PDF or DOCX.",
+            "no_meals": "No meals could be extracted. Try a shorter document or enter your meals manually.",
+            "rate_limited": "You've reached the daily limit of 10 import attempts. Try again tomorrow.",
+            "unavailable": "AI meal import is not configured yet. Please try again later.",
+            "extraction_failed": "We couldn't extract the meals. Please try again or enter them manually."
+        }
     },
-    "file_types_info": "We currently accept only .docx files. More coming soon!",
-    "import_success": "We managed to extract the following from you file. Review and create all the meals below in one action!",
+    "file_types_info": "Upload a DOCX or text-based PDF, up to 4 MB (PDF: up to 20 pages). Uploading sends the document text to OpenAI to identify meals. Remove personal or sensitive details first. Scanned files and images are not supported.",
+    "import_success": "Review and correct the extracted meals, then create them together. Nothing is saved until you confirm.",
     "onboarding": {
         "welcome": {
             "title": "Small habits. A healthier rhythm.",
