@@ -64,6 +64,13 @@
             "when": 1791915827809,
             "tag": "0008_spicy_junta",
             "breakpoints": true
+        },
+        {
+            "idx": 9,
+            "version": "7",
+            "when": 1792857622495,
+            "tag": "0009_overconfident_millenium_guard",
+            "breakpoints": true
         }
     ]
 }

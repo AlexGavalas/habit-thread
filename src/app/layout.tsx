@@ -15,7 +15,7 @@ import {
     APP_URL,
 } from '~constants/brand';
 import { Providers } from '~features/providers';
-import { foodDatabaseSearch } from '~flags';
+import { foodDatabaseSearch, mealImport } from '~flags';
 import { getResources, getT } from '~util/i18n';
 import { createQueryClient } from '~util/query-client';
 
@@ -134,13 +134,19 @@ export const viewport: Viewport = {
 const AppContent = async ({
     children,
 }: Readonly<{ children: ReactNode }>): Promise<ReactElement> => {
-    const [session, profile, isFoodDatabaseSearchEnabled, requestDate] =
-        await Promise.all([
-            getServerSession(),
-            getCurrentUser(),
-            foodDatabaseSearch(),
-            getRequestDate(),
-        ]);
+    const [
+        session,
+        profile,
+        isFoodDatabaseSearchEnabled,
+        isMealImportEnabled,
+        requestDate,
+    ] = await Promise.all([
+        getServerSession(),
+        getCurrentUser(),
+        foodDatabaseSearch(),
+        mealImport(),
+        getRequestDate(),
+    ]);
 
     const language = profile?.language === 'gr' ? 'gr' : 'en';
 
@@ -154,7 +160,7 @@ const AppContent = async ({
         <Providers
             key={profile?.id ?? 'anonymous'}
             dehydratedState={dehydrate(queryClient)}
-            featureFlags={{ isFoodDatabaseSearchEnabled }}
+            featureFlags={{ isFoodDatabaseSearchEnabled, isMealImportEnabled }}
             initialWeek={format(
                 startOfWeek(requestDate, { weekStartsOn: 1 }),
                 'yyyy-MM-dd',

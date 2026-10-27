@@ -10,7 +10,7 @@ After installing the dependencies, running `mise exec -- pnpm install`, configur
 
 Routes live in `src/app`. Server Components load initial data directly through the
 server-only Drizzle services in `src/api`; `src/app/api` contains Route Handlers
-for browser reads, CRUD, authentication, and DOCX uploads. Server Actions handle
+for browser reads, CRUD, authentication, and meal-document uploads. Server Actions handle
 profile forms, calendar saves, and accepting connection requests.
 
 TanStack Query owns interactive browser data (search, pagination, calendar navigation,
@@ -22,6 +22,54 @@ Home streams meals and measurements independently through Suspense boundaries.
 The profile controls language; `/en/*` and `/gr/*` remain accepted through rewrites.
 Translations use the next-i18next App Router provider. Calendar dates are initialized
 from a shared request snapshot to keep server and browser hydration consistent.
+
+## AI meal import
+
+File import is gated by the Vercel boolean flag `meal-import`, defaulting to
+hidden in every environment. Enable it for the intended users through Vercel
+Flags; the tab and upload endpoint use the same flag. A disabled endpoint
+returns 404 before reading the document or consuming AI quota.
+
+For local import E2E tests, set `E2E_MEAL_IMPORT=true`, for example:
+`E2E_MEAL_IMPORT=true mise exec -- pnpm test:e2e e2e/authenticated/meal-import.spec.ts e2e/authenticated/meal-import-save.spec.ts --project=authenticated`.
+This override only applies in local E2E mode; normal app environments use Vercel Flags.
+
+Set `OPENAI_API_KEY` in `.env.local` and in the appropriate Vercel deployment
+environments. Never expose it through `NEXT_PUBLIC_` or commit it. API billing
+is separate from ChatGPT. `OPENAI_MEAL_IMPORT_MODEL` optionally overrides the
+default `gpt-4.1-mini`; choose a model supporting structured outputs.
+
+Apply migrations with `mise exec -- pnpm db:migrate` before importing. The
+`meal_import_usage` table atomically limits each user to 10 AI attempts per
+UTC day. Provider failures count; invalid/unreadable documents and
+missing configuration do not. There are no automatic provider retries.
+
+PDF text extraction uses `unpdf`'s serverless PDF.js bundle with its worker
+inlined; no native canvas or browser DOM globals are required. The parser loads
+only for PDF requests.
+
+Import preview screenshots have separate compact and food-database-enabled
+baselines; verify both locally with `E2E_FOOD_DATABASE_SEARCH=false` and `true`.
+
+Imports accept DOCX and text-based PDF files up to 4 MiB, 40,000 extracted
+characters, and 20 PDF pages. Scanned/image-only and encrypted PDFs are not
+supported; there is no OCR. Image-only PDF pages reject the whole import, but
+images embedded alongside text are not interpreted. PDF text extraction can
+lose layout information, so users must review the result. No days or times
+are imported, and nothing is saved as a meal until the user confirms.
+
+Document text is sent directly to OpenAI using the Vercel AI SDK, without AI
+Gateway or tools. Requests disable response storage (`store: false`); this does
+not disable the provider's abuse-monitoring retention. Review OpenAI's data
+controls and your privacy notice before enabling imports for real user data.
+Source files/text and raw AI responses are not persisted or logged by the app.
+Only token counts are logged. Output is schema-validated and whitespace-normalized;
+only exact duplicates are removed. Requests have a 45-second model timeout and
+an 8,000-token output ceiling; incomplete output is rejected rather than saved.
+
+To add a file format, implement a reader in `src/api/meal-import/read-document.ts`
+and add its extension/signature to the reader registry. Update the picker, copy
+and tests; the shared AI extraction and response contract remain unchanged.
 
 ## Tech
 
