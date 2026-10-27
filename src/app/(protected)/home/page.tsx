@@ -11,6 +11,7 @@ import { HomePageSkeleton } from '~components/loading-skeleton';
 import { Home } from '~features/screens/home';
 import type { Meal } from '~types/meal';
 import { createQueryClient } from '~util/query-client';
+import { getMeasurementSummaryQueryKey } from '~util/query-keys';
 
 const HomeContent = async (): Promise<ReactElement> => {
     const profile = await requireUser();
@@ -32,7 +33,10 @@ const HomeContent = async (): Promise<ReactElement> => {
     ]);
 
     const client = createQueryClient();
-    client.setQueryData(['measurement-summary'], measurementSummary);
+    client.setQueryData(
+        getMeasurementSummaryQueryKey(profile.id),
+        measurementSummary,
+    );
 
     return (
         <HydrationBoundary state={dehydrate(client)}>

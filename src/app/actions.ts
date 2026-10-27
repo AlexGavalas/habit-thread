@@ -5,14 +5,14 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
 import { acceptConnectionRequest as acceptRequest } from '~api/connection';
-import { saveMeals } from '~api/meal';
+import { saveMealPlanChanges } from '~api/meal-plan';
 import { saveMealZoneTimes as saveZoneTimes } from '~api/meal-zone';
-import { requireMealPlanAccess } from '~api/professional';
+import { ProfessionalError, requireMealPlanAccess } from '~api/professional';
 import { getCurrentUser, getRequestDate } from '~api/session';
 import { updateProfile } from '~api/user';
-import { patchRequestSchema as mealSchema } from '~schemas/meal';
 import { mealZoneTimesRequestSchema } from '~schemas/meal-zone';
 import { patchRequestSchema as profileSchema } from '~schemas/user';
+import { type ActionResult } from '~types/action-result';
 
 import {
     type ProfessionalActionResult,
@@ -53,52 +53,26 @@ export const setProfessionalRole = async (
     return setProfessionalRoleAction(input);
 };
 
-export const saveMealPlan = async (
-    input: unknown,
-): Promise<{ ok: boolean }> => {
+export const saveMealPlan = async (input: unknown): Promise<ActionResult> => {
     const user = await getCurrentUser();
-
     if (!user) {
-        return { ok: false };
+        return { ok: false, reason: 'unauthorized' };
     }
-
-    const parsed = mealSchema
-        .extend({ ownerUserId: z.number().int().positive().optional() })
-        .safeParse(input);
-
-    if (!parsed.success) {
-        return { ok: false };
+    const result = await saveMealPlanChanges(user.id, input);
+    if (result.ok) {
+        revalidatePath('/home');
+        revalidatePath('/meal-plan');
     }
-
-    try {
-        const { ownerUserId = user.id, ...plan } = parsed.data;
-        await requireMealPlanAccess({
-            actorUserId: user.id,
-            ownerUserId,
-        });
-        await saveMeals({
-            ...plan,
-            ...(ownerUserId !== user.id && { allowAnnotations: false }),
-            userId: ownerUserId,
-        });
-    } catch (error) {
-        console.error(error);
-        return { ok: false };
-    }
-
-    revalidatePath('/home');
-    revalidatePath('/meal-plan');
-
-    return { ok: true };
+    return result.ok ? { ok: true } : result;
 };
 
 export const saveMealZoneTimes = async (
     input: unknown,
-): Promise<{ effectiveFrom?: string; ok: boolean }> => {
+): Promise<ActionResult<{ effectiveFrom: string }>> => {
     const user = await getCurrentUser();
 
     if (!user) {
-        return { ok: false };
+        return { ok: false, reason: 'unauthorized' };
     }
 
     const parsed = mealZoneTimesRequestSchema
@@ -106,7 +80,7 @@ export const saveMealZoneTimes = async (
         .safeParse(input);
 
     if (!parsed.success) {
-        return { ok: false };
+        return { ok: false, reason: 'invalid' };
     }
 
     const effectiveFrom = format(
@@ -126,8 +100,10 @@ export const saveMealZoneTimes = async (
             userId: ownerUserId,
         });
     } catch (error) {
-        console.error(error);
-        return { ok: false };
+        if (error instanceof ProfessionalError) {
+            return { ok: false, reason: 'forbidden' };
+        }
+        throw error;
     }
 
     revalidatePath('/home');
@@ -137,25 +113,20 @@ export const saveMealZoneTimes = async (
     return { effectiveFrom, ok: true };
 };
 
-export const saveProfile = async (input: unknown): Promise<{ ok: boolean }> => {
+export const saveProfile = async (input: unknown): Promise<ActionResult> => {
     const user = await getCurrentUser();
 
     if (!user) {
-        return { ok: false };
+        return { ok: false, reason: 'unauthorized' };
     }
 
     const parsed = profileSchema.safeParse(input);
 
     if (!parsed.success) {
-        return { ok: false };
+        return { ok: false, reason: 'invalid' };
     }
 
-    try {
-        await updateProfile({ ...parsed.data, userId: user.id });
-    } catch (error) {
-        console.error(error);
-        return { ok: false };
-    }
+    await updateProfile({ ...parsed.data, userId: user.id });
 
     revalidatePath('/', 'layout');
 
@@ -164,21 +135,18 @@ export const saveProfile = async (input: unknown): Promise<{ ok: boolean }> => {
 
 export const acceptConnectionRequest = async (
     input: unknown,
-): Promise<{ ok: boolean }> => {
+): Promise<ActionResult> => {
     const user = await getCurrentUser();
 
     const requestId = z.string().uuid().safeParse(input);
 
-    if (!user || !requestId.success) {
-        return { ok: false };
+    if (!user) {
+        return { ok: false, reason: 'unauthorized' };
     }
-
-    try {
-        await acceptRequest({ requestId: requestId.data, userId: user.id });
-    } catch (error) {
-        console.error(error);
-        return { ok: false };
+    if (!requestId.success) {
+        return { ok: false, reason: 'invalid' };
     }
+    await acceptRequest({ requestId: requestId.data, userId: user.id });
 
     revalidatePath('/connections');
 

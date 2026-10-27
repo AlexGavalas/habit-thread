@@ -1,8 +1,26 @@
 import { z } from 'zod';
 
-import { type EditedUser } from '~types/user';
+import { type EditedUser, type UserProfile } from '~types/user';
 
 type UserSchema = z.ZodType<EditedUser>;
+
+export const profileResponseSchema = z.object({
+    data: z.object({
+        created_at: z.string(),
+        email: z.string(),
+        food_preferences_negative: z.string().nullable(),
+        food_preferences_positive: z.string().nullable(),
+        full_name: z.string(),
+        has_completed_onboarding: z.boolean().nullable(),
+        height: z.number().nullable(),
+        id: z.number().int().positive(),
+        is_discoverable: z.boolean(),
+        language: z.string(),
+        professional_is_discoverable: z.boolean(),
+        roles: z.array(z.literal('professional')),
+        target_weight: z.number().nullable(),
+    }) satisfies z.ZodType<UserProfile>,
+});
 
 export const userSchema: UserSchema = z.object({
     created_at: z.string().optional(),

@@ -50,7 +50,7 @@ test(
             meal: 'Client meal',
             note: 'Client note',
             rating: 4,
-            section_key: 'morning_12/01/2026',
+            section_key: 'morning_Mon 12/01/2026',
             user_id: profile.id,
         };
         const createResponse = await clientPage.request.patch('/api/v1/meal', {

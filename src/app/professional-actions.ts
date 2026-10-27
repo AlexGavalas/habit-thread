@@ -11,19 +11,18 @@ import {
     setProfessionalDiscoverable as updateProfessionalDiscoverability,
     setProfessionalRole as updateProfessionalRole,
 } from '~api/professional';
+import { type ProfessionalErrorCode } from '~api/professional/errors';
 import { getCurrentUser } from '~api/session';
 
-export type ProfessionalActionResult = {
-    error?: string;
-    ok: boolean;
-};
+export type ProfessionalActionResult =
+    | { ok: true }
+    | { error: ProfessionalErrorCode | 'unauthorized' | 'invalid'; ok: false };
 
 const actionError = (error: unknown): ProfessionalActionResult => {
     if (error instanceof ProfessionalError) {
         return { error: error.code, ok: false };
     }
-    console.error(error);
-    return { error: 'unknown', ok: false };
+    throw error;
 };
 
 export const setProfessionalRole = async (
@@ -31,8 +30,11 @@ export const setProfessionalRole = async (
 ): Promise<ProfessionalActionResult> => {
     const user = await getCurrentUser();
     const parsed = z.object({ enabled: z.boolean() }).safeParse(input);
-    if (!user || !parsed.success) {
-        return { ok: false };
+    if (!user) {
+        return { error: 'unauthorized', ok: false };
+    }
+    if (!parsed.success) {
+        return { error: 'invalid', ok: false };
     }
 
     try {
@@ -54,8 +56,11 @@ export const setProfessionalDiscoverable = async (
 ): Promise<ProfessionalActionResult> => {
     const user = await getCurrentUser();
     const parsed = z.object({ discoverable: z.boolean() }).safeParse(input);
-    if (!user || !parsed.success) {
-        return { ok: false };
+    if (!user) {
+        return { error: 'unauthorized', ok: false };
+    }
+    if (!parsed.success) {
+        return { error: 'invalid', ok: false };
     }
 
     try {
@@ -78,8 +83,11 @@ export const inviteProfessional = async (
     const parsed = z
         .object({ professionalUserId: z.number().int().positive() })
         .safeParse(input);
-    if (!user || !parsed.success) {
-        return { ok: false };
+    if (!user) {
+        return { error: 'unauthorized', ok: false };
+    }
+    if (!parsed.success) {
+        return { error: 'invalid', ok: false };
     }
 
     try {
@@ -101,8 +109,11 @@ export const acceptProfessionalInvitation = async (
     const parsed = z
         .object({ relationshipId: z.string().uuid() })
         .safeParse(input);
-    if (!user || !parsed.success) {
-        return { ok: false };
+    if (!user) {
+        return { error: 'unauthorized', ok: false };
+    }
+    if (!parsed.success) {
+        return { error: 'invalid', ok: false };
     }
 
     try {
@@ -125,8 +136,11 @@ export const removeProfessionalRelationship = async (
     const parsed = z
         .object({ relationshipId: z.string().uuid() })
         .safeParse(input);
-    if (!user || !parsed.success) {
-        return { ok: false };
+    if (!user) {
+        return { error: 'unauthorized', ok: false };
+    }
+    if (!parsed.success) {
+        return { error: 'invalid', ok: false };
     }
 
     try {

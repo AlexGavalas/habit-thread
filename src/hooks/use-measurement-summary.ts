@@ -1,6 +1,8 @@
 import { type UseQueryResult, useQuery } from '@tanstack/react-query';
 
+import { measurementSummaryResponseSchema } from '~schemas/measurement';
 import { type MeasurementSummary } from '~types/measurement';
+import { getMeasurementSummaryQueryKey } from '~util/query-keys';
 
 import { useProfile } from './use-profile';
 
@@ -9,19 +11,18 @@ export const useMeasurementSummary = (): UseQueryResult<MeasurementSummary> => {
 
     return useQuery({
         enabled: Boolean(profile),
-        queryFn: async (): Promise<MeasurementSummary> => {
-            const response = await fetch('/api/v1/measurement?type=summary');
+        queryFn: async ({ signal }): Promise<MeasurementSummary> => {
+            const response = await fetch('/api/v1/measurement?type=summary', {
+                signal,
+            });
 
             if (!response.ok) {
                 throw new Error('Could not load measurements');
             }
 
-            const result = (await response.json()) as {
-                data: MeasurementSummary;
-            };
-
-            return result.data;
+            return measurementSummaryResponseSchema.parse(await response.json())
+                .data;
         },
-        queryKey: ['measurement-summary'],
+        queryKey: getMeasurementSummaryQueryKey(profile?.id),
     });
 };

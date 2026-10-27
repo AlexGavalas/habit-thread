@@ -1,6 +1,9 @@
 import { expect, test } from '@playwright/test';
+import { z } from 'zod';
 
 import en from '../../public/locales/en/common.json';
+import { getResponseSchema } from '../../src/schemas/meal';
+import { weeklyMealZoneSchema } from '../../src/schemas/weekly-meal-zone';
 import { E2E_USER, authenticateE2eUser } from '../support/auth';
 import { readFixtureProfile } from '../support/provision';
 
@@ -25,27 +28,38 @@ test('rejects unauthenticated API access and preserves the not-found page', asyn
     await context.close();
 });
 
-test('rolls back the whole meal save when an insert fails', async ({
+test('rejects invalid bulk edits before deleting existing meals', async ({
     request,
 }) => {
-    const profile = (await (await request.get('/api/v1/user')).json()) as {
-        data: { id: number };
-    };
+    const profile = await readFixtureProfile(request);
+    const zones = z
+        .object({ data: z.array(weeklyMealZoneSchema) })
+        .parse(
+            await (
+                await request.get(
+                    '/api/v1/weekly-meal-zones?weekStart=2029-12-31',
+                )
+            ).json(),
+        );
+    const slot = zones.data.find((zone) => zone.day === '2030-01-01');
+    if (!slot) {
+        throw new Error('Expected a meal slot for the test date');
+    }
     const meal = {
-        day: '2030-01-01 00:00',
+        day: slot.day,
         meal: 'Transaction original',
-        section_key: 'morning_01/01/2030',
-        user_id: profile.data.id,
+        section_key: slot.zoneKey,
+        user_id: profile.id,
     };
     const created = await request.patch('/api/v1/meal', {
         data: { deletedIds: [], editedMeals: [], newMeals: [meal] },
     });
     expect(created.ok()).toBe(true);
     const url = '/api/v1/meal?startDate=2030-01-01&endDate=2030-01-02';
-    const before = (await (await request.get(url)).json()) as {
-        data: { id: string; meal: string }[];
-    };
-    const original = before.data.find((item) => item.meal === meal.meal);
+    const before = getResponseSchema.parse(
+        await (await request.get(url)).json(),
+    );
+    const original = before.data?.find((item) => item.meal === meal.meal);
     expect(original).toBeDefined();
 
     const failed = await request.patch('/api/v1/meal', {
@@ -55,11 +69,57 @@ test('rolls back the whole meal save when an insert fails', async ({
             newMeals: [{ ...meal, day: 'invalid-date' }],
         },
     });
-    expect(failed.status()).toBe(500);
-    const after = (await (await request.get(url)).json()) as {
-        data: { id: string }[];
+    expect(failed.status()).toBe(400);
+    const after = getResponseSchema.parse(
+        await (await request.get(url)).json(),
+    );
+    expect(after.data?.map((item) => item.id)).toContain(original?.id);
+});
+
+test('serializes repeated creates without duplicating a meal slot', async ({
+    request,
+}) => {
+    const profile = await readFixtureProfile(request);
+    const zones = z
+        .object({ data: z.array(weeklyMealZoneSchema) })
+        .parse(
+            await (
+                await request.get(
+                    '/api/v1/weekly-meal-zones?weekStart=2033-01-03',
+                )
+            ).json(),
+        );
+    const slot = zones.data[0];
+    if (!slot) {
+        throw new Error('Expected a meal slot for the test week');
+    }
+    const input = {
+        deletedIds: [],
+        editedMeals: [],
+        newMeals: [
+            {
+                day: slot.day,
+                meal: 'Concurrent porridge',
+                section_key: slot.zoneKey,
+                user_id: profile.id,
+            },
+        ],
     };
-    expect(after.data.map((item) => item.id)).toContain(original?.id);
+    const results = await Promise.all([
+        request.patch('/api/v1/meal', { data: input }),
+        request.patch('/api/v1/meal', { data: input }),
+    ]);
+    expect(results.map((response) => response.status())).toEqual([200, 200]);
+    const saved = getResponseSchema.parse(
+        await (
+            await request.get(
+                '/api/v1/meal?startDate=2033-01-03&endDate=2033-01-09',
+            )
+        ).json(),
+    );
+    expect(
+        saved.data?.filter((meal) => meal.section_key === slot.zoneKey),
+    ).toHaveLength(1);
 });
 
 test('accepts a connection request atomically and removes the connection', async ({

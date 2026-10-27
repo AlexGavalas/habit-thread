@@ -18,7 +18,9 @@ describe('meal zone settings', () => {
 
         jest.mocked(useMealZoneTimes).mockReturnValue({
             effectiveFrom: '2026-10-12',
+            isError: false,
             isFetching: false,
+            retry: jest.fn(),
             times: DEFAULT_MEAL_ZONE_TIMES,
         });
         jest.mocked(saveMealZoneTimes).mockResolvedValue({
@@ -50,6 +52,35 @@ describe('meal zone settings', () => {
             });
         });
 
+        client.clear();
+    });
+
+    it('offers retry instead of editing defaults after a failed read', async () => {
+        expect.hasAssertions();
+        const retry = jest.fn();
+        jest.mocked(useMealZoneTimes).mockReturnValue({
+            isError: true,
+            isFetching: false,
+            retry,
+            times: DEFAULT_MEAL_ZONE_TIMES,
+        });
+        const client = new QueryClient();
+        const Wrapper = ({ children }: PropsWithChildren): ReactElement => (
+            <QueryClientProvider client={client}>
+                {children}
+            </QueryClientProvider>
+        );
+        const { user } = renderWithUser(<MealZoneSettings />, { Wrapper });
+        expect(screen.getByRole('alert')).toHaveTextContent(
+            'We could not load your data.',
+        );
+        expect(
+            screen.queryByRole('button', { name: 'Save' }),
+        ).not.toBeInTheDocument();
+        await user.click(
+            screen.getByRole('button', { name: 'Please try again' }),
+        );
+        expect(retry).toHaveBeenCalledTimes(1);
         client.clear();
     });
 });

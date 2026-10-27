@@ -15,11 +15,7 @@ import type { ReactElement } from 'react';
 import { type SubmitEventHandler, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { showErrorNotification } from '~util/notification';
-
-const localeMap = {
-    gr: 'el',
-};
+import { useTrackingMutation } from '~hooks/use-tracking-mutation';
 
 type ModalContentProps = {
     onSave?: () => Promise<void>;
@@ -43,6 +39,10 @@ export const MeasurementModal = ({
     const [weight, setWeight] = useState(initialData?.weight);
     const [fatPercent, setFatPercent] = useState(initialData?.fat_percentage);
     const [error, setError] = useState('');
+    const mutation = useTrackingMutation(id, async () => {
+        await onSave?.();
+        context.closeContextModal(id);
+    });
 
     const closeModal = (): void => {
         context.closeContextModal(id);
@@ -52,16 +52,25 @@ export const MeasurementModal = ({
         setError('');
     };
 
+    const handleDateChange = (value: string | null): void => {
+        if (!mutation.isPending) {
+            setDate(value);
+        }
+    };
+
     const handleWeightChange = ((value): void => {
         setWeight(Number(value));
     }) satisfies NonNullable<NumberInputProps['onChange']>;
 
     const handleFatPercentChange = ((value): void => {
-        setFatPercent(Number(value));
+        setFatPercent(value === '' ? undefined : Number(value));
     }) satisfies NonNullable<NumberInputProps['onChange']>;
 
-    const handleSave = (async (e): Promise<void> => {
+    const handleSave = ((e): void => {
         e.preventDefault();
+        if (mutation.isPending) {
+            return;
+        }
 
         if (!weight) {
             setError(t('errors.weight_empty'));
@@ -73,31 +82,11 @@ export const MeasurementModal = ({
             return;
         }
 
-        const url = initialData?.id
-            ? `/api/v1/measurement?id=${initialData.id}`
-            : '/api/v1/measurement';
-
-        const response = await fetch(url, {
-            body: JSON.stringify({
-                date,
-                fatPercent,
-                weight,
-            }),
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            method: initialData ? 'PATCH' : 'POST',
+        mutation.mutate({
+            data: { date, fatPercent: fatPercent ?? null, weight },
+            id: initialData?.id,
+            resource: 'measurement',
         });
-
-        if (!response.ok) {
-            showErrorNotification({
-                message: `${t('errors.measurement_save')}. ${t('try_again')}`,
-                title: t('notification.error.title'),
-            });
-        } else {
-            await onSave?.();
-            closeModal();
-        }
     }) satisfies SubmitEventHandler<HTMLFormElement>;
 
     return (
@@ -105,14 +94,15 @@ export const MeasurementModal = ({
             <Text>{t('date')}</Text>
             <Center>
                 <DatePicker
-                    locale={localeMap[i18n.language as keyof typeof localeMap]}
-                    onChange={setDate}
+                    locale={i18n.language === 'gr' ? 'el' : 'en'}
+                    onChange={handleDateChange}
                     value={date}
                 />
             </Center>
             <Space h="lg" />
             <NumberInput
                 decimalScale={2}
+                disabled={mutation.isPending}
                 error={error}
                 label={t('weight')}
                 min={0}
@@ -124,6 +114,7 @@ export const MeasurementModal = ({
             <Space h="lg" />
             <NumberInput
                 decimalScale={2}
+                disabled={mutation.isPending}
                 label={t('fat_label')}
                 max={100}
                 min={0}
@@ -133,10 +124,17 @@ export const MeasurementModal = ({
 
             <Space h="lg" />
             <Group justify="space-between">
-                <Button color="danger" onClick={closeModal} variant="light">
+                <Button
+                    color="danger"
+                    disabled={mutation.isPending}
+                    onClick={closeModal}
+                    variant="light"
+                >
                     {t('generic.actions.cancel')}
                 </Button>
-                <Button type="submit">{t('generic.actions.save')}</Button>
+                <Button loading={mutation.isPending} type="submit">
+                    {t('generic.actions.save')}
+                </Button>
             </Group>
         </form>
     );

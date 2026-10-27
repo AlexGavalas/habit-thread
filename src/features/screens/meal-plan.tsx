@@ -41,6 +41,7 @@ export const MealPlan = ({
             <DeepLinkedMealModal
                 date={initialDate}
                 initialSchedule={{
+                    ownerUserId,
                     weekStart: initialWeekStart,
                     zones: initialWeeklyMealZones,
                 }}
@@ -50,6 +51,7 @@ export const MealPlan = ({
             <Calendar
                 initialDate={initialDate}
                 initialSchedule={{
+                    ownerUserId,
                     weekStart: initialWeekStart,
                     zones: initialWeeklyMealZones,
                 }}

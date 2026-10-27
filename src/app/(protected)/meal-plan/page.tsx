@@ -20,6 +20,12 @@ import { MEAL_ZONE_KEYS } from '~constants/meal-zones';
 import { MealPlan } from '~features/screens/meal-plan';
 import { type MealZoneKey } from '~types/meal-zone';
 import { createQueryClient } from '~util/query-client';
+import {
+    getMealsQueryKey,
+    getWeekActivitiesQueryKey,
+    getMealZoneTimesQueryKey,
+    getWeeklyMealZonesQueryKey,
+} from '~util/query-keys';
 
 type MealPlanPageProps = Readonly<{
     searchParams: Promise<{ date?: string; meal?: string; slot?: string }>;
@@ -56,17 +62,17 @@ const MealPlanContent = async ({
 
     const client = createQueryClient();
 
-    client.setQueryData(['meals', profile.id, startDate], meals.data);
+    client.setQueryData(getMealsQueryKey(profile.id, startDate), meals.data);
     client.setQueryData(
-        ['activities', 'week', profile.id, startDate],
+        getWeekActivitiesQueryKey(profile.id, startDate),
         activities,
     );
-    client.setQueryData(['meal-zone-times', profile.id, startDate], {
+    client.setQueryData(getMealZoneTimesQueryKey(profile.id, startDate), {
         data: mealZoneTimes,
         effectiveFrom: startDate,
     });
     client.setQueryData(
-        ['weekly-meal-zones', profile.id, startDate],
+        getWeeklyMealZonesQueryKey(profile.id, startDate),
         weeklyMealZones,
     );
 

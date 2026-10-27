@@ -1,11 +1,12 @@
 import { addWeeks, endOfWeek, format, parseISO } from 'date-fns';
-import { and, eq, gte, lte, sql } from 'drizzle-orm';
+import { and, eq, gte, lte } from 'drizzle-orm';
 import 'server-only';
 
 import { getDb } from '~db';
 import { meals } from '~db/schema';
 
 import { createMeals, fetchMeals } from './meal';
+import { lockMealPlan } from './meal-plan-lock';
 import { fetchWeeklyMealZones, saveWeeklyMealZones } from './weekly-meal-zone';
 
 export const copyMealWeek = async ({
@@ -25,11 +26,7 @@ export const copyMealWeek = async ({
         'yyyy-MM-dd',
     );
     await getDb().transaction(async (db) => {
-        // Serialize repeat copies for this owner/destination; replacing the week
-        // is idempotent in content and must never leave duplicate meals.
-        await db.execute(
-            sql`select pg_advisory_xact_lock(hashtext(${`${userId}:${weekStart}`}))`,
-        );
+        await lockMealPlan(db, userId);
         const zones = await fetchWeeklyMealZones({
             db,
             userId,

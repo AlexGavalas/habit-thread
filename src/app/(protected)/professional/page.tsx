@@ -17,6 +17,11 @@ import { MealZoneSettings } from '~features/meal-zone-settings';
 import { ProfessionalDashboard } from '~features/professional-dashboard';
 import { MealPlan } from '~features/screens/meal-plan';
 import { createQueryClient } from '~util/query-client';
+import {
+    getMealsQueryKey,
+    getMealZoneTimesQueryKey,
+    getWeeklyMealZonesQueryKey,
+} from '~util/query-keys';
 
 type ProfessionalPageProps = Readonly<{
     searchParams: Promise<{
@@ -85,15 +90,15 @@ const ProfessionalDashboardContent = async ({
         ]);
         const queryClient = createQueryClient();
         queryClient.setQueryData(
-            ['meals', selectedClient.id, startDate],
+            getMealsQueryKey(selectedClient.id, startDate),
             meals.data,
         );
         queryClient.setQueryData(
-            ['meal-zone-times', selectedClient.id, startDate],
+            getMealZoneTimesQueryKey(selectedClient.id, startDate),
             { data: mealZoneTimes, effectiveFrom: startDate },
         );
         queryClient.setQueryData(
-            ['weekly-meal-zones', selectedClient.id, startDate],
+            getWeeklyMealZonesQueryKey(selectedClient.id, startDate),
             weeklyMealZones,
         );
 
@@ -106,7 +111,10 @@ const ProfessionalDashboardContent = async ({
                     initialWeekStart={startDate}
                     ownerUserId={selectedClient.id}
                 />
-                <MealZoneSettings ownerUserId={selectedClient.id} />
+                <MealZoneSettings
+                    key={selectedClient.id}
+                    ownerUserId={selectedClient.id}
+                />
             </HydrationBoundary>
         );
     }

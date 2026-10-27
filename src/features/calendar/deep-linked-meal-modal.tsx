@@ -16,6 +16,7 @@ import { MEAL_MODAL_OPTIONS } from '../modals/meal/meal-modal-options';
 type DeepLinkedMealModalProps = Readonly<{
     date: string;
     initialSchedule: {
+        ownerUserId?: number;
         weekStart: string;
         zones: WeeklyMealZone[];
     };
@@ -32,8 +33,10 @@ export const DeepLinkedMealModal = ({
     const { t } = useTranslation();
     const ownerUserId = useMealPlanOwnerId();
     const { currentWeek } = useCurrentWeek();
-    const { deleteEntryCell, meals, saveEntryCell, isLoading } = useMeals();
-    const { zones } = useWeeklyMealZones(currentWeek, initialSchedule);
+    const { deleteEntryCell, meals, saveEntryCell, isLoading, isError } =
+        useMeals();
+    const schedule = useWeeklyMealZones(currentWeek, initialSchedule);
+    const { zones } = schedule;
     const openMealModal = useOpenContextModal('meal');
     const openedTarget = useRef<string | null>(null);
     const targetDate = useMemo(() => parseISO(date), [date]);
@@ -42,6 +45,9 @@ export const DeepLinkedMealModal = ({
         if (
             (!mealZone && !slotKey) ||
             isLoading ||
+            isError ||
+            schedule.isError ||
+            schedule.isLoading ||
             !ownerUserId ||
             !isSameWeek(currentWeek, targetDate, { weekStartsOn: 1 })
         ) {
@@ -103,6 +109,9 @@ export const DeepLinkedMealModal = ({
         date,
         deleteEntryCell,
         isLoading,
+        isError,
+        schedule.isError,
+        schedule.isLoading,
         mealZone,
         meals,
         openMealModal,

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import { type EditedMeal, type Meal } from '~types/meal';
+import { requireActionSuccess } from '~util/action-result';
 import { showErrorNotification } from '~util/notification';
 
 import { saveMealOperation } from '../../app/meal-mutation-actions';
@@ -38,10 +39,7 @@ export const useMealMutation = (
                 ownerUserId: variables.ownerUserId,
                 weekStart: variables.weekStart,
             });
-            if (!result.ok) {
-                throw new Error('Could not save meal');
-            }
-            return result.meals;
+            return requireActionSuccess(result).meals;
         },
         mutationKey,
         onError: (_error, variables, context) => {

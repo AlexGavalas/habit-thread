@@ -16,7 +16,7 @@ export const porridge: Meal = {
     user_id: 7,
 };
 
-export const createMealPlanHarness = (
+export const createMealPlanTestContext = (
     initialMeals: Meal[] = [porridge],
 ): {
     queryClient: QueryClient;
