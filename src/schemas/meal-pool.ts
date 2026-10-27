@@ -1,10 +1,26 @@
 import { z } from 'zod';
 
-import { type EditedMealPool } from '~types/meal-pool';
+import { type EditedMealPool, type MealTemplate } from '~types/meal-pool';
 
 import { mealItemSchema } from './meal';
 
 type MealPoolSchema = z.ZodType<EditedMealPool>;
+
+const mealTemplateSchema: z.ZodType<MealTemplate> = z.object({
+    content: z.string(),
+    id: z.number(),
+    items: z.array(mealItemSchema.required()),
+});
+
+export const mealPoolSearchResponseSchema = z.object({
+    data: z.union([
+        z.array(mealTemplateSchema),
+        z.object({
+            client: z.array(mealTemplateSchema),
+            own: z.array(mealTemplateSchema),
+        }),
+    ]),
+});
 
 export const mealPoolSchema: MealPoolSchema = z.object({
     content: z.string(),
