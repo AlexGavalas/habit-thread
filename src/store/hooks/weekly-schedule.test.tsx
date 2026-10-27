@@ -1,90 +1,81 @@
-import { Provider, createStore } from 'jotai';
-import { type PropsWithChildren } from 'react';
+import { createMealPlanHarness, deferred, porridge } from '~test/meal-plan';
+import { act, renderHook, waitFor } from '~test/utils';
 
-import { currentWeekAtom, unsavedChangesAtom } from '~store/atoms';
-import { act, renderHook } from '~test/utils';
-import { type Meal } from '~types/meal';
-import { type WeeklyMealZone } from '~types/meal-zone';
-
-import { saveWeeklyMealSchedule } from '../../app/weekly-meal-zone-actions';
+import { copyMealPlanWeek } from '../../app/meal-mutation-actions';
+import { useCurrentWeek } from './current-week';
 import { useWeeklyScheduleOps } from './weekly-schedule';
 
-describe('useWeeklyScheduleOps', () => {
-    it('copies the current schedule and meals into the following week', async () => {
+jest.mock('~util/notification');
+
+describe('copy week', () => {
+    it('confirms replacement and navigates only after persistence succeeds', async () => {
         expect.hasAssertions();
-        const store = createStore();
-        store.set(currentWeekAtom, new Date('2024-01-01T12:00:00Z'));
-
-        const Wrapper = ({ children }: PropsWithChildren): React.ReactNode => (
-            <Provider store={store}>{children}</Provider>
-        );
-
-        const zones: WeeklyMealZone[] = [
-            {
-                day: '2024-01-01',
-                label: 'Breakfast',
-                legacyKey: 'morning',
-                position: 0,
-                time: '08:00',
-                weekStart: '2024-01-01',
-                zoneKey: 'Breakfast_Mon 01/01/2024',
-            },
-            {
-                day: '2024-01-02',
-                label: 'Custom meal',
-                position: 0,
-                time: '10:00',
-                weekStart: '2024-01-01',
-                zoneKey: 'custom-zone-id',
-            },
-        ];
-        const { result } = renderHook(() => useWeeklyScheduleOps(zones), {
-            wrapper: Wrapper,
-        });
-        const meal: Meal = {
-            day: '2024-01-01 08:00',
-            id: '10accc9d-f0b7-4225-87df-3e91d5639d75',
-            meal: 'Greek yogurt and fruit',
-            note: 'Add honey',
-            rating: 4,
-            section_key: 'Breakfast_Mon 01/01/2024',
-            user_id: 7,
-        };
-
-        await act(async () => {
-            await result.current.copyToNextWeek([meal]);
-        });
-
-        expect(jest.mocked(saveWeeklyMealSchedule)).toHaveBeenCalledWith(
-            expect.objectContaining({
-                weekStart: '2024-01-08',
-                zones: [
-                    expect.objectContaining({
-                        day: '2024-01-08',
-                        zoneKey: 'Breakfast_Mon 08/01/2024',
-                    }),
-                    expect.objectContaining({
-                        day: '2024-01-09',
-                        zoneKey: 'custom-zone-id',
-                    }),
-                ],
+        const confirm = jest.spyOn(window, 'confirm').mockReturnValue(true);
+        jest.mocked(copyMealPlanWeek)
+            .mockResolvedValueOnce({ ok: false })
+            .mockResolvedValueOnce({ ok: true });
+        const { Wrapper, queryClient } = createMealPlanHarness();
+        const { result } = renderHook(
+            () => ({
+                operations: useWeeklyScheduleOps(),
+                week: useCurrentWeek(),
             }),
+            { wrapper: Wrapper },
         );
-
-        expect(store.get(currentWeekAtom)).toStrictEqual(
-            new Date('2024-01-08T12:00:00Z'),
-        );
-        expect(store.get(unsavedChangesAtom)).toStrictEqual({
-            anonymous: {
-                'Breakfast_Mon 08/01/2024': {
-                    day: '2024-01-08',
-                    meal: 'Greek yogurt and fruit',
-                    note: 'Add honey',
-                    rating: 4,
-                    section_key: 'Breakfast_Mon 08/01/2024',
-                    user_id: 7,
-                },
-            },
+        await act(async () => {
+            await result.current.operations.copyToNextWeek();
         });
+        expect(result.current.week.currentWeek.toISOString()).toContain(
+            porridge.day,
+        );
+        await act(async () => {
+            await result.current.operations.copyToNextWeek();
+        });
+        expect(result.current.week.currentWeek.toISOString()).toContain(
+            '2026-01-19',
+        );
+        expect(copyMealPlanWeek).toHaveBeenCalledWith({
+            ownerUserId: 7,
+            sourceWeek: porridge.day,
+        });
+        confirm.mockRestore();
+        queryClient.clear();
+    });
+
+    it('does not redirect when a copy finishes after navigating to another week', async () => {
+        expect.hasAssertions();
+        const confirm = jest.spyOn(window, 'confirm').mockReturnValue(true);
+        const response = deferred<{ ok: boolean }>();
+        jest.mocked(copyMealPlanWeek).mockReturnValueOnce(response.promise);
+        const { Wrapper, queryClient } = createMealPlanHarness();
+        const { result } = renderHook(
+            () => ({
+                operations: useWeeklyScheduleOps(),
+                week: useCurrentWeek(),
+            }),
+            { wrapper: Wrapper },
+        );
+        let copying: Promise<void>;
+        act(() => {
+            copying = result.current.operations.copyToNextWeek();
+        });
+        await waitFor(() => {
+            expect(copyMealPlanWeek).toHaveBeenCalledWith({
+                ownerUserId: 7,
+                sourceWeek: porridge.day,
+            });
+        });
+        act(() => {
+            result.current.week.goToDate(new Date('2026-02-02T12:00:00Z'));
+        });
+        await act(async () => {
+            response.resolve({ ok: true });
+            await copying;
+        });
+        expect(result.current.week.currentWeek.toISOString()).toContain(
+            '2026-02-02',
+        );
+        confirm.mockRestore();
+        queryClient.clear();
     });
 });

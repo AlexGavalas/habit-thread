@@ -15,7 +15,7 @@ import { format } from 'date-fns';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { type Meal } from '~types/meal';
+import { type EditedMeal } from '~types/meal';
 import { type WeeklyMealZone } from '~types/meal-zone';
 
 import styles from './schedule-editor.module.css';
@@ -25,7 +25,7 @@ import { useScheduleEditor } from './use-schedule-editor';
 type Props = Readonly<{
     isSaving: boolean;
     initialDay: string;
-    meals: Meal[];
+    meals: EditedMeal[];
     onClose: () => void;
     onSave: (zones: WeeklyMealZone[]) => Promise<void>;
     opened: boolean;
@@ -51,6 +51,11 @@ export const ScheduleEditor = (props: Props): ReactElement => {
     const handleCopySourceChange = (value: string | null): void => {
         editor.setCopySource(value);
     };
+    const handleClose = (): void => {
+        if (!props.isSaving) {
+            props.onClose();
+        }
+    };
 
     return (
         <Drawer
@@ -59,7 +64,7 @@ export const ScheduleEditor = (props: Props): ReactElement => {
                 content: styles.drawerContent,
             }}
             closeButtonProps={{ 'aria-label': t('generic.actions.close') }}
-            onClose={props.onClose}
+            onClose={handleClose}
             opened={props.opened}
             position="right"
             size="md"
@@ -148,7 +153,11 @@ export const ScheduleEditor = (props: Props): ReactElement => {
                 </Stack>
             </ScrollArea>
             <Group className={styles.actions} justify="flex-end">
-                <Button onClick={props.onClose} variant="default">
+                <Button
+                    disabled={props.isSaving}
+                    onClick={handleClose}
+                    variant="default"
+                >
                     {t('generic.actions.cancel')}
                 </Button>
                 <Button

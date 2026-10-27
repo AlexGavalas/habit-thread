@@ -1,108 +1,132 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Provider, createStore } from 'jotai';
-import { type PropsWithChildren } from 'react';
-
-import { currentWeekAtom, unsavedChangesAtom } from '~store/atoms';
+import { createMealPlanHarness, deferred, porridge } from '~test/meal-plan';
 import { act, renderHook, waitFor } from '~test/utils';
-import { type Meal } from '~types/meal';
 
-import { saveMealPlan } from '../../app/actions';
+import { saveMealOperation } from '../../app/meal-mutation-actions';
 import { useMeals } from './meals';
 
-describe('useMeals', () => {
-    it('loads the current week and saves a meal edit', async () => {
+jest.mock('~util/notification');
+
+describe('immediate meal saves', () => {
+    it('shares pending state and saves an edit without a second submit', async () => {
         expect.hasAssertions();
-
-        const meal: Meal = {
-            day: '2024-01-01 08:00',
-            id: '10accc9d-f0b7-4225-87df-3e91d5639d75',
-            meal: 'Porridge',
-            note: null,
-            rating: null,
-            section_key: 'Breakfast_Mon 01/01/2024',
-            user_id: 7,
-        };
-        const fetchMock = jest
-            .spyOn(global, 'fetch')
-            .mockResolvedValueOnce(Response.json({ data: [meal] }))
-            .mockResolvedValueOnce(Response.json({ data: [meal] }));
-        jest.mocked(saveMealPlan).mockResolvedValue({ ok: true });
-
-        const store = createStore();
-        store.set(currentWeekAtom, new Date('2024-01-03T12:00:00Z'));
-        const queryClient = new QueryClient({
-            defaultOptions: { queries: { retry: false } },
-        });
-        const Wrapper = ({ children }: PropsWithChildren): React.ReactNode => (
-            <Provider store={store}>
-                <QueryClientProvider client={queryClient}>
-                    {children}
-                </QueryClientProvider>
-            </Provider>
+        const response =
+            deferred<Awaited<ReturnType<typeof saveMealOperation>>>();
+        jest.mocked(saveMealOperation).mockReturnValueOnce(response.promise);
+        const { Wrapper, queryClient } = createMealPlanHarness();
+        const { result } = renderHook(
+            () => ({
+                first: useMeals(),
+                second: useMeals(),
+            }),
+            { wrapper: Wrapper },
         );
-
-        const { result } = renderHook(useMeals, { wrapper: Wrapper });
-
-        await waitFor(() => {
-            expect({
-                calls: fetchMock.mock.calls,
-                meals: result.current.meals,
-            }).toStrictEqual({
-                calls: [
-                    ['/api/v1/meal?startDate=2024-01-01&endDate=2024-01-07'],
-                ],
-                meals: [meal],
-            });
-        });
-
+        let saving: Promise<void>;
         act(() => {
-            result.current.saveEntryCell({
-                meal,
-                note: 'Use oat milk',
-                rating: 5,
-                sectionKey: meal.section_key,
-                timestamp: new Date('2024-01-01T08:00:00Z'),
+            saving = result.current.first.saveEntryCell({
+                meal: porridge,
+                note: porridge.note,
+                rating: porridge.rating,
+                sectionKey: porridge.section_key,
+                timestamp: new Date(porridge.day),
                 userId: 7,
                 value: 'Banana porridge',
             });
         });
-
-        expect(
-            store.get(unsavedChangesAtom).anonymous?.[meal.section_key],
-        ).toMatchObject({
-            id: meal.id,
-            meal: 'Banana porridge',
-            note: 'Use oat milk',
-            rating: 5,
-            user_id: 7,
+        await waitFor(() => {
+            expect(result.current.second.pendingSlots).toStrictEqual([
+                'monday',
+            ]);
         });
-
-        await act(async () => {
-            await result.current.savePlan();
-        });
-
-        expect({
-            calls: jest.mocked(saveMealPlan).mock.calls,
-            unsavedChanges: store.get(unsavedChangesAtom),
-        }).toStrictEqual({
-            calls: [
-                [
-                    {
-                        deletedIds: [],
-                        editedMeals: [
-                            expect.objectContaining({
-                                id: meal.id,
-                                meal: 'Banana porridge',
-                            }),
-                        ],
-                        newMeals: [],
-                    },
+        expect(saveMealOperation).toHaveBeenCalledWith(
+            expect.objectContaining({
+                editedMeals: [
+                    expect.objectContaining({
+                        id: porridge.id,
+                        meal: 'Banana porridge',
+                    }),
                 ],
-            ],
-            unsavedChanges: {},
+                ownerUserId: 7,
+                weekStart: '2026-01-12',
+            }),
+        );
+        await act(async () => {
+            response.resolve({
+                meals: [{ ...porridge, meal: 'Banana porridge' }],
+                ok: true,
+            });
+            await saving;
         });
+        await waitFor(() => {
+            expect(result.current.second.isSaving).toBe(false);
+        });
+        queryClient.clear();
+    });
 
-        fetchMock.mockRestore();
+    it('keeps a deleting meal visible and restores it on failure', async () => {
+        expect.hasAssertions();
+        const response =
+            deferred<Awaited<ReturnType<typeof saveMealOperation>>>();
+        jest.mocked(saveMealOperation).mockReturnValueOnce(response.promise);
+        const { Wrapper, queryClient } = createMealPlanHarness();
+        const { result } = renderHook(useMeals, { wrapper: Wrapper });
+        let outcome: Promise<unknown>;
+        act(() => {
+            outcome = result.current
+                .deleteEntryCell({ meal: porridge })
+                .catch((error: unknown) => error);
+        });
+        await waitFor(() => {
+            expect(result.current.isSaving).toBe(true);
+        });
+        expect(result.current.meals).toStrictEqual([porridge]);
+        await act(async () => {
+            response.resolve({ ok: false, reason: 'invalid' });
+            await outcome;
+        });
+        expect(result.current.meals).toStrictEqual([porridge]);
+        queryClient.clear();
+    });
+
+    it('uses the generated ID when editing a newly created meal again', async () => {
+        expect.hasAssertions();
+        const { Wrapper, queryClient } = createMealPlanHarness([]);
+        jest.mocked(saveMealOperation).mockResolvedValue({
+            meals: [porridge],
+            ok: true,
+        });
+        const { result } = renderHook(useMeals, { wrapper: Wrapper });
+        await act(async () => {
+            await result.current.saveEntryCell({
+                note: null,
+                rating: null,
+                sectionKey: 'monday',
+                timestamp: new Date(porridge.day),
+                userId: 7,
+                value: 'Porridge',
+            });
+        });
+        await act(async () => {
+            await result.current.saveEntryCell({
+                meal: result.current.meals[0],
+                note: 'New note',
+                rating: 4,
+                sectionKey: 'monday',
+                timestamp: new Date(porridge.day),
+                userId: 7,
+                value: 'Porridge',
+            });
+        });
+        expect(saveMealOperation).toHaveBeenLastCalledWith(
+            expect.objectContaining({
+                editedMeals: [
+                    expect.objectContaining({
+                        id: porridge.id,
+                        note: 'New note',
+                    }),
+                ],
+                newMeals: [],
+            }),
+        );
         queryClient.clear();
     });
 });

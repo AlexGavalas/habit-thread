@@ -30,7 +30,7 @@ test('creates a measurement and refreshes the dashboard summary', async ({
     expect(summary.data).toMatchObject({ currentFat: 19, currentWeight: 81 });
 });
 
-test('saves calendar drafts through a server action and copies the week', async ({
+test('saves meal edits immediately and copies the week atomically', async ({
     page,
 }) => {
     const mealText = page
@@ -42,7 +42,7 @@ test('saves calendar drafts through a server action and copies the week', async 
         .first()
         .getByRole('article')
         .first();
-    await firstMealSlot.hover();
+    await firstMealSlot.locator('[tabindex="0"]').focus();
     await firstMealSlot
         .getByRole('button', { exact: true, name: 'Plan meal' })
         .click();
@@ -59,18 +59,20 @@ test('saves calendar drafts through a server action and copies the week', async 
     await page.getByRole('link', { exact: true, name: 'Home' }).click();
     await page.getByRole('link', { exact: true, name: 'Meal plan' }).click();
     await expect(mealText).toBeVisible();
-    await page.getByRole('button', { exact: true, name: 'Save' }).click();
     await expect(
         page.getByRole('button', { exact: true, name: 'Save' }),
     ).toBeHidden();
     await page.reload();
     await expect(mealText).toBeVisible();
     await page.getByRole('button', { name: 'More actions' }).click();
+    page.once('dialog', async (confirmation) => {
+        await confirmation.accept();
+    });
     await page.getByRole('menuitem', { name: 'Copy to next week' }).click();
-    await page.getByRole('button', { exact: true, name: 'Save' }).click();
-    await expect(
-        page.getByRole('button', { exact: true, name: 'Save' }),
-    ).toBeHidden();
+    await expect(page.getByText('19 Jan–25 Jan 2026')).toBeVisible();
+    await page.goto('/meal-plan?date=2026-01-19');
+    await page.reload();
+    await expect(mealText).toBeVisible();
     await page.getByRole('button', { name: 'Previous week' }).click();
     await expect(mealText).toBeVisible();
     await page.getByRole('button', { exact: true, name: 'Next week' }).click();

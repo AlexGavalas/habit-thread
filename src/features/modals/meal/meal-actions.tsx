@@ -8,12 +8,14 @@ import styles from './meal.module.css';
 
 type Props = Readonly<{
     canDelete: boolean;
+    isSaving: boolean;
     onCancel: () => void;
     onDelete: MouseEventHandler<HTMLButtonElement>;
 }>;
 
 export const MealActions = ({
     canDelete,
+    isSaving,
     onCancel,
     onDelete,
 }: Props): ReactElement => {
@@ -26,6 +28,7 @@ export const MealActions = ({
                     className={styles.deleteButton}
                     color="danger"
                     leftSection={<Trash />}
+                    disabled={isSaving}
                     onClick={onDelete}
                     type="button"
                     variant="subtle"
@@ -38,13 +41,14 @@ export const MealActions = ({
             <div className={styles.primaryActions}>
                 <Button
                     color="gray"
+                    disabled={isSaving}
                     onClick={onCancel}
                     type="button"
                     variant="default"
                 >
                     {t('generic.actions.cancel')}
                 </Button>
-                <Button type="submit">
+                <Button loading={isSaving} type="submit">
                     {t('modals.meal_edit.actions.save')}
                 </Button>
             </div>

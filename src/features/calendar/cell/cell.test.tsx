@@ -18,6 +18,7 @@ jest.mock('~store/hooks', () => ({
         deleteEntryRow: jest.fn(),
         isLoading: false,
         meals: [],
+        pendingSlots: [],
         revert: jest.fn(),
         saveEntryCell: jest.fn(),
         saveEntryRow: jest.fn(),
@@ -31,7 +32,6 @@ describe('<Cell />', () => {
     );
     const props: CellProps = {
         id: 'id',
-        isEdited: false,
         timestamp: new Date(),
     };
     it('renders', () => {

@@ -1,4 +1,3 @@
-import { Space } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import type { ReactElement } from 'react';
 import { useRef, useState } from 'react';
@@ -16,6 +15,7 @@ import { Content } from './content';
 import { Controls } from './controls';
 import { MealSwapBoard } from './meal-swap-board';
 import { MobileContent } from './mobile-content';
+import { PersistenceStatus } from './persistence-status';
 import { ScheduleEditor } from './schedule-editor';
 
 export const Calendar = ({
@@ -34,10 +34,13 @@ export const Calendar = ({
     const closeScheduleEditor = scheduleHandlers.close;
     const { currentWeek } = useCurrentWeek();
     const ownerUserId = useMealPlanOwnerId();
-    const { isLoading: mealsLoading, meals } = useMeals();
+    const { isLoading: mealsLoading, meals, isSaving } = useMeals();
     const schedule = useWeeklyMealZones(currentWeek, initialSchedule);
     const handleSaveSchedule = schedule.save;
     const openScheduleEditor = (day?: string): void => {
+        if (isSaving) {
+            return;
+        }
         setScheduleDay(day ?? schedule.zones[0]?.day ?? initialDate);
         scheduleHandlers.open();
     };
@@ -54,10 +57,9 @@ export const Calendar = ({
                 <Controls
                     onEditSchedule={openScheduleEditor}
                     onPrint={handlePrint}
-                    zones={schedule.zones}
                 />
+                <PersistenceStatus />
             </div>
-            <Space h="md" />
             <div ref={ref} className={styles.desktopCalendar}>
                 <Card>
                     <MealSwapBoard

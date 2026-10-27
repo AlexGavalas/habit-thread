@@ -19,15 +19,9 @@ export type CellProps = Readonly<{
     id: string;
     meal?: Meal | EditedMeal;
     timestamp: Date;
-    isEdited: boolean;
 }>;
 
-export const Cell = ({
-    id,
-    meal,
-    timestamp,
-    isEdited,
-}: CellProps): ReactElement => {
+export const Cell = ({ id, meal, timestamp }: CellProps): ReactElement => {
     const { t } = useTranslation();
     const ownerUserId = useMealPlanOwnerId();
     const canEditAnnotations = useCanEditMealAnnotations();
@@ -35,14 +29,15 @@ export const Cell = ({
     const { focused: isFocusedWithin, ref: focusRef } = useFocusWithin();
     const mergedRef = useMergedRef(ref, focusRef);
 
-    const { deleteEntryCell, saveEntryCell } = useMeals();
+    const { deleteEntryCell, saveEntryCell, pendingSlots } = useMeals();
+    const isSaving = pendingSlots.includes(id);
 
-    const handleSave = (newMeal: MealChange): void => {
+    const handleSave = async (newMeal: MealChange): Promise<void> => {
         if (!ownerUserId || !newMeal.meal) {
             return;
         }
 
-        saveEntryCell({
+        await saveEntryCell({
             items: newMeal.items,
             meal,
             note: newMeal.note,
@@ -54,19 +49,19 @@ export const Cell = ({
         });
     };
 
-    const handleDelete = (): void => {
+    const handleDelete = async (): Promise<void> => {
         if (!meal) {
             return;
         }
 
-        deleteEntryCell({ meal });
+        await deleteEntryCell({ meal });
     };
 
     const hasNote = !!meal?.note;
 
     return (
         <Box ref={mergedRef} style={{ position: 'relative' }} tabIndex={0}>
-            {(isHovered || isFocusedWithin) && (
+            {!isSaving && (isHovered || isFocusedWithin) && (
                 <CellOverlay
                     canEditAnnotations={canEditAnnotations}
                     meal={meal}
@@ -77,14 +72,16 @@ export const Cell = ({
             )}
             <Box
                 className={styles.cell}
-                data-edited={isEdited || undefined}
+                aria-busy={isSaving}
                 style={{
                     ...(hasNote && { gridTemplateRows: 'auto 1fr' }),
-                    ...(isEdited && {
-                        border: '2px solid var(--app-color-state-modified)',
-                    }),
                 }}
             >
+                {isSaving && (
+                    <Text className={styles.saving} size="xs" role="status">
+                        {t('meal_plan.persistence.saving')}
+                    </Text>
+                )}
                 {hasNote && (
                     <Badge
                         fullWidth
@@ -97,9 +94,10 @@ export const Cell = ({
                 )}
                 <Center
                     style={{
-                        ...((isHovered || isFocusedWithin) && {
-                            opacity: 0.15,
-                        }),
+                        ...(!isSaving &&
+                            (isHovered || isFocusedWithin) && {
+                                opacity: 0.15,
+                            }),
                     }}
                 >
                     <Stack

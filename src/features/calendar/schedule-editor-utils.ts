@@ -1,11 +1,11 @@
 import { addMinutes, format, parse } from 'date-fns';
 
-import { type Meal } from '~types/meal';
+import { type EditedMeal } from '~types/meal';
 import { type WeeklyMealZone } from '~types/meal-zone';
 
 export type ScheduleEditorOptions = {
     initialDay: string;
-    meals: Meal[];
+    meals: EditedMeal[];
     onClose: () => void;
     onSave: (zones: WeeklyMealZone[]) => Promise<void>;
     opened: boolean;

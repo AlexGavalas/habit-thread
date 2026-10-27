@@ -6,7 +6,7 @@ import type { ReactElement } from 'react';
 import { type ButtonHTMLAttributes, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useCurrentWeek, useMeals, useUnsavedChanges } from '~store/hooks';
+import { useCurrentWeek, useMeals } from '~store/hooks';
 import { type MealsMap } from '~types/meal';
 import { type WeeklyMealZone } from '~types/meal-zone';
 import { getDaysOfWeek } from '~util/date';
@@ -31,7 +31,6 @@ export const Content = ({ onEditSchedule, zones }: Props): ReactElement => {
     const isExtraLargeViewport = useMediaQuery('(min-width: 88em)');
     const { i18n, t } = useTranslation();
     const { currentWeek } = useCurrentWeek();
-    const { unsavedChanges } = useUnsavedChanges();
     const { meals } = useMeals();
     const swap = useMealSwap();
     const mealsMap = meals.reduce<MealsMap>((acc, meal) => {
@@ -132,7 +131,6 @@ export const Content = ({ onEditSchedule, zones }: Props): ReactElement => {
                         meals={mealsMap}
                         onEditSchedule={onEditSchedule}
                         timestamp={timestamp}
-                        unsavedChanges={unsavedChanges}
                         zones={zones}
                     />
                 </Carousel.Slide>

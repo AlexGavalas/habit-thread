@@ -17,6 +17,19 @@ for (const width of [1440, 1100]) {
         await expect(instructions).toBeVisible();
         await expect(firstDay).toBeVisible();
 
+        const weekNavBounds = await page
+            .getByRole('button', { exact: true, name: 'Previous week' })
+            .boundingBox();
+        const instructionBounds = await instructions.boundingBox();
+        if (!weekNavBounds || !instructionBounds) {
+            throw new Error(
+                'Expected visible week navigation and instructions',
+            );
+        }
+        expect(
+            instructionBounds.y - weekNavBounds.y - weekNavBounds.height,
+        ).toBeLessThanOrEqual(40);
+
         if (width === 1440) {
             await expect(next).toHaveCount(0);
             const textBounds = await instructions.locator('..').boundingBox();

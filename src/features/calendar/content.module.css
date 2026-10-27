@@ -78,7 +78,8 @@
 }
 
 .dayHeader {
-    min-height: 4.5rem;
+    /* Reserve space for calories and wrapped macros, even on empty days. */
+    min-height: 6rem;
 }
 
 .nutritionButton {

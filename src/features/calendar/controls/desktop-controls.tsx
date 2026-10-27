@@ -13,12 +13,10 @@ import {
     EditPencil,
     FastArrowLeft,
     FastArrowRight,
-    FloppyDisk,
     Plus,
     PrintingPage,
     StatsReport,
     MoreHoriz,
-    Xmark,
 } from 'iconoir-react';
 import type { ReactElement } from 'react';
 import { type MouseEventHandler } from 'react';
@@ -29,7 +27,8 @@ import { useCurrentWeek } from '~store/hooks';
 import styles from './controls.module.css';
 
 type DesktopControlsProps = Readonly<{
-    hasUnsavedChanges: boolean;
+    isCopyBlocked: boolean;
+    isScheduleBlocked: boolean;
     onCopy: () => void;
     onCreateMeal: () => void;
     onEditSchedule: () => void;
@@ -37,8 +36,6 @@ type DesktopControlsProps = Readonly<{
     onOverview: () => void;
     onPreviousWeek: () => void;
     onPrint: MouseEventHandler<HTMLButtonElement>;
-    onRevert: () => void;
-    onSave: MouseEventHandler<HTMLButtonElement>;
 }>;
 
 const buttonProps = { size: 'xs' } satisfies ButtonProps;
@@ -83,6 +80,7 @@ export const DesktopControls = (props: DesktopControlsProps): ReactElement => {
                 <Group gap="sm">
                     <Button
                         {...buttonProps}
+                        disabled={props.isScheduleBlocked}
                         leftSection={<EditPencil />}
                         onClick={props.onEditSchedule}
                         variant="outline"
@@ -117,6 +115,7 @@ export const DesktopControls = (props: DesktopControlsProps): ReactElement => {
                         </Menu.Target>
                         <Menu.Dropdown>
                             <Menu.Item
+                                disabled={props.isCopyBlocked}
                                 leftSection={<Copy />}
                                 onClick={props.onCopy}
                             >
@@ -131,25 +130,6 @@ export const DesktopControls = (props: DesktopControlsProps): ReactElement => {
                         </Menu.Dropdown>
                     </Menu>
                 </Group>
-                {props.hasUnsavedChanges && (
-                    <Group gap="sm">
-                        <Button
-                            {...buttonProps}
-                            onClick={props.onRevert}
-                            rightSection={<Xmark />}
-                            variant="outline"
-                        >
-                            {t('generic.actions.cancel')}
-                        </Button>
-                        <Button
-                            {...buttonProps}
-                            onClick={props.onSave}
-                            rightSection={<FloppyDisk />}
-                        >
-                            {t('generic.actions.save')}
-                        </Button>
-                    </Group>
-                )}
             </Stack>
         </Group>
     );

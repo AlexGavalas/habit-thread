@@ -31,11 +31,6 @@
     background: var(--app-color-surface-meal);
 }
 
-.meal[data-edited='true'] {
-    border-color: var(--app-color-state-modified);
-    border-width: 2px;
-}
-
 .mealSummary {
     min-width: 0;
 }

@@ -11,11 +11,13 @@ import { z } from 'zod';
 
 import { type Meal } from '~types/meal';
 
-type MealNoteModalProps = {
+import { useEditorSubmit } from '../use-editor-submit';
+
+type MealNoteModalProps = Readonly<{
     meal: Meal;
     onSave: (meal: string) => Promise<void>;
     onDelete: () => Promise<void>;
-};
+}>;
 
 const NOTE_FIELD_NAME = 'note';
 
@@ -30,6 +32,7 @@ export const MealNoteModal = ({
 }: ContextModalProps<MealNoteModalProps>): ReactElement => {
     const { t } = useTranslation();
     const [error, setError] = useState('');
+    const submission = useEditorSubmit(id);
 
     const closeModal = (): void => {
         context.closeContextModal(id);
@@ -51,13 +54,15 @@ export const MealNoteModal = ({
             return;
         }
 
-        await onSave(note);
-        closeModal();
+        if (await submission.submit(() => onSave(note))) {
+            closeModal();
+        }
     }) satisfies SubmitEventHandler<HTMLFormElement>;
 
     const handleDelete = (async (): Promise<void> => {
-        await onDelete();
-        closeModal();
+        if (await submission.submit(onDelete)) {
+            closeModal();
+        }
     }) satisfies MouseEventHandler<HTMLButtonElement>;
 
     return (
@@ -66,7 +71,8 @@ export const MealNoteModal = ({
                 <Textarea
                     autosize
                     defaultValue={meal.note ?? ''}
-                    error={error}
+                    error={error || submission.error}
+                    disabled={submission.isSaving}
                     label={t('modals.meal_note.label')}
                     maxRows={20}
                     minRows={5}
@@ -76,16 +82,25 @@ export const MealNoteModal = ({
                 />
 
                 <Group justify="space-between">
-                    <Button color="danger" onClick={closeModal} variant="light">
+                    <Button
+                        disabled={submission.isSaving}
+                        color="danger"
+                        onClick={closeModal}
+                        variant="light"
+                    >
                         {t('generic.actions.cancel')}
                     </Button>
                     <Group gap="md">
                         {meal.note && (
-                            <Button color="danger" onClick={handleDelete}>
+                            <Button
+                                disabled={submission.isSaving}
+                                color="danger"
+                                onClick={handleDelete}
+                            >
                                 {t('generic.actions.delete')}
                             </Button>
                         )}
-                        <Button type="submit">
+                        <Button loading={submission.isSaving} type="submit">
                             {t('generic.actions.save')}
                         </Button>
                     </Group>

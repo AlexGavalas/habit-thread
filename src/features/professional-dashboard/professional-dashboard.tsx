@@ -1,6 +1,7 @@
 'use client';
 
 import { Container } from '@mantine/core';
+import { useIsMutating } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import type { ReactElement } from 'react';
 import {
@@ -9,19 +10,18 @@ import {
     type ReactNode,
     useState,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useLocalizedPath } from '~hooks/use-localized-path';
-import { useMeals, useUnsavedChanges } from '~store/hooks';
 import type {
     PaginatedProfessionalClients,
     ProfessionalClientSummary,
 } from '~types/professional';
+import { showErrorNotification } from '~util/notification';
 
 import { removeProfessionalRelationship } from '../../app/actions';
 import { ClientDirectory } from './client-directory';
 import { ClientDrawer } from './client-drawer';
-import { UnsavedChangesModal } from './unsaved-changes-modal';
-import { useNavigationGuard } from './use-navigation-guard';
 
 type ProfessionalDashboardProps = Readonly<{
     clients: PaginatedProfessionalClients;
@@ -39,12 +39,20 @@ export const ProfessionalDashboard = ({
     const router = useRouter();
     const localize = useLocalizedPath();
     const [search, setSearch] = useState(query);
-    const [shouldStopAfterPrompt, setShouldStopAfterPrompt] = useState(false);
     const ownerUserId = selectedClient?.id ?? -1;
-    const { hasUnsavedChanges, removeChanges } = useUnsavedChanges(ownerUserId);
-    const { savePlan } = useMeals(ownerUserId);
-    const { clearNavigation, isPromptOpen, pendingUrl, requestNavigation } =
-        useNavigationGuard(hasUnsavedChanges);
+    const isSaving =
+        useIsMutating({ mutationKey: ['meal-plan-write', ownerUserId] }) > 0;
+    const { t } = useTranslation();
+    const canNavigate = (): boolean => {
+        if (!isSaving) {
+            return true;
+        }
+        showErrorNotification({
+            title: t('meal_plan.persistence.saving'),
+            message: t('meal_plan.persistence.wait'),
+        });
+        return false;
+    };
 
     const destination = ({
         client,
@@ -70,7 +78,7 @@ export const ProfessionalDashboard = ({
     };
 
     const navigate = (url: string): void => {
-        if (requestNavigation(url)) {
+        if (!canNavigate()) {
             return;
         }
         router.push(url);
@@ -81,47 +89,11 @@ export const ProfessionalDashboard = ({
         navigate(destination({ page: 1, q: search.trim() }));
     };
 
-    const continueNavigation = async (): Promise<void> => {
-        const url = pendingUrl;
-        if (shouldStopAfterPrompt && selectedClient) {
-            const result = await removeProfessionalRelationship({
-                relationshipId: selectedClient.relationshipId,
-            });
-            if (!result.ok) {
-                return;
-            }
-        }
-        clearNavigation();
-        setShouldStopAfterPrompt(false);
-        if (url) {
-            router.push(url);
-            router.refresh();
-        }
-    };
-
-    const handleDiscardAndContinue = (): void => {
-        removeChanges();
-        void continueNavigation();
-    };
-
-    const handleCancelNavigation = (): void => {
-        clearNavigation();
-        setShouldStopAfterPrompt(false);
-    };
-
-    const handleSaveAndContinue = async (): Promise<void> => {
-        if (await savePlan()) {
-            await continueNavigation();
-        }
-    };
-
     const handleStopManaging = async (): Promise<void> => {
         if (!selectedClient) {
             return;
         }
-        if (hasUnsavedChanges) {
-            requestNavigation(destination({}));
-            setShouldStopAfterPrompt(true);
+        if (!canNavigate()) {
             return;
         }
         const result = await removeProfessionalRelationship({
@@ -167,12 +139,6 @@ export const ProfessionalDashboard = ({
                 detail={detail}
                 onClose={handleCloseDrawer}
                 onStopManaging={handleStopManaging}
-            />
-            <UnsavedChangesModal
-                onCancel={handleCancelNavigation}
-                onDiscard={handleDiscardAndContinue}
-                onSave={handleSaveAndContinue}
-                opened={isPromptOpen}
             />
         </Container>
     );

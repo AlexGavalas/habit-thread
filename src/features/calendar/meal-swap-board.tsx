@@ -9,7 +9,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useMeals, useUnsavedChanges } from '~store/hooks';
+import { useMeals } from '~store/hooks';
 import { type MealSlot } from '~store/hooks/meal-operations';
 import { type WeeklyMealZone } from '~types/meal-zone';
 
@@ -40,7 +40,6 @@ export const MealSwapBoard = ({
 }: MealSwapBoardProps): ReactElement => {
     const { t } = useTranslation();
     const { swapEntries } = useMeals();
-    const { hasUnsavedChanges } = useUnsavedChanges();
     const [selection, setSelection] = useState<Selection | null>(null);
     const [announcement, setAnnouncement] = useState('');
     const handleCancel = (): void => {
@@ -70,8 +69,14 @@ export const MealSwapBoard = ({
         ) {
             return;
         }
-        swapEntries(selection.slot, destination);
-        setAnnouncement(t('meal_plan.swap.updated'));
+        void swapEntries(selection.slot, destination).then(
+            () => {
+                setAnnouncement('');
+            },
+            () => {
+                setAnnouncement(t('errors.meal_save'));
+            },
+        );
         handleCancel();
     };
 
@@ -82,7 +87,7 @@ export const MealSwapBoard = ({
 
     const instructionMessage = selection
         ? t('meal_plan.swap.choose', { meal: selection.name })
-        : (hasUnsavedChanges && announcement) || t('meal_plan.swap.hint');
+        : announcement || t('meal_plan.swap.hint');
 
     return (
         <MealSwapContext.Provider

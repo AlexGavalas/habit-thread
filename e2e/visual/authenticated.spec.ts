@@ -119,18 +119,19 @@ test('meal plan is touch-friendly on mobile Chrome', async ({ page }) => {
     await expectNoHorizontalOverflow(page);
     await dialog
         .getByRole('textbox', { name: 'Meal name' })
-        .fill('Mobile lunch draft');
+        .fill('Mobile lunch saved');
     await dialog
         .getByRole('button', { exact: true, name: 'Save changes' })
         .click();
 
     await expect(dialog).toBeHidden();
-    const draftMeal = page.locator('p:visible').filter({
-        hasText: /^Mobile lunch draft$/,
-    });
-    await expect(draftMeal).toBeVisible();
-    await page.getByRole('button', { exact: true, name: 'Cancel' }).click();
-    await expect(draftMeal).toHaveCount(0);
+    const savedMeal = page
+        .locator('p:visible')
+        .filter({ hasText: /^Mobile lunch saved$/ });
+    await expect(savedMeal).toBeVisible();
+    await page.reload();
+    await dayPicker.getByRole('button').nth(1).click();
+    await expect(savedMeal).toBeVisible();
 
     await expect(page).toHaveScreenshot('meal-plan-mobile.png', {
         fullPage: true,

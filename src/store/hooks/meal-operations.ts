@@ -8,15 +8,10 @@ import {
     type MealsMap,
 } from '~types/meal';
 
-export type DeleteEntryCell = (params: { meal: Meal | EditedMeal }) => void;
-export type DeleteEntryRow = (id: string) => void;
-
 export type MealSlot = Readonly<{
     sectionKey: string;
     day: string;
 }>;
-
-export type SwapEntries = (source: MealSlot, destination: MealSlot) => void;
 
 export type SaveEntryCell = (params: {
     meal?: Meal | EditedMeal;
@@ -27,16 +22,7 @@ export type SaveEntryCell = (params: {
     items?: EditedMealItem[];
     note: EditedMeal['note'];
     rating: EditedMeal['rating'];
-}) => void;
-
-export type SaveEntryRow = (params: {
-    sectionKey: string;
-    userId: number;
-    value: string;
-    items?: EditedMealItem[];
-    note: EditedMeal['note'];
-    rating: EditedMeal['rating'];
-}) => void;
+}) => Promise<void>;
 
 export const createMealChange = ({
     meal,
@@ -57,18 +43,6 @@ export const createMealChange = ({
     section_key: sectionKey,
     user_id: userId,
 });
-
-export type UseMeals = (explicitOwnerUserId?: number) => {
-    meals: Meal[];
-    isLoading: boolean;
-    savePlan: () => Promise<boolean>;
-    revert: () => void;
-    deleteEntryCell: DeleteEntryCell;
-    deleteEntryRow: DeleteEntryRow;
-    saveEntryCell: SaveEntryCell;
-    saveEntryRow: SaveEntryRow;
-    swapEntries: SwapEntries;
-};
 
 type MealPlanChanges = {
     deletedIds: string[];
@@ -101,17 +75,11 @@ export const getMealPlanChanges = (
     };
 };
 
-export const getMealsMap = (meals: Meal[]): MealsMap =>
+export const getMealsMap = (meals: (Meal | EditedMeal)[]): MealsMap =>
     meals.reduce<MealsMap>((result, meal) => {
         result[meal.section_key] = meal;
         return result;
     }, {});
-
-// Empty drafts are persistence markers for moves/deletions, not edited meals.
-export const isMealSlotEdited = (
-    changes: MealsMap,
-    sectionKey: string,
-): boolean => Boolean(changes[sectionKey]?.meal);
 
 export const swapMealSlots = ({
     changes,

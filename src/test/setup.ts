@@ -73,6 +73,11 @@ jest.mock('../app/weekly-meal-zone-actions', () => ({
     saveWeeklyMealSchedule: jest.fn().mockResolvedValue({ ok: true }),
 }));
 
+jest.mock('../app/meal-mutation-actions', () => ({
+    copyMealPlanWeek: jest.fn(),
+    saveMealOperation: jest.fn(),
+}));
+
 jest.mock<typeof nextNavigation>('next/navigation', () =>
     jest.requireActual('next-router-mock/navigation'),
 );

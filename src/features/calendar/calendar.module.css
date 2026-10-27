@@ -28,6 +28,7 @@
 
     .mobileCalendar {
         display: block;
+        margin-top: var(--grid-gap);
     }
 }
 

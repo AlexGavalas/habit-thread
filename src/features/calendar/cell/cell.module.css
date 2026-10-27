@@ -13,6 +13,16 @@
     border-radius: var(--mantine-radius-sm);
 }
 
+.saving {
+    position: absolute;
+    right: var(--app-space-calendar-cell);
+    bottom: var(--app-space-calendar-cell);
+    border-radius: var(--mantine-radius-sm);
+    padding-inline: var(--mantine-spacing-xs);
+    background: var(--mantine-color-body);
+    color: var(--mantine-color-dimmed);
+}
+
 .overlayContent {
     align-items: center;
     display: flex;

@@ -11,12 +11,13 @@ export const fetchMeals = async ({
     endDate,
     startDate,
     userId,
+    db = getDb(),
 }: {
+    db?: ReturnType<typeof getDb>;
     endDate: string;
     startDate: string;
     userId: number;
 }): Promise<{ data: Meal[] }> => {
-    const db = getDb();
     const rows = await db
         .select()
         .from(meals)
@@ -108,7 +109,10 @@ export const updateMeals = async ({
                 .where(and(eq(meals.id, mealId), eq(meals.user_id, userId)))
                 .returning({ id: meals.id });
 
-            if (updated && meal.items) {
+            if (!updated) {
+                throw new Error('Meal no longer exists');
+            }
+            if (meal.items) {
                 await tx.delete(mealItems).where(eq(mealItems.meal_id, mealId));
                 if (meal.items.length) {
                     await tx
@@ -164,12 +168,13 @@ export const createMeals = async ({
 
 export const saveMeals = async (input: {
     allowAnnotations?: boolean;
+    db?: ReturnType<typeof getDb>;
     deletedIds: string[];
     editedMeals: EditedMeal[];
     newMeals: EditedMeal[];
     userId: number;
 }): Promise<void> => {
-    await getDb().transaction(async (db) => {
+    await (input.db ?? getDb()).transaction(async (db) => {
         await deleteMeals({ ...input, db });
         await updateMeals({ ...input, db });
         await createMeals({ ...input, db });
