@@ -1,4 +1,4 @@
-import { createMealPlanHarness, deferred, porridge } from '~test/meal-plan';
+import { createMealPlanTestContext, deferred, porridge } from '~test/meal-plan';
 import { act, renderHook, waitFor } from '~test/utils';
 
 import { saveMealOperation } from '../../app/meal-mutation-actions';
@@ -23,7 +23,7 @@ describe('immediate meal moves', () => {
             section_key: 'wednesday',
             meal: 'Salad',
         };
-        const { Wrapper, queryClient } = createMealPlanHarness([
+        const { Wrapper, queryClient } = createMealPlanTestContext([
             porridge,
             soup,
             salad,
@@ -95,7 +95,7 @@ describe('immediate meal moves', () => {
             section_key: 'tuesday',
             day: '2026-01-13',
         };
-        const { Wrapper, queryClient } = createMealPlanHarness();
+        const { Wrapper, queryClient } = createMealPlanTestContext();
         jest.mocked(saveMealOperation).mockResolvedValueOnce({
             meals: [moved],
             ok: true,

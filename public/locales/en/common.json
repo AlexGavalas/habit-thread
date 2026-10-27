@@ -246,6 +246,7 @@
     },
     "try_again": "Please try again",
     "errors": {
+        "load": "We could not load your data.",
         "weight_update": "We could not update your weight",
         "weight_save": "We could not save your weight",
         "weight_empty": "You forgot to input your weight",

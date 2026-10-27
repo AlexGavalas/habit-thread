@@ -37,23 +37,24 @@ export const useCreateMealPool: UseCreateMealPool = ({ onSuccess } = {}) => {
                 method: 'POST',
             });
 
-            if (response.ok) {
-                onSuccess?.();
-
-                await queryClient.invalidateQueries({
-                    queryKey: ['pool-meal'],
-                });
-
-                showSuccessNotification({
-                    message: t('notification.success.message'),
-                    title: t('notification.success.title'),
-                });
-            } else {
-                showErrorNotification({
-                    message: t('notification.error.message'),
-                    title: t('notification.error.title'),
-                });
+            if (!response.ok) {
+                throw new Error('Could not save meal template');
             }
         },
+        onError: () => {
+            showErrorNotification({
+                message: t('notification.error.message'),
+                title: t('notification.error.title'),
+            });
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['pool-meal'] });
+            showSuccessNotification({
+                message: t('notification.success.message'),
+                title: t('notification.success.title'),
+            });
+            onSuccess?.();
+        },
+        retry: false,
     });
 };

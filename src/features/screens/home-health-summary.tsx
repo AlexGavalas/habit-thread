@@ -10,6 +10,7 @@ import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Card } from '~components/card';
+import { ReadError } from '~components/read-error';
 import { useMeasurementSummary } from '~hooks/use-measurement-summary';
 
 import { getTimelineTrend, toSparklinePoints } from './home-helpers';
@@ -26,7 +27,15 @@ export const HealthSummary = ({
     targetWeight,
 }: HealthSummaryProps): ReactElement => {
     const { t, i18n } = useTranslation();
-    const { data: summary } = useMeasurementSummary();
+    const {
+        data: summary,
+        isError,
+        isFetching,
+        refetch,
+    } = useMeasurementSummary();
+    const handleRetry = (): void => {
+        void refetch();
+    };
     const weight = getTimelineTrend(summary?.weightTimeline);
     const fat = getTimelineTrend(summary?.fatTimeline);
     const formatter = new Intl.NumberFormat(i18n.language, {
@@ -64,7 +73,9 @@ export const HealthSummary = ({
                         {t('home_dashboard.details')}
                     </Button>
                 </Group>
-                {!hasMeasurements ? (
+                {isError ? (
+                    <ReadError onRetry={handleRetry} isRetrying={isFetching} />
+                ) : !hasMeasurements ? (
                     <EmptyHealthSummary onAddMeasurement={onAddMeasurement} />
                 ) : (
                     <Stack gap="lg">

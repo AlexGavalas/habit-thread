@@ -2,6 +2,7 @@ import { useMutationState } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import { type EditedMeal } from '~types/meal';
+export { getMealsQueryKey } from '~util/query-keys';
 
 export type MealMutationVariables = {
     slots: string[];
@@ -26,15 +27,6 @@ export const affectsMealWeek = (
         !scope || (scope.affectedWeeks ?? [scope.weekStart]).includes(weekStart)
     );
 };
-
-export const getMealsQueryKey = (
-    ownerUserId: number | undefined,
-    weekStart: string,
-): readonly ['meals', number | undefined, string] => [
-    'meals',
-    ownerUserId,
-    weekStart,
-];
 
 export const getMutationSlots = (variables: unknown): string[] | undefined =>
     slotsSchema.safeParse(variables).data?.slots;

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { addDays, addWeeks, format, parseISO } from 'date-fns';
 
 import en from '../../public/locales/en/common.json';
 import gr from '../../public/locales/gr/common.json';
@@ -32,11 +33,16 @@ test('creates a measurement and refreshes the dashboard summary', async ({
 
 test('saves meal edits immediately and copies the week atomically', async ({
     page,
-}) => {
+}, testInfo) => {
+    // Reserve separate source/destination weeks, including across retries.
+    const source = addWeeks(parseISO('2035-01-01'), testInfo.retry * 2);
+    const destination = addWeeks(source, 1);
+    const sourceDate = format(source, 'yyyy-MM-dd');
+    const destinationDate = format(destination, 'yyyy-MM-dd');
     const mealText = page
         .locator('p:visible')
         .filter({ hasText: /^App Router migration meal$/ });
-    await page.goto('/meal-plan');
+    await page.goto(`/meal-plan?date=${sourceDate}`);
     const firstMealSlot = page
         .getByRole('group', { name: 'Carousel slide' })
         .first()
@@ -58,6 +64,7 @@ test('saves meal edits immediately and copies the week atomically', async ({
 
     await page.getByRole('link', { exact: true, name: 'Home' }).click();
     await page.getByRole('link', { exact: true, name: 'Meal plan' }).click();
+    await page.goto(`/meal-plan?date=${sourceDate}`);
     await expect(mealText).toBeVisible();
     await expect(
         page.getByRole('button', { exact: true, name: 'Save' }),
@@ -69,8 +76,12 @@ test('saves meal edits immediately and copies the week atomically', async ({
         await confirmation.accept();
     });
     await page.getByRole('menuitem', { name: 'Copy to next week' }).click();
-    await expect(page.getByText('19 Jan–25 Jan 2026')).toBeVisible();
-    await page.goto('/meal-plan?date=2026-01-19');
+    await expect(
+        page.getByText(
+            `${format(destination, 'd MMM')}–${format(addDays(destination, 6), 'd MMM yyyy')}`,
+        ),
+    ).toBeVisible();
+    await page.goto(`/meal-plan?date=${destinationDate}`);
     await page.reload();
     await expect(mealText).toBeVisible();
     await page.getByRole('button', { name: 'Previous week' }).click();

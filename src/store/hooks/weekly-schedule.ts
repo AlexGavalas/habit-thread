@@ -1,11 +1,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { addWeeks, format, parseISO, startOfWeek } from 'date-fns';
 import { useStore } from 'jotai';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useMealPlanOwnerId } from '~features/meal-plan-owner';
 import { currentWeekAtom } from '~store/atoms';
+import { requireActionSuccess } from '~util/action-result';
 import { showErrorNotification } from '~util/notification';
+import { getMealsQueryKey, getWeeklyMealZonesQueryKey } from '~util/query-keys';
 
 import { copyMealPlanWeek } from '../../app/meal-mutation-actions';
 import { useCurrentWeek } from './current-week';
@@ -29,6 +32,10 @@ export const useWeeklyScheduleOps = (): {
     const { currentWeek } = useCurrentWeek();
     const store = useStore();
     const ownerUserId = useMealPlanOwnerId();
+    const visibleOwner = useRef(ownerUserId);
+    useEffect(() => {
+        visibleOwner.current = ownerUserId;
+    }, [ownerUserId]);
     const queryClient = useQueryClient();
     const mutationKey = mealMutationKey(ownerUserId);
     const weekStart = format(
@@ -50,9 +57,7 @@ export const useWeeklyScheduleOps = (): {
                 ownerUserId: variables.ownerUserId,
                 sourceWeek: variables.weekStart,
             });
-            if (!result.ok) {
-                throw new Error('Could not copy meal week');
-            }
+            requireActionSuccess(result);
         },
         onSuccess: async (_data, variables): Promise<void> => {
             const destination = format(
@@ -61,21 +66,26 @@ export const useWeeklyScheduleOps = (): {
             );
             await Promise.all([
                 queryClient.invalidateQueries({
-                    queryKey: ['meals', variables.ownerUserId, destination],
-                }),
-                queryClient.invalidateQueries({
-                    queryKey: [
-                        'weekly-meal-zones',
+                    queryKey: getMealsQueryKey(
                         variables.ownerUserId,
                         destination,
-                    ],
+                    ),
+                }),
+                queryClient.invalidateQueries({
+                    queryKey: getWeeklyMealZonesQueryKey(
+                        variables.ownerUserId,
+                        destination,
+                    ),
                 }),
             ]);
             const visibleWeek = format(
                 startOfWeek(store.get(currentWeekAtom), { weekStartsOn: 1 }),
                 'yyyy-MM-dd',
             );
-            if (visibleWeek === variables.weekStart) {
+            if (
+                visibleWeek === variables.weekStart &&
+                visibleOwner.current === variables.ownerUserId
+            ) {
                 store.set(currentWeekAtom, parseISO(destination));
             }
         },

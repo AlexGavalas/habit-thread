@@ -9,13 +9,15 @@ import { type MealZoneKey, type MealZoneTimes } from '~types/meal-zone';
 const normalizeTime = (time: string): string => time.slice(0, 5);
 
 export const fetchMealZoneTimes = async ({
+    db = getDb(),
     effectiveOn,
     userId,
 }: {
+    db?: ReturnType<typeof getDb>;
     effectiveOn: string;
     userId: number;
 }): Promise<MealZoneTimes> => {
-    const rows = await getDb()
+    const rows = await db
         .select({
             effectiveFrom: mealZoneTimes.effective_from,
             time: mealZoneTimes.time,

@@ -146,14 +146,14 @@ export const updateMeasurement = async ({
     weight,
 }: {
     date: string;
-    fatPercent: number;
+    fatPercent?: number | null;
     measurementId?: string;
     userId: number;
     weight: number;
 }): Promise<{ error: null }> => {
     const values = {
         date,
-        fat_percentage: fatPercent,
+        fat_percentage: fatPercent ?? null,
         user_id: userId,
         weight,
     };

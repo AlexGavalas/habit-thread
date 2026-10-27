@@ -2,10 +2,11 @@ import { revalidatePath } from 'next/cache';
 
 import { acceptConnectionRequest as acceptRequest } from '~api/connection';
 import { saveMeals } from '~api/meal';
+import { saveMealPlanChanges } from '~api/meal-plan';
 import { saveMealZoneTimes as saveZoneTimes } from '~api/meal-zone';
 import { getCurrentUser, getRequestDate } from '~api/session';
 import { updateProfile } from '~api/user';
-import { type UserProfile } from '~types/user';
+import { testUser } from '~test/user';
 
 import {
     acceptConnectionRequest,
@@ -18,6 +19,7 @@ jest.unmock('./actions');
 jest.mock('next/cache');
 jest.mock('~api/connection');
 jest.mock('~api/meal');
+jest.mock('~api/meal-plan');
 jest.mock('~api/meal-zone');
 jest.mock('~api/professional');
 jest.mock('~api/session', () => ({
@@ -28,11 +30,11 @@ jest.mock('~api/user');
 
 describe('server actions', () => {
     beforeEach(() => {
-        jest.mocked(getCurrentUser).mockResolvedValue({
-            id: 7,
-            professional_is_discoverable: false,
-            roles: [],
-        } as unknown as UserProfile);
+        jest.mocked(getCurrentUser).mockResolvedValue(testUser);
+        jest.mocked(saveMealPlanChanges).mockResolvedValue({
+            ok: false,
+            reason: 'invalid',
+        });
         jest.mocked(getRequestDate).mockResolvedValue(
             new Date('2026-10-07T12:00:00Z'),
         );
@@ -59,7 +61,10 @@ describe('server actions', () => {
 
         jest.mocked(getCurrentUser).mockResolvedValue(null);
 
-        await expect(action()).resolves.toStrictEqual({ ok: false });
+        await expect(action()).resolves.toStrictEqual({
+            ok: false,
+            reason: 'unauthorized',
+        });
 
         expect([
             jest.mocked(saveMeals).mock.calls,
@@ -87,9 +92,9 @@ describe('server actions', () => {
         ]);
 
         expect(results).toStrictEqual([
-            { ok: false },
-            { ok: false },
-            { ok: false },
+            { ok: false, reason: 'invalid' },
+            { ok: false, reason: 'invalid' },
+            { ok: false, reason: 'invalid' },
         ]);
 
         expect({

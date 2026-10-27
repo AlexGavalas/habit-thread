@@ -3,18 +3,19 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
-import { requireMealPlanAccess } from '~api/professional';
+import { ProfessionalError, requireMealPlanAccess } from '~api/professional';
 import { getCurrentUser } from '~api/session';
 import { saveWeeklyMealZones } from '~api/weekly-meal-zone';
 import { weeklyMealScheduleSchema } from '~schemas/weekly-meal-zone';
+import { type ActionResult } from '~types/action-result';
 
 export const saveWeeklyMealSchedule = async (
     input: unknown,
-): Promise<{ ok: boolean }> => {
+): Promise<ActionResult> => {
     const user = await getCurrentUser();
 
     if (!user) {
-        return { ok: false };
+        return { ok: false, reason: 'unauthorized' };
     }
 
     const parsed = weeklyMealScheduleSchema
@@ -22,7 +23,7 @@ export const saveWeeklyMealSchedule = async (
         .safeParse(input);
 
     if (!parsed.success) {
-        return { ok: false };
+        return { ok: false, reason: 'invalid' };
     }
 
     try {
@@ -37,8 +38,10 @@ export const saveWeeklyMealSchedule = async (
             zones,
         });
     } catch (error) {
-        console.error(error);
-        return { ok: false };
+        if (error instanceof ProfessionalError) {
+            return { ok: false, reason: 'forbidden' };
+        }
+        throw error;
     }
 
     revalidatePath('/home');

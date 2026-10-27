@@ -1,12 +1,13 @@
 import { Flex, Title } from '@mantine/core';
-import { useQuery } from '@tanstack/react-query';
-import { endOfWeek, format, isToday, startOfWeek } from 'date-fns';
+import { format, isToday, startOfWeek } from 'date-fns';
 import { Running } from 'iconoir-react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ReadError } from '~components/read-error';
 import { useMealPlanOwnerId } from '~features/meal-plan-owner';
 import { useProfile } from '~hooks/use-profile';
+import { useWeekActivities } from '~hooks/use-week-activities';
 import { useCurrentWeek } from '~store/hooks';
 import { type ActivitysMap } from '~types/activity';
 import { getDaysOfWeek } from '~util/date';
@@ -31,57 +32,25 @@ export const Header = (): ReactElement => {
         i18n.language === 'en' ? 'en' : 'gr',
     );
 
-    const { data: activities = [] } = useQuery({
-        enabled: shouldShowActivities,
-        queryFn: async (): Promise<
-            | (
-                  | {
-                        date: string;
-                        id: string;
-                        user_id: number;
-                        activity: string;
-                    }
-                  | {
-                        date: string;
-                        user_id: number;
-                        activity: string;
-                        id?: string | undefined;
-                    }
-              )[]
-            | undefined
-        > => {
-            if (!profile?.id || !shouldShowActivities) {
-                return;
-            }
-
-            const startDate = format(
-                startOfWeek(currentWeek, { weekStartsOn: 1 }),
-                'yyyy-MM-dd',
-            );
-
-            const endDate = format(
-                endOfWeek(currentWeek, { weekStartsOn: 1 }),
-                'yyyy-MM-dd',
-            );
-
-            const response = await fetch(
-                `/api/v1/activity?startDate=${startDate}&endDate=${endDate}`,
-            );
-
-            const { data } = (await response.json()) as {
-                data: ActivitysMap[keyof ActivitysMap][];
-            };
-
-            return data;
-        },
-        queryKey: ['activities', 'week', ownerUserId, currentWeekKey],
-    });
+    const {
+        data: activities = [],
+        isError,
+        isFetching,
+        refetch,
+    } = useWeekActivities(ownerUserId, currentWeekKey, shouldShowActivities);
+    const handleRetry = (): void => {
+        void refetch();
+    };
 
     const activitiesMap = activities.reduce<ActivitysMap>((acc, activity) => {
         acc[activity.date] = activity;
 
         return acc;
     }, {});
+
+    if (isError && shouldShowActivities) {
+        return <ReadError onRetry={handleRetry} isRetrying={isFetching} />;
+    }
 
     return (
         <div className={styles.wrapper}>

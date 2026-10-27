@@ -18,6 +18,7 @@ import { Providers } from '~features/providers';
 import { foodDatabaseSearch, mealImport } from '~flags';
 import { getResources, getT } from '~util/i18n';
 import { createQueryClient } from '~util/query-client';
+import { getProfileQueryKey } from '~util/query-keys';
 
 import '@mantine/carousel/styles.css';
 import '@mantine/charts/styles.css';
@@ -154,7 +155,7 @@ const AppContent = async ({
 
     const queryClient = createQueryClient();
 
-    queryClient.setQueryData(['user'], profile);
+    queryClient.setQueryData(getProfileQueryKey(profile?.email), profile);
 
     return (
         <Providers

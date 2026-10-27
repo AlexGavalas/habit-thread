@@ -5,6 +5,7 @@ import { useReactToPrint } from 'react-to-print';
 
 import { Card } from '~components/card';
 import { LoadingOverlay } from '~components/loading-overlay';
+import { ReadError } from '~components/read-error';
 import { useMealPlanOwnerId } from '~features/meal-plan-owner';
 import { useWeeklyMealZones } from '~hooks/use-weekly-meal-zones';
 import { useCurrentWeek, useMeals } from '~store/hooks';
@@ -24,6 +25,7 @@ export const Calendar = ({
 }: Readonly<{
     initialDate: string;
     initialSchedule: {
+        ownerUserId?: number;
         weekStart: string;
         zones: WeeklyMealZone[];
     };
@@ -34,7 +36,13 @@ export const Calendar = ({
     const closeScheduleEditor = scheduleHandlers.close;
     const { currentWeek } = useCurrentWeek();
     const ownerUserId = useMealPlanOwnerId();
-    const { isLoading: mealsLoading, meals, isSaving } = useMeals();
+    const {
+        isLoading: mealsLoading,
+        meals,
+        isSaving,
+        isError,
+        retry,
+    } = useMeals();
     const schedule = useWeeklyMealZones(currentWeek, initialSchedule);
     const handleSaveSchedule = schedule.save;
     const openScheduleEditor = (day?: string): void => {
@@ -49,6 +57,19 @@ export const Calendar = ({
         bodyClass: `${styles.print} ${styles.container}`,
         contentRef: ref,
     });
+
+    const handleRetry = (): void => {
+        retry();
+        schedule.retry();
+    };
+    if (isError || schedule.isError) {
+        return (
+            <ReadError
+                onRetry={handleRetry}
+                isRetrying={mealsLoading || schedule.isLoading}
+            />
+        );
+    }
 
     return (
         <section className={styles.container}>
@@ -81,7 +102,7 @@ export const Calendar = ({
                 />
             </div>
             <ScheduleEditor
-                isSaving={schedule.isLoading}
+                isSaving={schedule.isSaving}
                 initialDay={scheduleDay}
                 meals={meals}
                 onClose={closeScheduleEditor}

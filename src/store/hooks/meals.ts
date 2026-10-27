@@ -22,6 +22,8 @@ export const useMeals = (
 ): {
     meals: (Meal | EditedMeal)[];
     isLoading: boolean;
+    isError: boolean;
+    retry: () => void;
     isSaving: boolean;
     pendingSlots: string[];
     saveEntryCell: SaveEntryCell;
@@ -97,10 +99,14 @@ export const useMeals = (
     };
     return {
         deleteEntryCell,
+        isError: query.isError,
         isLoading: query.isFetching,
         isSaving: state.isSaving,
         meals: query.data ?? [],
         pendingSlots: state.pendingSlots,
+        retry: () => {
+            void query.refetch();
+        },
         saveEntryCell,
         swapEntries,
     };

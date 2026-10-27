@@ -4,11 +4,14 @@ import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 
+import { profileResponseSchema } from '~schemas/user';
 import { type UserProfile } from '~types/user';
+import { requireActionSuccess } from '~util/action-result';
 import {
     showErrorNotification,
     showSuccessNotification,
 } from '~util/notification';
+import { getProfileQueryKey } from '~util/query-keys';
 
 import { saveProfile } from '../app/actions';
 import { useUser } from './use-user';
@@ -39,18 +42,14 @@ export const useProfile: UseProfile = () => {
 
     const { data: profile, isFetching } = useQuery({
         enabled: Boolean(user),
-        queryFn: async (): Promise<UserProfile> => {
-            const response = await fetch('/api/v1/user');
-
-            const { data } = (await response.json()) as { data?: UserProfile };
-
-            if (!response.ok || !data) {
+        queryFn: async ({ signal }): Promise<UserProfile> => {
+            const response = await fetch('/api/v1/user', { signal });
+            if (!response.ok) {
                 throw new Error('Could not fetch user profile');
             }
-
-            return data;
+            return profileResponseSchema.parse(await response.json()).data;
         },
-        queryKey: ['user'],
+        queryKey: getProfileQueryKey(user?.email),
     });
 
     const { mutate: updateProfile } = useMutation({
@@ -68,9 +67,7 @@ export const useProfile: UseProfile = () => {
                 language,
                 targetWeight,
             });
-            if (!response.ok) {
-                throw new Error('Could not save profile');
-            }
+            requireActionSuccess(response);
         },
         onError: (): void => {
             showErrorNotification({
@@ -91,7 +88,7 @@ export const useProfile: UseProfile = () => {
             }
 
             await queryClient.invalidateQueries({
-                queryKey: ['user'],
+                queryKey: getProfileQueryKey(user?.email),
             });
         },
     });

@@ -3,6 +3,8 @@ import { z } from 'zod';
 
 import { MEAL_ZONE_KEYS } from '~constants/meal-zones';
 
+import { weekStartSchema } from './meal-plan';
+
 const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/u;
 
 export const weeklyMealZoneSchema = z.object({
@@ -17,7 +19,7 @@ export const weeklyMealZoneSchema = z.object({
 
 export const weeklyMealScheduleSchema = z
     .object({
-        weekStart: z.iso.date(),
+        weekStart: weekStartSchema,
         zones: z.array(weeklyMealZoneSchema).min(7).max(70),
     })
     .superRefine(({ weekStart, zones }, context) => {

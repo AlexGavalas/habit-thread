@@ -1,4 +1,4 @@
-import { createMealPlanHarness, deferred, porridge } from '~test/meal-plan';
+import { createMealPlanTestContext, deferred, porridge } from '~test/meal-plan';
 import { act, renderHook, waitFor } from '~test/utils';
 
 import { saveMealOperation } from '../../app/meal-mutation-actions';
@@ -12,7 +12,7 @@ describe('immediate meal saves', () => {
         const response =
             deferred<Awaited<ReturnType<typeof saveMealOperation>>>();
         jest.mocked(saveMealOperation).mockReturnValueOnce(response.promise);
-        const { Wrapper, queryClient } = createMealPlanHarness();
+        const { Wrapper, queryClient } = createMealPlanTestContext();
         const { result } = renderHook(
             () => ({
                 first: useMeals(),
@@ -67,7 +67,7 @@ describe('immediate meal saves', () => {
         const response =
             deferred<Awaited<ReturnType<typeof saveMealOperation>>>();
         jest.mocked(saveMealOperation).mockReturnValueOnce(response.promise);
-        const { Wrapper, queryClient } = createMealPlanHarness();
+        const { Wrapper, queryClient } = createMealPlanTestContext();
         const { result } = renderHook(useMeals, { wrapper: Wrapper });
         let outcome: Promise<unknown>;
         act(() => {
@@ -89,7 +89,7 @@ describe('immediate meal saves', () => {
 
     it('uses the generated ID when editing a newly created meal again', async () => {
         expect.hasAssertions();
-        const { Wrapper, queryClient } = createMealPlanHarness([]);
+        const { Wrapper, queryClient } = createMealPlanTestContext([]);
         jest.mocked(saveMealOperation).mockResolvedValue({
             meals: [porridge],
             ok: true,

@@ -8,11 +8,13 @@ import type { ReactElement } from 'react';
 import { type ChangeEvent, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ReadError } from '~components/read-error';
 import { DEFAULT_MEAL_ZONE_TIMES, ROWS } from '~constants/calendar';
 import { SettingsActions } from '~features/settings-actions';
 import { useMealZoneTimes } from '~hooks/use-meal-zone-times';
 import { mealZoneTimesSchema } from '~schemas/meal-zone';
 import { type MealZoneKey, type MealZoneTimes } from '~types/meal-zone';
+import { requireActionSuccess } from '~util/action-result';
 import {
     showErrorNotification,
     showSuccessNotification,
@@ -25,21 +27,24 @@ export const MealZoneSettings = ({
 }: Readonly<{ ownerUserId?: number }>): ReactElement => {
     const { t } = useTranslation();
     const queryClient = useQueryClient();
-    const { effectiveFrom, isFetching, times } = useMealZoneTimes(
-        undefined,
-        ownerUserId,
-    );
+    const {
+        effectiveFrom,
+        isFetching,
+        times,
+        isError,
+        retry: handleRetry,
+    } = useMealZoneTimes(undefined, ownerUserId);
     const [values, setValues] = useState<MealZoneTimes>(
         DEFAULT_MEAL_ZONE_TIMES,
     );
     const [hasLoaded, setHasLoaded] = useState(false);
 
     useEffect(() => {
-        if (!isFetching && !hasLoaded) {
+        if (!isError && !isFetching && !hasLoaded) {
             setValues(times);
             setHasLoaded(true);
         }
-    }, [hasLoaded, isFetching, times]);
+    }, [hasLoaded, isError, isFetching, times]);
 
     const validation = mealZoneTimesSchema.safeParse(values);
 
@@ -53,11 +58,7 @@ export const MealZoneSettings = ({
                 times: values,
             });
 
-            if (!response.ok) {
-                throw new Error('Could not save meal zone times');
-            }
-
-            return response;
+            return requireActionSuccess(response);
         },
         onError: (): void => {
             showErrorNotification({
@@ -97,6 +98,10 @@ export const MealZoneSettings = ({
     const formattedEffectiveDate = effectiveFrom
         ? format(parseISO(effectiveFrom), 'dd/MM/yyyy')
         : '';
+
+    if (isError) {
+        return <ReadError onRetry={handleRetry} isRetrying={isFetching} />;
+    }
 
     return (
         <Stack gap="md">

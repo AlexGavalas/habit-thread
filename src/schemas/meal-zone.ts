@@ -43,3 +43,8 @@ export const mealZoneTimesSchema: z.ZodType<MealZoneTimes> =
 export const mealZoneTimesRequestSchema = z.object({
     times: mealZoneTimesSchema,
 });
+
+export const mealZoneTimesResponseSchema = z.object({
+    data: mealZoneTimesSchema,
+    effectiveFrom: z.iso.date().optional(),
+});

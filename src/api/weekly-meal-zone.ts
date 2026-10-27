@@ -11,6 +11,7 @@ import { meals, weeklyMealZones } from '~db/schema';
 import { type WeeklyMealZone } from '~types/meal-zone';
 import { getDaysOfWeek } from '~util/date';
 
+import { lockMealPlan } from './meal-plan-lock';
 import { fetchMealZoneTimes } from './meal-zone';
 
 const normalizeTime = (value: string): string => value.slice(0, 5);
@@ -50,6 +51,7 @@ export const fetchWeeklyMealZones = async ({
     }
 
     const times = await fetchMealZoneTimes({
+        db,
         effectiveOn: weekStart,
         userId,
     });
@@ -88,6 +90,7 @@ export const saveWeeklyMealZones = async ({
     const retainedKeys = zones.map(({ zoneKey }) => zoneKey);
 
     await db.transaction(async (tx) => {
+        await lockMealPlan(tx, userId);
         const weekMeals = await tx
             .select({ id: meals.id, sectionKey: meals.section_key })
             .from(meals)

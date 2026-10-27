@@ -12,6 +12,10 @@ export const activitySchema: ActivitySchema = z.object({
 });
 
 export const patchRequestSchema = z.object({
-    activity: z.string(),
-    date: z.string(),
+    activity: z.string().trim().min(1),
+    date: z.iso.date(),
+});
+
+export const activitiesResponseSchema = z.object({
+    data: z.array(activitySchema),
 });

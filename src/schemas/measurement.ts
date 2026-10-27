@@ -13,7 +13,22 @@ export const measurementSchema: MeasurementSchema = z.object({
 });
 
 export const patchRequestSchema = z.object({
-    date: z.string(),
-    fatPercent: z.number(),
-    weight: z.number(),
+    date: z.iso.date(),
+    fatPercent: z.number().min(0).max(100).nullable().optional(),
+    weight: z.number().positive(),
+});
+
+export const measurementSummarySchema = z.object({
+    currentFat: z.number(),
+    currentWeight: z.number(),
+    fatTimeline: z
+        .array(z.object({ x: z.string(), y: z.number().nullable() }))
+        .nullable(),
+    weightTimeline: z
+        .array(z.object({ x: z.string(), y: z.number() }))
+        .nullable(),
+});
+
+export const measurementSummaryResponseSchema = z.object({
+    data: measurementSummarySchema,
 });

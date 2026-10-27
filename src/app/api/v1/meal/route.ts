@@ -1,22 +1,17 @@
-import { z } from 'zod';
-
-import { fetchMeals, saveMeals } from '~api/meal';
+import { fetchMeals } from '~api/meal';
+import { saveMealPlanChanges } from '~api/meal-plan';
 import { requireMealPlanAccess } from '~api/professional';
-import { patchRequestSchema } from '~schemas/meal';
+import { mealRangeQuerySchema } from '~schemas/meal-plan';
 import { withUser } from '~util/session';
 
 export const GET = withUser(async ({ request, user }) => {
-    const query: Partial<Record<string, string>> = Object.fromEntries(
-        request.nextUrl.searchParams,
+    const {
+        endDate,
+        startDate,
+        ownerUserId = user.id,
+    } = mealRangeQuerySchema.parse(
+        Object.fromEntries(request.nextUrl.searchParams),
     );
-
-    const endDate = String(query.endDate);
-    const startDate = String(query.startDate);
-    const ownerUserId = query.ownerUserId ? Number(query.ownerUserId) : user.id;
-
-    if (!Number.isSafeInteger(ownerUserId) || ownerUserId <= 0) {
-        return Response.json({ message: 'Bad Request' }, { status: 400 });
-    }
 
     await requireMealPlanAccess({
         actorUserId: user.id,
@@ -33,24 +28,12 @@ export const GET = withUser(async ({ request, user }) => {
 });
 
 export const PATCH = withUser(async ({ request, user }) => {
-    const {
-        deletedIds,
-        editedMeals,
-        newMeals,
-        ownerUserId = user.id,
-    } = patchRequestSchema
-        .extend({ ownerUserId: z.number().int().positive().optional() })
-        .parse(await request.json());
-
-    await requireMealPlanAccess({ actorUserId: user.id, ownerUserId });
-
-    await saveMeals({
-        ...(ownerUserId !== user.id && { allowAnnotations: false }),
-        deletedIds,
-        editedMeals,
-        newMeals,
-        userId: ownerUserId,
-    });
+    const result = await saveMealPlanChanges(user.id, await request.json());
+    if (!result.ok) {
+        return Response.json(result, {
+            status: result.reason === 'forbidden' ? 404 : 400,
+        });
+    }
 
     return Response.json({ message: 'OK' }, { status: 200 });
 });

@@ -126,7 +126,10 @@ describe('<Onboarding />', () => {
 
     it('keeps the welcome screen and allows retry after a role save failure', async () => {
         expect.hasAssertions();
-        jest.mocked(setProfessionalRole).mockResolvedValueOnce({ ok: false });
+        jest.mocked(setProfessionalRole).mockResolvedValueOnce({
+            error: 'invalid',
+            ok: false,
+        });
         const { user } = renderOnboarding();
         await user.click(screen.getByRole('checkbox'));
         await user.click(screen.getByRole('button', { name: 'Continue' }));

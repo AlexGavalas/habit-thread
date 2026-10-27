@@ -8,6 +8,7 @@ import { EditPencil, Running } from 'iconoir-react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ReadError } from '~components/read-error';
 import { useMeasurementSummary } from '~hooks/use-measurement-summary';
 
 import { HealthSummary } from './home-health-summary';
@@ -32,7 +33,15 @@ export const Home = ({
 }: HomeProps): ReactElement => {
     const { t, i18n } = useTranslation();
     const { handleAddActivity, handleAddMeasurement } = useHomeActions();
-    const { data: summary } = useMeasurementSummary();
+    const {
+        data: summary,
+        isError,
+        isFetching,
+        refetch,
+    } = useMeasurementSummary();
+    const handleRetry = (): void => {
+        void refetch();
+    };
     const now = parseISO(date);
     const day = format(now, 'yyyy-MM-dd');
     const todayZones = weeklyMealZones
@@ -93,14 +102,18 @@ export const Home = ({
                 </Group>
             </header>
 
-            <SummaryCards
-                currentWeight={currentWeight}
-                nextMeal={nextMeal}
-                plannedMeals={plannedMeals}
-                targetWeight={targetWeight}
-                totalMeals={mealItems.length}
-                weightTrend={weightTrend}
-            />
+            {isError ? (
+                <ReadError onRetry={handleRetry} isRetrying={isFetching} />
+            ) : (
+                <SummaryCards
+                    currentWeight={currentWeight}
+                    nextMeal={nextMeal}
+                    plannedMeals={plannedMeals}
+                    targetWeight={targetWeight}
+                    totalMeals={mealItems.length}
+                    weightTrend={weightTrend}
+                />
+            )}
 
             <section className={styles.contentGrid}>
                 <TodayMeals

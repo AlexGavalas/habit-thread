@@ -11,11 +11,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { showErrorNotification } from '~util/notification';
-
-const localeMap = {
-    gr: 'el',
-};
+import { useTrackingMutation } from '~hooks/use-tracking-mutation';
 
 type ActivityModalProps = {
     onSave?: () => Promise<void> | void;
@@ -38,6 +34,10 @@ export const ActivityModal = ({
 
     const [activity, setActivity] = useState(initialData?.activity);
     const [error, setError] = useState('');
+    const mutation = useTrackingMutation(id, async () => {
+        await onSave?.();
+        context.closeContextModal(id);
+    });
 
     const closeModal = (): void => {
         context.closeContextModal(id);
@@ -47,12 +47,21 @@ export const ActivityModal = ({
         setError('');
     };
 
+    const handleDateChange = (value: string | null): void => {
+        if (!mutation.isPending) {
+            setDate(value);
+        }
+    };
+
     const handleActivityChange = ((e): void => {
         setActivity(e.target.value);
     }) satisfies ChangeEventHandler<HTMLTextAreaElement>;
 
-    const handleSave = (async (e): Promise<void> => {
+    const handleSave = ((e): void => {
         e.preventDefault();
+        if (mutation.isPending) {
+            return;
+        }
 
         if (!activity) {
             setError(t('errors.activity_empty'));
@@ -64,30 +73,11 @@ export const ActivityModal = ({
             return;
         }
 
-        const url = initialData?.id
-            ? `/api/v1/activity?id=${initialData.id}`
-            : '/api/v1/activity';
-
-        const response = await fetch(url, {
-            body: JSON.stringify({
-                activity,
-                date,
-            }),
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            method: initialData ? 'PATCH' : 'POST',
+        mutation.mutate({
+            data: { activity, date },
+            id: initialData?.id,
+            resource: 'activity',
         });
-
-        if (!response.ok) {
-            showErrorNotification({
-                message: `${t('errors.activity_save')}. ${t('try_again')}`,
-                title: t('notification.error.title'),
-            });
-        } else {
-            await onSave?.();
-            closeModal();
-        }
     }) satisfies SubmitEventHandler<HTMLFormElement>;
 
     return (
@@ -95,14 +85,15 @@ export const ActivityModal = ({
             <Text>{t('date')}</Text>
             <Center>
                 <DatePicker
-                    locale={localeMap[i18n.language as keyof typeof localeMap]}
-                    onChange={setDate}
+                    locale={i18n.language === 'gr' ? 'el' : 'en'}
+                    onChange={handleDateChange}
                     value={date}
                 />
             </Center>
             <Space h="lg" />
             <Textarea
                 autosize
+                disabled={mutation.isPending}
                 defaultValue={activity}
                 error={error}
                 label={t('activity.label')}
@@ -114,10 +105,17 @@ export const ActivityModal = ({
 
             <Space h="lg" />
             <Group gap="md" justify="space-between">
-                <Button color="danger" onClick={closeModal} variant="light">
+                <Button
+                    color="danger"
+                    disabled={mutation.isPending}
+                    onClick={closeModal}
+                    variant="light"
+                >
                     {t('generic.actions.cancel')}
                 </Button>
-                <Button type="submit">{t('generic.actions.save')}</Button>
+                <Button loading={mutation.isPending} type="submit">
+                    {t('generic.actions.save')}
+                </Button>
             </Group>
         </form>
     );
