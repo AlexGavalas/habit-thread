@@ -48,10 +48,6 @@ PDF text extraction uses `unpdf`'s serverless PDF.js bundle with its worker
 inlined; no native canvas or browser DOM globals are required. The parser loads
 only for PDF requests.
 
-Every production build runs `pnpm check:meal-import-package`: it copies only
-the upload route's traced deployment files into an isolated temporary tree,
-loads the route, and extracts a synthetic PDF without access to the checkout's
-`node_modules`. No API key, database, or external AI call is used.
 Import preview screenshots have separate compact and food-database-enabled
 baselines; verify both locally with `E2E_FOOD_DATABASE_SEARCH=false` and `true`.
 

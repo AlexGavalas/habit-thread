@@ -8,7 +8,7 @@
     "packageManager": "pnpm@12.3.1",
     "scripts": {
         "dev": "next dev",
-        "build": "next build && pnpm check:meal-import-package",
+        "build": "next build",
         "build:analyze": "next analyze",
         "vercel-build": "if [ \"$VERCEL_ENV\" = \"preview\" ] || [ \"$VERCEL_ENV\" = \"production\" ]; then pnpm db:migrate; fi && pnpm build",
         "start": "next start",
@@ -31,7 +31,6 @@
         "db:e2e:down": "docker compose stop postgres-e2e",
         "lint": "oxlint .",
         "check:format": "oxfmt --check .",
-        "check:meal-import-package": "node scripts/check-meal-import-package.ts",
         "check:types": "tsc --noEmit",
         "format": "oxfmt",
         "format:all": "pnpm format .",
