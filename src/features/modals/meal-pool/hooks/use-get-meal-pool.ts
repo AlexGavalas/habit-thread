@@ -1,5 +1,6 @@
 import { type UseQueryResult, useQuery } from '@tanstack/react-query';
 
+import { mealPoolSearchResponseSchema } from '~schemas/meal-pool';
 import { type MealTemplate } from '~types/meal-pool';
 
 export type MealPoolSearchResults = {
@@ -28,11 +29,14 @@ export const useGetMealPool: UseGetMealPool = ({
             }
             const response = await fetch(`/api/v1/pool/meal?${query}`);
 
-            const { data } = (await response.json()) as {
-                data?: MealTemplate[] | MealPoolSearchResults;
-            };
+            if (!response.ok) {
+                throw new Error('Could not fetch previous meals');
+            }
+            const { data } = mealPoolSearchResponseSchema.parse(
+                await response.json(),
+            );
 
-            return data ?? (includeClient ? { client: [], own: [] } : []);
+            return data;
         },
         queryKey: [
             'pool-meal',

@@ -385,6 +385,25 @@
         },
         "meal_pool": {
             "title": "Create a meal",
+            "manual": {
+                "description": "Meal description",
+                "placeholder": "e.g. Greek yogurt, oats and a banana",
+                "use_previous": "Use a previous meal…",
+                "search": "Search previous meals",
+                "search_hint": "Search by a meal name or ingredient to find a starting point.",
+                "searching": "Searching meals…",
+                "search_error": "Couldn't load previous meals. Try another search.",
+                "no_results": "No meals found. Try another search or write your own meal above.",
+                "use_meal": "Use this meal",
+                "started_from": "Started from: {{meal}}",
+                "copy_hint": "The original won't change. Give your new meal a different description before saving.",
+                "undo": "Undo",
+                "replace_title": "Replace your draft?",
+                "replace_hint": "Use “{{meal}}” instead of your current description and items? You can undo this.",
+                "keep_draft": "Keep my draft",
+                "replace": "Replace draft",
+                "save": "Save new meal"
+            },
             "tabs": {
                 "manual": "Manual",
                 "food_database": "Food database",
