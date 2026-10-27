@@ -5,8 +5,7 @@ import type { ReactElement } from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useMeals, useUnsavedChanges } from '~store/hooks';
-import { isMealSlotEdited } from '~store/hooks/meal-operations';
+import { useMeals } from '~store/hooks';
 import { type MealsMap } from '~types/meal';
 import { type WeeklyMealZone } from '~types/meal-zone';
 import { getDaysOfWeek } from '~util/date';
@@ -27,7 +26,6 @@ export const MobileContent = ({
 }>): ReactElement | null => {
     const { i18n, t } = useTranslation();
     const { meals } = useMeals();
-    const { unsavedChanges } = useUnsavedChanges();
     const [selectedDay, setSelectedDay] = useState(
         () => (getDay(parseISO(initialDate)) + 6) % 7,
     );
@@ -53,9 +51,7 @@ export const MobileContent = ({
     const dayZones = zones
         .filter((zone) => zone.day === dayKey)
         .toSorted((a, b) => a.position - b.position);
-    const dayMeals = dayZones.map(
-        ({ zoneKey }) => unsavedChanges[zoneKey] ?? mealsMap[zoneKey],
-    );
+    const dayMeals = dayZones.map(({ zoneKey }) => mealsMap[zoneKey]);
 
     return (
         <Stack gap="lg">
@@ -84,11 +80,6 @@ export const MobileContent = ({
                 {dayZones.map((zone) => (
                     <MobileMeal
                         id={zone.zoneKey}
-                        isEdited={isMealSlotEdited(
-                            unsavedChanges,
-                            zone.zoneKey,
-                        )}
-                        isRow={false}
                         key={zone.zoneKey}
                         label={
                             zone.legacyKey
@@ -98,10 +89,7 @@ export const MobileContent = ({
                                 : zone.label
                         }
                         legacyKey={zone.legacyKey}
-                        meal={
-                            unsavedChanges[zone.zoneKey] ??
-                            mealsMap[zone.zoneKey]
-                        }
+                        meal={mealsMap[zone.zoneKey]}
                         time={zone.time}
                         timestamp={parseISO(zone.day)}
                     />

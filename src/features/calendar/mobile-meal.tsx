@@ -26,8 +26,6 @@ import { type RowKey } from './types';
 
 type MobileMealProps = Readonly<{
     id: string;
-    isEdited: boolean;
-    isRow: boolean;
     label: string;
     legacyKey?: MealZoneKey;
     meal?: Meal | EditedMeal;
@@ -40,8 +38,6 @@ const isSavedMeal = (meal?: Meal | EditedMeal): meal is Meal =>
 
 export const MobileMeal = ({
     id,
-    isEdited,
-    isRow,
     label,
     legacyKey,
     meal,
@@ -51,8 +47,8 @@ export const MobileMeal = ({
     const { t } = useTranslation();
     const ownerUserId = useMealPlanOwnerId();
     const canEditAnnotations = useCanEditMealAnnotations();
-    const { deleteEntryCell, deleteEntryRow, saveEntryCell, saveEntryRow } =
-        useMeals();
+    const { deleteEntryCell, saveEntryCell, pendingSlots } = useMeals();
+    const isSaving = pendingSlots.includes(id);
     const openEditMealModal = useOpenContextModal('meal');
     const openMealNoteModal = useOpenContextModal('meal-note');
     const openMealRatingModal = useOpenContextModal('meal-rating');
@@ -61,13 +57,12 @@ export const MobileMeal = ({
         ? MEAL_ICON[legacyKey]
         : (MEAL_ICON[rowKey as RowKey] ?? AppleHalf);
 
-    const handleSave = (newMeal: MealChange): Promise<void> => {
+    const handleSave = async (newMeal: MealChange): Promise<void> => {
         if (!ownerUserId || !newMeal.meal) {
-            return Promise.resolve();
+            return;
         }
 
-        const saveEntry = isRow ? saveEntryRow : saveEntryCell;
-        saveEntry({
+        await saveEntryCell({
             items: newMeal.items,
             meal,
             note: newMeal.note,
@@ -77,19 +72,13 @@ export const MobileMeal = ({
             userId: ownerUserId,
             value: newMeal.meal,
         });
-
-        return Promise.resolve();
     };
 
-    const handleDelete = (): void => {
+    const handleDelete = async (): Promise<void> => {
         if (!meal) {
             return;
         }
-        if (isRow) {
-            deleteEntryRow(id);
-        } else {
-            deleteEntryCell({ meal });
-        }
+        await deleteEntryCell({ meal });
     };
 
     const handleOpenEdit = (): void => {
@@ -150,12 +139,7 @@ export const MobileMeal = ({
     };
 
     return (
-        <Paper
-            withBorder
-            className={styles.meal}
-            data-edited={isEdited || undefined}
-            p="md"
-        >
+        <Paper withBorder className={styles.meal} aria-busy={isSaving} p="md">
             <Group justify="space-between" wrap="nowrap">
                 <Group className={styles.mealSummary} gap="md" wrap="nowrap">
                     <Box aria-hidden className={styles.mealIcon}>
@@ -169,17 +153,23 @@ export const MobileMeal = ({
                             {meal?.meal || 'N/A'}
                         </Text>
                         <MobileMealDetails meal={meal} />
+                        {isSaving && (
+                            <Text size="xs" role="status">
+                                {t('meal_plan.persistence.saving')}
+                            </Text>
+                        )}
                     </Stack>
                 </Group>
                 <Group gap="xs" wrap="nowrap">
                     <UnstyledButton
                         aria-label={t('meal_plan.edit_meal_label', { label })}
                         className={styles.actionButton}
+                        disabled={isSaving}
                         onClick={handleOpenEdit}
                     >
                         <EditPencil />
                     </UnstyledButton>
-                    {meal?.meal && (
+                    {meal?.meal && !isSaving && (
                         <MobileMealActions
                             canEditAnnotations={
                                 isSavedMeal(meal) && canEditAnnotations

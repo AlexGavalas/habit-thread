@@ -3,6 +3,8 @@ import { Drag, Xmark } from 'iconoir-react';
 import { useRef, useState, type DragEvent, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useMeals } from '~store/hooks';
+
 import { Cell, type CellProps } from './cell/cell';
 import { useMealSwap } from './meal-swap-board';
 import styles from './meal-swap.module.css';
@@ -24,11 +26,13 @@ export const SwappableMeal = ({
 }: SwappableMealProps): ReactElement => {
     const { t } = useTranslation();
     const swap = useMealSwap();
+    const { pendingSlots } = useMeals();
+    const isSaving = pendingSlots.includes(props.id);
     const ref = useRef<HTMLDivElement>(null);
     const [isOver, setIsOver] = useState(false);
     const slot = { day, sectionKey: props.id };
     const selected = swap?.selection?.slot.sectionKey === props.id;
-    const isTarget = Boolean(swap?.selection && !selected);
+    const isTarget = Boolean(swap?.selection && !selected && !isSaving);
     const targetLabel = props.meal?.meal
         ? t('meal_plan.swap.swap_here', { meal: props.meal.meal, slot: label })
         : t('meal_plan.swap.move_here', { slot: label });
@@ -37,7 +41,7 @@ export const SwappableMeal = ({
         // Embla cancels bubbling native dragstart events to implement swiping.
         // Capture the handle's drag before it reaches the carousel viewport.
         event.stopPropagation();
-        if (!props.meal?.meal) {
+        if (!props.meal?.meal || isSaving) {
             event.preventDefault();
             return;
         }
@@ -71,7 +75,7 @@ export const SwappableMeal = ({
             swap?.cancel();
             return;
         }
-        if (props.meal?.meal) {
+        if (props.meal?.meal && !isSaving) {
             swap?.select({ dragging: false, name: props.meal.meal, slot });
         }
     };
@@ -114,8 +118,8 @@ export const SwappableMeal = ({
                             className={styles.handle}
                             data-meal-drag-handle
                             data-unavailable={isTarget || undefined}
-                            disabled={isTarget}
-                            draggable
+                            disabled={isTarget || isSaving}
+                            draggable={!isSaving}
                             onClick={handleSelect}
                             onDragStartCapture={handleDragStart}
                             onDragEnd={handleCancel}

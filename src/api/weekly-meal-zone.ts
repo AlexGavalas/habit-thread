@@ -18,11 +18,13 @@ const normalizeTime = (value: string): string => value.slice(0, 5);
 export const fetchWeeklyMealZones = async ({
     userId,
     weekStart,
+    db = getDb(),
 }: {
+    db?: ReturnType<typeof getDb>;
     userId: number;
     weekStart: string;
 }): Promise<WeeklyMealZone[]> => {
-    const rows = await getDb()
+    const rows = await db
         .select()
         .from(weeklyMealZones)
         .where(
@@ -72,12 +74,13 @@ export const saveWeeklyMealZones = async ({
     userId,
     weekStart,
     zones,
+    db = getDb(),
 }: {
+    db?: ReturnType<typeof getDb>;
     userId: number;
     weekStart: string;
     zones: WeeklyMealZone[];
 }): Promise<void> => {
-    const db = getDb();
     const endDate = format(
         endOfWeek(parseISO(weekStart), { weekStartsOn: 1 }),
         'yyyy-MM-dd',

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { type WeeklyMealZone } from '~types/meal-zone';
 import { getDaysOfWeek } from '~util/date';
 
+import { useEditorSubmit } from '../modals/use-editor-submit';
 import {
     getDuplicateTimes,
     getNextMealTime,
@@ -42,6 +43,7 @@ export const useScheduleEditor = ({
     zones,
 }: ScheduleEditorOptions): ScheduleEditor => {
     const { i18n, t } = useTranslation();
+    const submission = useEditorSubmit();
     const days = useMemo(
         () =>
             getDaysOfWeek(
@@ -173,8 +175,9 @@ export const useScheduleEditor = ({
     };
     const handleSave = async (): Promise<void> => {
         const normalized = normalizeSchedule(draft, days);
-        await onSave(normalized);
-        onClose();
+        if (await submission.submit(() => onSave(normalized))) {
+            onClose();
+        }
     };
 
     return {

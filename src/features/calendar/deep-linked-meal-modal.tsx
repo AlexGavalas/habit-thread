@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useMealPlanOwnerId } from '~features/meal-plan-owner';
 import { useWeeklyMealZones } from '~hooks/use-weekly-meal-zones';
-import { useCurrentWeek, useMeals, useUnsavedChanges } from '~store/hooks';
+import { useCurrentWeek, useMeals } from '~store/hooks';
 import { type EditedMealItem } from '~types/meal';
 import { type MealZoneKey, type WeeklyMealZone } from '~types/meal-zone';
 import { useOpenContextModal } from '~util/modal';
@@ -32,9 +32,8 @@ export const DeepLinkedMealModal = ({
     const { t } = useTranslation();
     const ownerUserId = useMealPlanOwnerId();
     const { currentWeek } = useCurrentWeek();
-    const { deleteEntryCell, meals, saveEntryCell } = useMeals();
+    const { deleteEntryCell, meals, saveEntryCell, isLoading } = useMeals();
     const { zones } = useWeeklyMealZones(currentWeek, initialSchedule);
-    const { unsavedChanges } = useUnsavedChanges();
     const openMealModal = useOpenContextModal('meal');
     const openedTarget = useRef<string | null>(null);
     const targetDate = useMemo(() => parseISO(date), [date]);
@@ -42,6 +41,7 @@ export const DeepLinkedMealModal = ({
     useEffect(() => {
         if (
             (!mealZone && !slotKey) ||
+            isLoading ||
             !ownerUserId ||
             !isSameWeek(currentWeek, targetDate, { weekStartsOn: 1 })
         ) {
@@ -65,9 +65,7 @@ export const DeepLinkedMealModal = ({
             return;
         }
 
-        const meal =
-            unsavedChanges[sectionKey] ??
-            meals.find((item) => item.section_key === sectionKey);
+        const meal = meals.find((item) => item.section_key === sectionKey);
 
         openedTarget.current = targetKey;
         openMealModal({
@@ -75,14 +73,17 @@ export const DeepLinkedMealModal = ({
             innerProps: {
                 initialItems: meal?.items ?? [],
                 initialMeal: meal?.meal ?? '',
-                onDelete: (): void => {
+                onDelete: async (): Promise<void> => {
                     if (!meal) {
                         return;
                     }
-                    deleteEntryCell({ meal });
+                    await deleteEntryCell({ meal });
                 },
-                onSave: (value: string, items: EditedMealItem[]): void => {
-                    saveEntryCell({
+                onSave: async (
+                    value: string,
+                    items: EditedMealItem[],
+                ): Promise<void> => {
+                    await saveEntryCell({
                         items,
                         meal,
                         note: meal?.note,
@@ -101,6 +102,7 @@ export const DeepLinkedMealModal = ({
         currentWeek,
         date,
         deleteEntryCell,
+        isLoading,
         mealZone,
         meals,
         openMealModal,
@@ -109,7 +111,6 @@ export const DeepLinkedMealModal = ({
         slotKey,
         t,
         targetDate,
-        unsavedChanges,
         zones,
     ]);
 

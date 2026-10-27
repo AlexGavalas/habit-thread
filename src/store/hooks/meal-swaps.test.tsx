@@ -1,94 +1,121 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Provider, createStore } from 'jotai';
-import { type PropsWithChildren, type ReactElement } from 'react';
+import { createMealPlanHarness, deferred, porridge } from '~test/meal-plan';
+import { act, renderHook, waitFor } from '~test/utils';
 
-import { MealPlanOwnerProvider } from '~features/meal-plan-owner';
-import { currentWeekAtom, unsavedChangesAtom } from '~store/atoms';
-import { act, renderHook } from '~test/utils';
-import { type Meal } from '~types/meal';
-
+import { saveMealOperation } from '../../app/meal-mutation-actions';
 import { useMeals } from './meals';
 
-describe('useMeals swaps', () => {
-    it('applies repeated swaps atomically and isolates the plan owner drafts', () => {
-        const source = { day: '2026-01-12', sectionKey: 'monday' };
-        const destination = { day: '2026-01-13', sectionKey: 'tuesday' };
-        const empty = { day: '2026-01-14', sectionKey: 'wednesday' };
-        const meal: Meal = {
-            day: source.day,
-            id: 'meal-id',
-            meal: 'Porridge',
-            note: 'Client annotation',
-            rating: 5,
-            section_key: source.sectionKey,
-            user_id: 7,
-        };
-        const otherMeal: Meal = {
-            ...meal,
-            day: destination.day,
-            id: 'other-meal-id',
+jest.mock('~util/notification');
+
+describe('immediate meal moves', () => {
+    it('rolls back both slots without reverting an unrelated successful edit', async () => {
+        expect.hasAssertions();
+        const response =
+            deferred<Awaited<ReturnType<typeof saveMealOperation>>>();
+        const soup = {
+            ...porridge,
+            id: 'soup-id',
+            section_key: 'tuesday',
             meal: 'Soup',
-            section_key: destination.sectionKey,
         };
-        const otherOwnerChanges = { untouched: { ...meal, user_id: 8 } };
-        const store = createStore();
-        store.set(currentWeekAtom, new Date('2026-01-12T12:00:00Z'));
-        store.set(unsavedChangesAtom, {
-            '7': { [source.sectionKey]: { ...meal, meal: 'Edited porridge' } },
-            '8': otherOwnerChanges,
-        });
-        const queryClient = new QueryClient({
-            defaultOptions: { queries: { staleTime: Infinity } },
-        });
-        queryClient.setQueryData(['meals', 7, source.day], [meal, otherMeal]);
-        const Wrapper = ({ children }: PropsWithChildren): ReactElement => (
-            <Provider store={store}>
-                <MealPlanOwnerProvider
-                    canEditAnnotations={false}
-                    ownerUserId={7}
-                >
-                    <QueryClientProvider client={queryClient}>
-                        {children}
-                    </QueryClientProvider>
-                </MealPlanOwnerProvider>
-            </Provider>
-        );
+        const salad = {
+            ...porridge,
+            id: 'salad-id',
+            section_key: 'wednesday',
+            meal: 'Salad',
+        };
+        const { Wrapper, queryClient } = createMealPlanHarness([
+            porridge,
+            soup,
+            salad,
+        ]);
+        jest.mocked(saveMealOperation)
+            .mockReturnValueOnce(response.promise)
+            .mockResolvedValueOnce({
+                meals: [{ ...salad, meal: 'Green salad' }],
+                ok: true,
+            });
         const { result } = renderHook(useMeals, { wrapper: Wrapper });
-
+        let outcome: Promise<unknown>;
         act(() => {
-            result.current.swapEntries(source, destination);
-            result.current.swapEntries(destination, empty);
+            outcome = result.current
+                .swapEntries(
+                    { day: porridge.day, sectionKey: 'monday' },
+                    { day: porridge.day, sectionKey: 'tuesday' },
+                )
+                .catch((error: unknown) => error);
         });
-
-        expect(store.get(unsavedChangesAtom)).toStrictEqual({
-            '7': {
-                [source.sectionKey]: {
-                    ...otherMeal,
-                    day: source.day,
-                    section_key: source.sectionKey,
-                },
-                [destination.sectionKey]: {
-                    day: destination.day,
-                    meal: '',
-                    section_key: destination.sectionKey,
-                    user_id: 7,
-                },
-                [empty.sectionKey]: {
-                    ...meal,
-                    day: empty.day,
-                    meal: 'Edited porridge',
-                    section_key: empty.sectionKey,
-                },
-            },
-            '8': otherOwnerChanges,
+        await waitFor(() => {
+            expect(
+                result.current.meals.find(
+                    (meal) => meal.section_key === 'tuesday',
+                ),
+            ).toMatchObject({
+                id: porridge.id,
+                note: 'Oat milk',
+                rating: 5,
+            });
         });
-
-        act(() => {
-            result.current.revert();
+        await act(async () => {
+            await expect(
+                result.current.swapEntries(
+                    { day: porridge.day, sectionKey: 'tuesday' },
+                    { day: porridge.day, sectionKey: 'thursday' },
+                ),
+            ).rejects.toThrow('Meal operation is not available');
+            await result.current.saveEntryCell({
+                meal: salad,
+                note: null,
+                rating: null,
+                sectionKey: salad.section_key,
+                timestamp: new Date(salad.day),
+                userId: 7,
+                value: 'Green salad',
+            });
         });
+        await act(async () => {
+            response.reject(new Error('Network failure'));
+            await outcome;
+        });
+        await waitFor(() => {
+            expect(result.current.meals).toStrictEqual(
+                expect.arrayContaining([
+                    porridge,
+                    soup,
+                    { ...salad, meal: 'Green salad' },
+                ]),
+            );
+        });
+        queryClient.clear();
+    });
 
-        expect(store.get(unsavedChangesAtom)).toStrictEqual({
-            '8': otherOwnerChanges,
+    it('persists a move to an empty slot without creating an empty meal', async () => {
+        expect.hasAssertions();
+        const moved = {
+            ...porridge,
+            section_key: 'tuesday',
+            day: '2026-01-13',
+        };
+        const { Wrapper, queryClient } = createMealPlanHarness();
+        jest.mocked(saveMealOperation).mockResolvedValueOnce({
+            meals: [moved],
+            ok: true,
+        });
+        const { result } = renderHook(useMeals, { wrapper: Wrapper });
+        await act(async () => {
+            await result.current.swapEntries(
+                { day: porridge.day, sectionKey: 'monday' },
+                { day: moved.day, sectionKey: 'tuesday' },
+            );
+        });
+        expect(saveMealOperation).toHaveBeenCalledWith(
+            expect.objectContaining({
+                deletedIds: [],
+                editedMeals: [moved],
+                newMeals: [],
+            }),
+        );
+        await waitFor(() => {
+            expect(result.current.meals).toStrictEqual([moved]);
         });
         queryClient.clear();
     });

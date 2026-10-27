@@ -14,7 +14,6 @@ import { EditPencil, Plus } from 'iconoir-react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { isMealSlotEdited } from '~store/hooks/meal-operations';
 import { type MealsMap } from '~types/meal';
 import { type WeeklyMealZone } from '~types/meal-zone';
 
@@ -27,7 +26,6 @@ type Props = Readonly<{
     meals: MealsMap;
     onEditSchedule: (day?: string) => void;
     timestamp: Date;
-    unsavedChanges: MealsMap;
     zones: WeeklyMealZone[];
 }>;
 
@@ -36,7 +34,6 @@ export const DayLane = ({
     meals,
     onEditSchedule,
     timestamp,
-    unsavedChanges,
     zones,
 }: Props): ReactElement => {
     const { t } = useTranslation();
@@ -44,9 +41,7 @@ export const DayLane = ({
     const dayZones = zones
         .filter((zone) => zone.day === day)
         .toSorted((a, b) => a.position - b.position);
-    const dayMeals = dayZones.map(
-        ({ zoneKey }) => unsavedChanges[zoneKey] ?? meals[zoneKey],
-    );
+    const dayMeals = dayZones.map(({ zoneKey }) => meals[zoneKey]);
     const hasNutrition = dayMeals.some((meal) => meal?.items?.length);
     const handleEditSchedule = onEditSchedule.bind(undefined, day);
 
@@ -103,8 +98,7 @@ export const DayLane = ({
             </header>
             <Stack className={styles.slots} gap="compact">
                 {dayZones.map((zone) => {
-                    const meal =
-                        unsavedChanges[zone.zoneKey] ?? meals[zone.zoneKey];
+                    const meal = meals[zone.zoneKey];
                     const slotLabel = zone.legacyKey
                         ? t(`meal_zone_settings.labels.${zone.legacyKey}`)
                         : zone.label;
@@ -113,10 +107,6 @@ export const DayLane = ({
                             <SwappableMeal
                                 day={zone.day}
                                 id={zone.zoneKey}
-                                isEdited={isMealSlotEdited(
-                                    unsavedChanges,
-                                    zone.zoneKey,
-                                )}
                                 label={`${label}, ${slotLabel}, ${zone.time}`}
                                 meal={meal}
                                 slotLabel={slotLabel}

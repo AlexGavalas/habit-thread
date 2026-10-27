@@ -94,6 +94,13 @@
     "welcome": "Welcome",
     "view_weekly_meal": "Meal plan",
     "meal_plan": {
+        "persistence": {
+            "saving": "Saving…",
+            "saved": "Saved",
+            "failed": "Not saved. Please try again.",
+            "wait": "Please wait for your changes to finish saving.",
+            "confirm_copy": "Copy this plan to next week? This will replace next week’s schedule and meals."
+        },
         "edit_meal_label": "Edit {{label}}",
         "every_day": "Every day",
         "meal_library": "Meal library",

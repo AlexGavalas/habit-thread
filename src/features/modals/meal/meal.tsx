@@ -16,6 +16,7 @@ import { type FoodSearchResult } from '~types/food-search';
 import { type EditedMealItem } from '~types/meal';
 
 import { useGetMealPool } from '../meal-pool/hooks/use-get-meal-pool';
+import { useEditorSubmit } from '../use-editor-submit';
 import { useMealItems } from './hooks/use-meal-items';
 import { MealActions } from './meal-actions';
 import { MealEditorPanel } from './meal-editor-panel';
@@ -25,13 +26,13 @@ import { MealSearch } from './meal-search';
 import { MealSourcePanel } from './meal-source-panel';
 import styles from './meal.module.css';
 
-type MealModalProps = {
+type MealModalProps = Readonly<{
     onDelete: () => Promise<void> | void;
     initialItems?: EditedMealItem[];
     onSave: (meal: string, items: EditedMealItem[]) => Promise<void> | void;
     initialMeal: string;
     ownerUserId?: number;
-};
+}>;
 
 export const MealModal = ({
     context,
@@ -49,6 +50,7 @@ export const MealModal = ({
     const { profile } = useProfile();
     const isMobile = useMediaQuery('(max-width: 48em)');
     const [error, setError] = useState('');
+    const submission = useEditorSubmit(id);
     const [preview, setPreview] = useState(initialMeal);
     const { addFood, items, recentlyAddedIndex, setItems } =
         useMealItems(initialItems);
@@ -76,21 +78,20 @@ export const MealModal = ({
     const handleSubmit = (async (e): Promise<void> => {
         e.preventDefault();
 
-        const meal = preview;
-
-        if (!meal) {
+        if (!preview) {
             setError(t('errors.meal_empty'));
             return;
         }
 
-        await onSave(meal, items);
-
-        closeModal();
+        if (await submission.submit(() => onSave(preview, items))) {
+            closeModal();
+        }
     }) satisfies SubmitEventHandler<HTMLFormElement>;
 
     const handleDelete = (async (): Promise<void> => {
-        await onDelete();
-        closeModal();
+        if (await submission.submit(onDelete)) {
+            closeModal();
+        }
     }) satisfies MouseEventHandler<HTMLButtonElement>;
 
     const handleSearchChange = ((e): void => {
@@ -151,6 +152,7 @@ export const MealModal = ({
     return (
         <form className={styles.form} onSubmit={handleSubmit}>
             <div
+                inert={submission.isSaving}
                 className={`${styles.content} ${isFoodDatabaseSearchEnabled ? styles.workspaceContent : ''}`}
             >
                 {isFoodDatabaseSearchEnabled ? (
@@ -187,9 +189,11 @@ export const MealModal = ({
             </div>
             <MealActions
                 canDelete={Boolean(initialMeal)}
+                isSaving={submission.isSaving}
                 onCancel={closeModal}
                 onDelete={handleDelete}
             />
+            {submission.error && <p role="alert">{submission.error}</p>}
         </form>
     );
 };

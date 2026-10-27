@@ -1,77 +1,112 @@
-import { add, format, parse, parseISO } from 'date-fns';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { addWeeks, format, parseISO, startOfWeek } from 'date-fns';
+import { useStore } from 'jotai';
+import { useTranslation } from 'react-i18next';
 
 import { useMealPlanOwnerId } from '~features/meal-plan-owner';
-import { type EditedMeal, type Meal, type MealsMap } from '~types/meal';
-import { type WeeklyMealZone } from '~types/meal-zone';
+import { currentWeekAtom } from '~store/atoms';
+import { showErrorNotification } from '~util/notification';
 
-import { saveWeeklyMealSchedule } from '../../app/weekly-meal-zone-actions';
+import { copyMealPlanWeek } from '../../app/meal-mutation-actions';
 import { useCurrentWeek } from './current-week';
-import { useUnsavedChanges } from './unsaved-changes';
+import {
+    affectsMealWeek,
+    mealMutationKey,
+    useMealMutationState,
+} from './meal-mutation-state';
 
-const cloneSectionKey = (key: string): string =>
-    key.replace(/(\d+\/\d+\/\d+)$/, (match) => {
-        const previousDate = parse(match, 'dd/MM/yyyy', new Date());
-        return format(add(previousDate, { weeks: 1 }), 'dd/MM/yyyy');
-    });
-
-const cloneState = (
-    meals: (EditedMeal | Meal)[],
-): Record<string, EditedMeal> => {
-    return meals.reduce((acc: MealsMap, meal) => {
-        const newKey = cloneSectionKey(meal.section_key);
-
-        const day = format(add(parseISO(meal.day), { weeks: 1 }), 'yyyy-MM-dd');
-
-        acc[newKey] = {
-            ...meal,
-            day,
-            section_key: newKey,
-        };
-
-        delete acc[newKey]?.id;
-
-        return acc;
-    }, {});
+type CopyWeekVariables = {
+    affectedWeeks: string[];
+    ownerUserId: number;
+    weekStart: string;
 };
 
-type CopyToNextWeek = (meals: (EditedMeal | Meal)[]) => Promise<void>;
-
-export const useWeeklyScheduleOps = (
-    zones: WeeklyMealZone[],
-): {
-    copyToNextWeek: CopyToNextWeek;
+export const useWeeklyScheduleOps = (): {
+    copyToNextWeek: () => Promise<void>;
+    isCopyBlocked: boolean;
 } => {
-    const { nextWeek } = useCurrentWeek();
-    const { addChange } = useUnsavedChanges();
+    const { t } = useTranslation();
+    const { currentWeek } = useCurrentWeek();
+    const store = useStore();
     const ownerUserId = useMealPlanOwnerId();
-
-    const copyToNextWeek: CopyToNextWeek = async (meals) => {
-        const nextZones = zones.map((zone) => ({
-            ...zone,
-            day: format(add(parseISO(zone.day), { weeks: 1 }), 'yyyy-MM-dd'),
-            weekStart: format(
-                add(parseISO(zone.weekStart), { weeks: 1 }),
-                'yyyy-MM-dd',
-            ),
-            zoneKey: cloneSectionKey(zone.zoneKey),
-        }));
-        const nextWeekStart = nextZones[0]?.weekStart;
-        if (nextWeekStart) {
-            const result = await saveWeeklyMealSchedule({
-                ...(ownerUserId ? { ownerUserId } : {}),
-                weekStart: nextWeekStart,
-                zones: nextZones,
+    const queryClient = useQueryClient();
+    const mutationKey = mealMutationKey(ownerUserId);
+    const weekStart = format(
+        startOfWeek(currentWeek, { weekStartsOn: 1 }),
+        'yyyy-MM-dd',
+    );
+    const nextWeekStart = format(
+        addWeeks(parseISO(weekStart), 1),
+        'yyyy-MM-dd',
+    );
+    const sourceState = useMealMutationState(ownerUserId, weekStart);
+    const destinationState = useMealMutationState(ownerUserId, nextWeekStart);
+    const isCopyBlocked = sourceState.isSaving || destinationState.isSaving;
+    const mutation = useMutation({
+        mutationKey,
+        retry: false,
+        mutationFn: async (variables: CopyWeekVariables): Promise<void> => {
+            const result = await copyMealPlanWeek({
+                ownerUserId: variables.ownerUserId,
+                sourceWeek: variables.weekStart,
             });
             if (!result.ok) {
-                return;
+                throw new Error('Could not copy meal week');
             }
+        },
+        onSuccess: async (_data, variables): Promise<void> => {
+            const destination = format(
+                addWeeks(parseISO(variables.weekStart), 1),
+                'yyyy-MM-dd',
+            );
+            await Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: ['meals', variables.ownerUserId, destination],
+                }),
+                queryClient.invalidateQueries({
+                    queryKey: [
+                        'weekly-meal-zones',
+                        variables.ownerUserId,
+                        destination,
+                    ],
+                }),
+            ]);
+            const visibleWeek = format(
+                startOfWeek(store.get(currentWeekAtom), { weekStartsOn: 1 }),
+                'yyyy-MM-dd',
+            );
+            if (visibleWeek === variables.weekStart) {
+                store.set(currentWeekAtom, parseISO(destination));
+            }
+        },
+        onError: (): void => {
+            showErrorNotification({
+                title: t('notification.error.title'),
+                message: `${t('errors.meal_save')}. ${t('try_again')}`,
+            });
+        },
+    });
+    const copyToNextWeek = async (): Promise<void> => {
+        if (
+            !ownerUserId ||
+            queryClient.isMutating({
+                mutationKey,
+                predicate: (write) =>
+                    affectsMealWeek(write.state.variables, weekStart) ||
+                    affectsMealWeek(write.state.variables, nextWeekStart),
+            }) ||
+            !window.confirm(t('meal_plan.persistence.confirm_copy'))
+        ) {
+            return;
         }
-        nextWeek();
-
-        Object.values(cloneState(meals)).forEach(addChange);
+        // Errors are surfaced by the mutation. There is no editor to retain.
+        await mutation
+            .mutateAsync({
+                affectedWeeks: [weekStart, nextWeekStart],
+                ownerUserId,
+                weekStart,
+            })
+            .catch(() => undefined);
     };
-
-    return {
-        copyToNextWeek,
-    };
+    return { copyToNextWeek, isCopyBlocked };
 };

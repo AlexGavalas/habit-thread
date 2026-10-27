@@ -183,7 +183,7 @@ test('drags to offscreen days in either direction and drops without clicking car
         destination.getByText(mealName, { exact: true }),
     ).toBeVisible();
     await expect(slots.first().locator('[data-edited]')).toHaveCount(0);
-    await page.getByRole('button', { exact: true, name: 'Save' }).click();
+    await expect(destination.locator('[aria-busy="true"]')).toHaveCount(0);
     await expect(
         page.getByRole('button', { exact: true, name: 'Save' }),
     ).toHaveCount(0);

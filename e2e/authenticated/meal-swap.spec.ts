@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { getResponseSchema } from '../../src/schemas/meal';
 import { weeklyMealZoneSchema } from '../../src/schemas/weekly-meal-zone';
 
-test('swaps and moves whole meals, saves them, and reverts drafts', async ({
+test('swaps and moves whole meals with immediate persistence', async ({
     page,
     request,
 }) => {
@@ -104,6 +104,7 @@ test('swaps and moves whole meals, saves them, and reverts drafts', async ({
     await expect(
         second.getByText('Swap porridge', { exact: true }),
     ).toBeVisible();
+    await expect(second.locator('[aria-busy="true"]')).toHaveCount(0);
     await second.getByRole('button', { name: /^Swap or move/ }).click();
     await third.getByRole('button', { name: /^Move meal to/ }).click();
     await expect(
@@ -112,12 +113,12 @@ test('swaps and moves whole meals, saves them, and reverts drafts', async ({
     await expect(
         third.getByText('Swap porridge', { exact: true }),
     ).toBeVisible();
-    await test.step('Keep the edited marker on the meal, not the emptied source', async () => {
+    await test.step('Finish saving without leaving edited markers', async () => {
+        await expect(third.locator('[aria-busy="true"]')).toHaveCount(0);
         await expect(second.locator('[data-edited]')).toHaveCount(0);
-        await expect(third.locator('[data-edited]')).toHaveCount(1);
-        await expect(first.locator('[data-edited]')).toHaveCount(1);
+        await expect(third.locator('[data-edited]')).toHaveCount(0);
+        await expect(first.locator('[data-edited]')).toHaveCount(0);
     });
-    await page.getByRole('button', { exact: true, name: 'Save' }).click();
     await expect(
         page.getByRole('button', { exact: true, name: 'Save' }),
     ).toHaveCount(0);
@@ -153,18 +154,18 @@ test('swaps and moves whole meals, saves them, and reverts drafts', async ({
     await third.getByRole('button', { name: /^Swap or move/ }).click();
     await second.getByRole('button', { name: /^Move meal to/ }).focus();
     await page.keyboard.press('Enter');
-    await page.getByRole('button', { exact: true, name: 'Cancel' }).click();
-    await expect(
-        third.getByText('Swap porridge', { exact: true }),
-    ).toBeVisible();
+    await expect(second.locator('[aria-busy="true"]')).toHaveCount(0);
     await expect(
         second.getByText('Swap porridge', { exact: true }),
-    ).toHaveCount(0);
+    ).toBeVisible();
+    await expect(third.getByText('Swap porridge', { exact: true })).toHaveCount(
+        0,
+    );
     await expect(board).toHaveScreenshot('desktop-meal-swap.png');
     await test.step('Reach an offscreen day on a smaller desktop', async () => {
         await page.setViewportSize({ height: 1000, width: 1100 });
-        await third.hover();
-        await third.getByRole('button', { name: /^Swap or move/ }).click();
+        await second.hover();
+        await second.getByRole('button', { name: /^Swap or move/ }).click();
         const next = page.getByRole('button', { name: 'Show later days' });
         await next.click();
         await next.click();
@@ -175,6 +176,6 @@ test('swaps and moves whole meals, saves them, and reverts drafts', async ({
             sunday.getByText('Swap porridge', { exact: true }),
         ).toBeInViewport();
         await expect(board).toHaveScreenshot('desktop-meal-swap-narrow.png');
-        await page.getByRole('button', { exact: true, name: 'Cancel' }).click();
+        await expect(sunday.locator('[aria-busy="true"]')).toHaveCount(0);
     });
 });

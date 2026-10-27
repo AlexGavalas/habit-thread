@@ -10,11 +10,13 @@ import { useTranslation } from 'react-i18next';
 
 import { type Meal } from '~types/meal';
 
-type MealRatingModalProps = {
+import { useEditorSubmit } from '../use-editor-submit';
+
+type MealRatingModalProps = Readonly<{
     meal: Meal;
     onSave: (rating: number) => Promise<void>;
     onDelete: () => Promise<void>;
-};
+}>;
 
 export const MealRatingModal = ({
     context,
@@ -23,6 +25,7 @@ export const MealRatingModal = ({
 }: ContextModalProps<MealRatingModalProps>): ReactElement => {
     const { t } = useTranslation();
     const [rating, setRating] = useState<number>();
+    const submission = useEditorSubmit(id);
 
     const closeModal = (): void => {
         context.closeContextModal(id);
@@ -35,13 +38,15 @@ export const MealRatingModal = ({
             return;
         }
 
-        await onSave(rating);
-        closeModal();
+        if (await submission.submit(() => onSave(rating))) {
+            closeModal();
+        }
     }) satisfies SubmitEventHandler<HTMLFormElement>;
 
     const handleDelete = (async (): Promise<void> => {
-        await onDelete();
-        closeModal();
+        if (await submission.submit(onDelete)) {
+            closeModal();
+        }
     }) satisfies MouseEventHandler<HTMLButtonElement>;
 
     return (
@@ -50,24 +55,39 @@ export const MealRatingModal = ({
                 <Center>
                     <Rating
                         defaultValue={Number(meal.rating)}
+                        readOnly={submission.isSaving}
                         onChange={setRating}
                     />
                 </Center>
                 <Group justify="space-between">
-                    <Button color="danger" onClick={closeModal} variant="light">
+                    <Button
+                        disabled={submission.isSaving}
+                        color="danger"
+                        onClick={closeModal}
+                        variant="light"
+                    >
                         {t('generic.actions.cancel')}
                     </Button>
                     <Group gap="md">
                         {meal.rating && (
-                            <Button color="danger" onClick={handleDelete}>
+                            <Button
+                                disabled={submission.isSaving}
+                                color="danger"
+                                onClick={handleDelete}
+                            >
                                 {t('generic.actions.delete')}
                             </Button>
                         )}
-                        <Button disabled={!rating} type="submit">
+                        <Button
+                            loading={submission.isSaving}
+                            disabled={!rating}
+                            type="submit"
+                        >
                             {t('generic.actions.save')}
                         </Button>
                     </Group>
                 </Group>
+                {submission.error && <p role="alert">{submission.error}</p>}
             </Stack>
         </form>
     );

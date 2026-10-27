@@ -4,7 +4,7 @@ import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { MEAL_ZONE_KEYS } from '~constants/meal-zones';
-import { useCurrentWeek, useMeals, useUnsavedChanges } from '~store/hooks';
+import { useCurrentWeek, useMeals } from '~store/hooks';
 import { type MealsMap } from '~types/meal';
 import { getDaysOfWeek } from '~util/date';
 
@@ -15,7 +15,6 @@ export const DailyNutrition = (): ReactElement => {
     const { t } = useTranslation();
     const { currentWeek } = useCurrentWeek();
     const { meals } = useMeals();
-    const { unsavedChanges } = useUnsavedChanges();
     const map = meals.reduce<MealsMap>((result, meal) => {
         result[meal.section_key] = meal;
         return result;
@@ -26,10 +25,7 @@ export const DailyNutrition = (): ReactElement => {
             <div />
             {getDaysOfWeek(currentWeek).map(({ label, timestamp }) => {
                 const day = format(timestamp, 'yyyy-MM-dd');
-                const dayMeals = Object.values({
-                    ...map,
-                    ...unsavedChanges,
-                })
+                const dayMeals = Object.values(map)
                     .filter((meal) => meal.day === day)
                     .sort((a, b) => {
                         const zone = (meal: typeof a): number =>

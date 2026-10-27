@@ -1,192 +1,107 @@
-import {
-    keepPreviousData,
-    useQuery,
-    useQueryClient,
-} from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, startOfWeek } from 'date-fns';
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { useMealPlanOwnerId } from '~features/meal-plan-owner';
-import { type Meal } from '~types/meal';
-import { getDaysOfWeek } from '~util/date';
-import {
-    showErrorNotification,
-    showSuccessNotification,
-} from '~util/notification';
+import { getResponseSchema } from '~schemas/meal';
+import { type EditedMeal, type Meal } from '~types/meal';
 
-import { saveMealPlan } from '../../app/actions';
 import { useCurrentWeek } from './current-week';
+import { getMealsQueryKey, useMealMutationState } from './meal-mutation-state';
 import {
-    type DeleteEntryCell,
-    type DeleteEntryRow,
     type SaveEntryCell,
-    type SaveEntryRow,
-    type SwapEntries,
-    type UseMeals,
     createMealChange,
-    getMealPlanChanges,
     getMealsMap,
     getWeekRange,
     swapMealSlots,
+    type MealSlot,
 } from './meal-operations';
-import { useUnsavedChanges } from './unsaved-changes';
+import { useMealMutation } from './use-meal-mutation';
 
-export const useMeals: UseMeals = (explicitOwnerUserId) => {
-    const { t } = useTranslation();
+export const useMeals = (
+    explicitOwnerUserId?: number,
+): {
+    meals: (Meal | EditedMeal)[];
+    isLoading: boolean;
+    isSaving: boolean;
+    pendingSlots: string[];
+    saveEntryCell: SaveEntryCell;
+    deleteEntryCell: (params: { meal: Meal | EditedMeal }) => Promise<void>;
+    swapEntries: (source: MealSlot, destination: MealSlot) => Promise<void>;
+} => {
     const { currentWeek } = useCurrentWeek();
     const queryClient = useQueryClient();
-
     const ownerUserId = useMealPlanOwnerId(explicitOwnerUserId);
-    const { unsavedChanges, removeChanges, addChange, updateChanges } =
-        useUnsavedChanges(ownerUserId);
-
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const currentWeekKey = format(
+    const weekStart = format(
         startOfWeek(currentWeek, { weekStartsOn: 1 }),
         'yyyy-MM-dd',
     );
-
-    const { data: meals = [], isFetching: isFetchingMeals } = useQuery({
-        enabled: ownerUserId !== -1,
-        placeholderData: keepPreviousData,
-        queryFn: async (): Promise<Meal[]> => {
+    const queryKey = getMealsQueryKey(ownerUserId, weekStart);
+    const state = useMealMutationState(ownerUserId, weekStart);
+    const persist = useMealMutation(ownerUserId, weekStart);
+    const query = useQuery({
+        enabled: ownerUserId !== -1 && !state.isSaving,
+        staleTime: 30_000,
+        refetchOnWindowFocus: false,
+        queryKey,
+        queryFn: async ({ signal }): Promise<EditedMeal[]> => {
             const { endDate, startDate } = getWeekRange(currentWeek);
-
             const ownerQuery = ownerUserId ? `&ownerUserId=${ownerUserId}` : '';
             const response = await fetch(
                 `/api/v1/meal?startDate=${startDate}&endDate=${endDate}${ownerQuery}`,
+                { signal },
             );
-
-            const result = (await response.json()) as { data?: Meal[] };
-
-            setIsSubmitting(false);
-
-            return result.data ?? [];
-        },
-        queryKey: ownerUserId
-            ? ['meals', ownerUserId, currentWeekKey]
-            : ['meals', currentWeekKey],
-    });
-
-    const mealsMap = getMealsMap(meals);
-
-    const savePlan = async (): Promise<boolean> => {
-        setIsSubmitting(true);
-
-        const mealPlan = getMealPlanChanges(unsavedChanges, ownerUserId);
-        const response = await saveMealPlan(mealPlan).catch(() => ({
-            ok: false,
-        }));
-
-        if (!response.ok) {
-            setIsSubmitting(false);
-
-            showErrorNotification({
-                message: `${t('errors.meal_save')}. ${t('try_again')}`,
-                title: t('notification.error.title'),
-            });
-            return false;
-        }
-        await queryClient.invalidateQueries({
-            queryKey: ownerUserId ? ['meals', ownerUserId] : ['meals'],
-        });
-        setIsSubmitting(false);
-
-        removeChanges();
-
-        showSuccessNotification({
-            message: t('notification.success.message'),
-            title: t('notification.success.title'),
-        });
-        return true;
-    };
-
-    const deleteEntryCell: DeleteEntryCell = ({ meal }) => {
-        const deletedMeal = {
-            ...meal,
-            meal: '',
-        };
-
-        addChange(deletedMeal);
-    };
-
-    const deleteEntryRow: DeleteEntryRow = (id) => {
-        const [row] = id.split('_');
-        const daysOfWeek = getDaysOfWeek(currentWeek);
-
-        for (const { label } of daysOfWeek) {
-            const sectionKey = `${row}_${label}`;
-            const meal = meals.find((m) => m.section_key === sectionKey);
-
-            if (!meal) {
-                console.warn('No meal found for row', row);
-                continue;
+            if (!response.ok) {
+                throw new Error('Could not fetch meals');
             }
-
-            deleteEntryCell({ meal });
-        }
+            const { data } = getResponseSchema.parse(await response.json());
+            if (!data) {
+                throw new Error('Missing meal data');
+            }
+            return data;
+        },
+    });
+    const saveEntryCell: SaveEntryCell = async (params) => {
+        const current = queryClient.getQueryData<EditedMeal[]>(queryKey);
+        const meal =
+            current?.find((entry) => entry.section_key === params.sectionKey) ??
+            params.meal;
+        await persist({
+            [params.sectionKey]: createMealChange({ ...params, meal }),
+        });
     };
-
-    const saveEntryCell: SaveEntryCell = (params) => {
-        addChange(createMealChange(params));
+    const deleteEntryCell = async ({
+        meal,
+    }: {
+        meal: Meal | EditedMeal;
+    }): Promise<void> => {
+        await persist({ [meal.section_key]: { ...meal, meal: '' } }, false);
     };
-
-    const saveEntryRow: SaveEntryRow = ({
-        sectionKey,
-        userId,
-        value,
-        items,
-        note,
-        rating,
-    }) => {
-        const [row] = sectionKey.split('_');
-        const daysOfWeek = getDaysOfWeek(currentWeek);
-
-        for (const { label, timestamp } of daysOfWeek) {
-            const key = `${row}_${label}`;
-
-            const meal = mealsMap[key];
-
-            saveEntryCell({
-                items,
-                meal,
-                note,
-                rating,
-                sectionKey: key,
-                timestamp,
-                userId,
-                value,
-            });
-        }
-    };
-
-    const swapEntries: SwapEntries = (source, destination) => {
-        if (!ownerUserId) {
+    const swapEntries = async (
+        source: MealSlot,
+        destination: MealSlot,
+    ): Promise<void> => {
+        const meals = queryClient.getQueryData<EditedMeal[]>(queryKey) ?? [];
+        if (!ownerUserId || source.sectionKey === destination.sectionKey) {
             return;
         }
-
-        updateChanges((changes) =>
-            swapMealSlots({
-                changes,
-                destination,
-                meals: mealsMap,
-                source,
-                userId: ownerUserId,
-            }),
-        );
+        const changes = swapMealSlots({
+            changes: {},
+            destination,
+            meals: getMealsMap(meals),
+            source,
+            userId: ownerUserId,
+        });
+        if (Object.keys(changes).length) {
+            await persist(changes);
+        }
     };
-
     return {
         deleteEntryCell,
-        deleteEntryRow,
-        isLoading: isFetchingMeals || isSubmitting,
-        meals,
-        revert: removeChanges,
+        isLoading: query.isFetching,
+        isSaving: state.isSaving,
+        meals: query.data ?? [],
+        pendingSlots: state.pendingSlots,
         saveEntryCell,
-        saveEntryRow,
-        savePlan,
         swapEntries,
     };
 };
