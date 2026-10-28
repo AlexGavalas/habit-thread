@@ -30,14 +30,16 @@ const expectReadOnlyFeedback = async (
     const note = page.getByRole('dialog', { name: 'Note' });
     await expect(note).toContainText('Client note');
     await expect(note.getByRole('textbox')).toHaveCount(0);
-    await expect(drawer.getByRole('button', { name: 'Edit note' })).toHaveCount(
-        0,
-    );
     await expect(
-        drawer.getByRole('button', { exact: true, name: 'Rate' }),
+        drawer.getByRole('button', { name: /^(Edit note|Rate)$/ }),
     ).toHaveCount(0);
     await expectAccessible(page, 'professional-meal-feedback');
     await expect(note.getByText('Client note')).toBeFocused();
+    // The accessibility scan can scroll the drawer while checking offscreen content.
+    // Capture the same viewport on local builds and remote previews.
+    await drawer.evaluate((element) => {
+        element.scrollTo(0, 0);
+    });
     await expect(page).toHaveScreenshot(screenshot, {
         mask: [
             drawer.getByRole('banner'),
