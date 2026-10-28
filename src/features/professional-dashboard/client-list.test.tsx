@@ -17,7 +17,11 @@ describe('<ClientList />', () => {
 
         const onSelectClient = jest.fn();
         const { user } = renderWithUser(
-            <ClientList clients={clients} onSelectClient={onSelectClient} />,
+            <ClientList
+                clients={clients}
+                search=""
+                onSelectClient={onSelectClient}
+            />,
         );
 
         await user.click(screen.getByText('client@example.test'));
@@ -31,7 +35,11 @@ describe('<ClientList />', () => {
 
         const onSelectClient = jest.fn();
         const { user } = renderWithUser(
-            <ClientList clients={clients} onSelectClient={onSelectClient} />,
+            <ClientList
+                clients={clients}
+                search=""
+                onSelectClient={onSelectClient}
+            />,
         );
 
         screen

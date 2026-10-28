@@ -69,6 +69,7 @@ export const ClientDirectory = ({
                     <ClientList
                         clients={clients.clients}
                         onSelectClient={onSelectClient}
+                        search={search}
                         selectedClientId={selectedClientId}
                     />
                     {clients.pageCount > 1 && (

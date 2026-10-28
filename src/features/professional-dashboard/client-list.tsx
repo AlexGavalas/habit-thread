@@ -10,15 +10,22 @@ import styles from './professional-dashboard.module.css';
 type ClientListProps = Readonly<{
     clients: ProfessionalClientSummary[];
     onSelectClient: (clientId: number) => void;
+    search: string;
     selectedClientId?: number;
 }>;
 
 export const ClientList = ({
     clients,
     onSelectClient,
+    search,
     selectedClientId,
-}: ClientListProps): ReactElement => {
+}: ClientListProps): ReactElement | null => {
     const { t } = useTranslation();
+
+    if (!search.length && !clients.length) {
+        return null;
+    }
+
     if (!clients.length) {
         return <Text>{t('professional.dashboard.no_clients')}</Text>;
     }
