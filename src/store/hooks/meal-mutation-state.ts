@@ -14,8 +14,8 @@ export type MealMutationVariables = {
 
 const slotsSchema = z.object({ slots: z.array(z.string()) });
 const weekScopeSchema = z.object({
-    weekStart: z.string(),
     affectedWeeks: z.array(z.string()).optional(),
+    weekStart: z.string(),
 });
 
 export const affectsMealWeek = (
@@ -51,9 +51,9 @@ export const useMealMutationState = (
                 affectsMealWeek(mutation.state.variables, weekStart),
         },
         select: (mutation) => ({
+            slots: getMutationSlots(mutation.state.variables) ?? [],
             status: mutation.state.status,
             submittedAt: mutation.state.submittedAt,
-            slots: getMutationSlots(mutation.state.variables) ?? [],
         }),
     });
     const pending = writes.filter(({ status }) => status === 'pending');

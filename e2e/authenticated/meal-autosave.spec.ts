@@ -12,7 +12,7 @@ test('shows in-flight feedback, retains a failed edit, and persists a retry', as
         .locator('article')
         .first();
     await first.locator('[tabindex="0"]').focus();
-    await first.getByRole('button', { name: 'Plan meal', exact: true }).click();
+    await first.getByRole('button', { exact: true, name: 'Plan meal' }).click();
     const dialog = page.getByRole('dialog', { name: 'Edit meal' });
     const text = dialog.locator('textarea[name="meal"]');
     await text.fill('Immediately saved porridge');
@@ -26,16 +26,16 @@ test('shows in-flight feedback, retains a failed edit, and persists a retry', as
         await route.abort('failed');
     });
     await dialog
-        .getByRole('button', { name: 'Save changes', exact: true })
+        .getByRole('button', { exact: true, name: 'Save changes' })
         .click();
     await expect(
-        dialog.getByRole('button', { name: 'Save changes', exact: true }),
+        dialog.getByRole('button', { exact: true, name: 'Save changes' }),
     ).toBeDisabled();
     await expect(
         page.getByRole('status').filter({ hasText: /^Saving…$/ }),
     ).toHaveCount(2);
     await expect(
-        page.getByRole('button', { name: 'Next week', exact: true }),
+        page.getByRole('button', { exact: true, name: 'Next week' }),
     ).toBeEnabled();
     await expectModalScreenshot(dialog, 'meal-saving-desktop.png');
     gate.resolve(undefined);
@@ -43,7 +43,7 @@ test('shows in-flight feedback, retains a failed edit, and persists a retry', as
     await expect(text).toHaveValue('Immediately saved porridge');
     await page.unroute('**/meal-plan?date=2032-01-05');
     await dialog
-        .getByRole('button', { name: 'Save changes', exact: true })
+        .getByRole('button', { exact: true, name: 'Save changes' })
         .click();
     await expect(dialog).toBeHidden();
     await expect(
@@ -74,7 +74,7 @@ test('shows in-flight feedback, retains a failed edit, and persists a retry', as
         .click();
     await expect(noteDialog).toBeHidden();
     await expect(
-        page.getByRole('button', { name: 'Save', exact: true }),
+        page.getByRole('button', { exact: true, name: 'Save' }),
     ).toHaveCount(0);
 });
 
@@ -84,7 +84,7 @@ test('saves and deletes a meal on mobile without a plan-wide save', async ({
     await page.setViewportSize({ height: 850, width: 390 });
     await page.goto('/meal-plan?date=2032-01-12');
     await page
-        .getByRole('button', { name: 'Edit Morning', exact: true })
+        .getByRole('button', { exact: true, name: 'Edit Morning' })
         .click();
     const dialog = page.getByRole('dialog');
     await expect(
@@ -98,7 +98,7 @@ test('saves and deletes a meal on mobile without a plan-wide save', async ({
     }
     await dialog.locator('textarea[name="meal"]').fill('Mobile autosaved meal');
     await dialog
-        .getByRole('button', { name: 'Save changes', exact: true })
+        .getByRole('button', { exact: true, name: 'Save changes' })
         .click();
     await expect(dialog).toBeHidden();
     await page.reload();
@@ -111,10 +111,10 @@ test('saves and deletes a meal on mobile without a plan-wide save', async ({
         fullPage: true,
     });
     await page
-        .getByRole('button', { name: 'Edit Morning', exact: true })
+        .getByRole('button', { exact: true, name: 'Edit Morning' })
         .click();
     await dialog
-        .getByRole('button', { name: 'Delete meal', exact: true })
+        .getByRole('button', { exact: true, name: 'Delete meal' })
         .click();
     await expect(dialog).toBeHidden();
     await page.reload();

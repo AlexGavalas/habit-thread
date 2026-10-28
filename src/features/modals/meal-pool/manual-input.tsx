@@ -92,6 +92,17 @@ export const ManualInputTab = ({
         setPendingTemplate(undefined);
     };
 
+    const handleCancelReplacement = (): void => {
+        setPendingTemplate(undefined);
+    };
+    const handleConfirmReplacement = (): void => {
+        if (pendingTemplate) {
+            handleApplyTemplate(pendingTemplate);
+        }
+    };
+    const handleItemsChange = (items: EditedMealItem[]): void => {
+        setDraft({ ...draft, items });
+    };
     return (
         <MealLibraryPanel
             actions={
@@ -99,12 +110,8 @@ export const ManualInputTab = ({
                     {pendingTemplate && (
                         <ReplaceMealDraft
                             meal={pendingTemplate.content}
-                            onCancel={() => {
-                                setPendingTemplate(undefined);
-                            }}
-                            onConfirm={() => {
-                                handleApplyTemplate(pendingTemplate);
-                            }}
+                            onCancel={handleCancelReplacement}
+                            onConfirm={handleConfirmReplacement}
                         />
                     )}
                     {draft.source && previousDraft && (
@@ -164,9 +171,7 @@ export const ManualInputTab = ({
                 {draft.items.length > 0 && (
                     <MealItemsEditor
                         items={draft.items}
-                        onItemsChange={(items) => {
-                            setDraft({ ...draft, items });
-                        }}
+                        onItemsChange={handleItemsChange}
                     />
                 )}
                 <Button

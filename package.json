@@ -30,6 +30,7 @@
         "db:e2e:up": "docker compose up -d postgres-e2e",
         "db:e2e:down": "docker compose stop postgres-e2e",
         "lint": "oxlint .",
+        "lint:fix": "oxlint . --fix",
         "check:format": "oxfmt --check .",
         "check:types": "tsc --noEmit",
         "format": "oxfmt",

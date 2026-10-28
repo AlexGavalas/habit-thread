@@ -31,26 +31,27 @@ export const SwappableMeal = ({
     const ref = useRef<HTMLDivElement>(null);
     const [isOver, setIsOver] = useState(false);
     const slot = { day, sectionKey: props.id };
+    const mealName = props.meal?.meal;
     const selected = swap?.selection?.slot.sectionKey === props.id;
     const isTarget = Boolean(swap?.selection && !selected && !isSaving);
-    const targetLabel = props.meal?.meal
-        ? t('meal_plan.swap.swap_here', { meal: props.meal.meal, slot: label })
+    const targetLabel = mealName
+        ? t('meal_plan.swap.swap_here', { meal: mealName, slot: label })
         : t('meal_plan.swap.move_here', { slot: label });
 
     const handleDragStart = (event: DragEvent<HTMLButtonElement>): void => {
         // Embla cancels bubbling native dragstart events to implement swiping.
         // Capture the handle's drag before it reaches the carousel viewport.
         event.stopPropagation();
-        if (!props.meal?.meal || isSaving) {
+        if (!mealName || isSaving) {
             event.preventDefault();
             return;
         }
         event.dataTransfer.effectAllowed = 'move';
-        event.dataTransfer.setData('text/plain', props.meal.meal);
+        event.dataTransfer.setData('text/plain', mealName);
         if (ref.current) {
             event.dataTransfer.setDragImage(ref.current, 24, 24);
         }
-        swap?.select({ dragging: true, name: props.meal.meal, slot });
+        swap?.select({ dragging: true, name: mealName, slot });
     };
 
     const handleDragOver = (event: DragEvent<HTMLDivElement>): void => {
@@ -75,8 +76,8 @@ export const SwappableMeal = ({
             swap?.cancel();
             return;
         }
-        if (props.meal?.meal && !isSaving) {
-            swap?.select({ dragging: false, name: props.meal.meal, slot });
+        if (mealName && !isSaving) {
+            swap?.select({ dragging: false, name: mealName, slot });
         }
     };
 
@@ -107,11 +108,11 @@ export const SwappableMeal = ({
                     {slotLabel}
                 </Text>
                 <div className={styles.headerActions}>
-                    {swap && props.meal?.meal && (
+                    {swap && mealName && (
                         <ActionIcon
                             aria-hidden={isTarget}
                             aria-label={t('meal_plan.swap.select', {
-                                meal: props.meal.meal,
+                                meal: mealName,
                                 slot: label,
                             })}
                             aria-pressed={selected}
@@ -152,7 +153,7 @@ export const SwappableMeal = ({
                         type="button"
                     >
                         <span>
-                            {props.meal?.meal
+                            {mealName
                                 ? t('meal_plan.swap.swap')
                                 : t('meal_plan.swap.move')}
                         </span>

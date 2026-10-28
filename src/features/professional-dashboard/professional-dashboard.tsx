@@ -48,8 +48,8 @@ export const ProfessionalDashboard = ({
             return true;
         }
         showErrorNotification({
-            title: t('meal_plan.persistence.saving'),
             message: t('meal_plan.persistence.wait'),
+            title: t('meal_plan.persistence.saving'),
         });
         return false;
     };

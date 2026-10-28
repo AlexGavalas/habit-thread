@@ -1,6 +1,6 @@
 import { Button, Group, Paper, Stack, Text, TextInput } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
-import type { ReactElement } from 'react';
+import type { ChangeEventHandler, ReactElement } from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -57,6 +57,11 @@ export const PreviousMealPicker = ({
     });
     const results = Array.isArray(data) ? data : data.own;
     const searching = isFetching || searchQuery.trim() !== debouncedSearchQuery;
+    const handleSearchChange: ChangeEventHandler<HTMLInputElement> = (
+        event,
+    ) => {
+        setSearchQuery(event.target.value);
+    };
 
     return (
         <Stack gap="sm">
@@ -65,9 +70,7 @@ export const PreviousMealPicker = ({
                 label={t('modals.meal_pool.manual.search')}
                 placeholder={t('generic.search.placeholder')}
                 value={searchQuery}
-                onChange={(event) => {
-                    setSearchQuery(event.target.value);
-                }}
+                onChange={handleSearchChange}
             />
             <div aria-live="polite" aria-busy={searching}>
                 {!debouncedSearchQuery && !searching && (
@@ -96,24 +99,34 @@ export const PreviousMealPicker = ({
             </div>
             {!searching && !isError && debouncedSearchQuery && (
                 <Stack gap="xs">
-                    {results.map((template) => (
-                        <Paper key={template.id} withBorder p="sm" radius="sm">
-                            <Stack gap="xs">
-                                <Text size="sm">{template.content}</Text>
-                                <Group justify="end">
-                                    <Button
-                                        variant="light"
-                                        size="compact-sm"
-                                        onClick={() => {
-                                            onSelect(template);
-                                        }}
-                                    >
-                                        {t('modals.meal_pool.manual.use_meal')}
-                                    </Button>
-                                </Group>
-                            </Stack>
-                        </Paper>
-                    ))}
+                    {results.map((template) => {
+                        const handleSelect = (): void => {
+                            onSelect(template);
+                        };
+                        return (
+                            <Paper
+                                key={template.id}
+                                withBorder
+                                p="sm"
+                                radius="sm"
+                            >
+                                <Stack gap="xs">
+                                    <Text size="sm">{template.content}</Text>
+                                    <Group justify="end">
+                                        <Button
+                                            variant="light"
+                                            size="compact-sm"
+                                            onClick={handleSelect}
+                                        >
+                                            {t(
+                                                'modals.meal_pool.manual.use_meal',
+                                            )}
+                                        </Button>
+                                    </Group>
+                                </Stack>
+                            </Paper>
+                        );
+                    })}
                 </Stack>
             )}
         </Stack>

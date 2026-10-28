@@ -37,7 +37,7 @@ export const createMealPlanTestContext = (
             </MealPlanOwnerProvider>
         </Provider>
     );
-    return { queryClient, Wrapper };
+    return { Wrapper, queryClient };
 };
 
 export const deferred = <Value,>(): {

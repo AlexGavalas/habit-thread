@@ -4,11 +4,19 @@ import { MealFoodWorkspace } from './meal-food-workspace';
 
 describe('meal workspace navigation', () => {
     it.each([
-        { initialView: 'search', nextView: 'Selected (0)' },
-        { initialView: 'selected', nextView: 'Search' },
+        {
+            initialLabel: 'Search',
+            initialView: 'search',
+            nextView: 'Selected (0)',
+        },
+        {
+            initialLabel: 'Selected (0)',
+            initialView: 'selected',
+            nextView: 'Search',
+        },
     ] as const)(
         'starts on %s and allows switching views',
-        async ({ initialView, nextView }) => {
+        async ({ initialLabel, initialView, nextView }) => {
             expect.hasAssertions();
             const handleItemsChange = jest.fn();
             const { user } = renderWithUser(
@@ -26,14 +34,9 @@ describe('meal workspace navigation', () => {
             const selected = screen.getByRole('button', {
                 name: 'Selected (0)',
             });
-            expect(search).toHaveAttribute(
-                'aria-pressed',
-                String(initialView === 'search'),
-            );
-            expect(selected).toHaveAttribute(
-                'aria-pressed',
-                String(initialView === 'selected'),
-            );
+            expect(
+                screen.getByRole('button', { pressed: true }),
+            ).toHaveAccessibleName(initialLabel);
             await user.click(screen.getByRole('button', { name: nextView }));
             expect(search).toHaveAttribute(
                 'aria-pressed',

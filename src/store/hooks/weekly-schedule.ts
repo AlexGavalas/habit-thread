@@ -50,14 +50,19 @@ export const useWeeklyScheduleOps = (): {
     const destinationState = useMealMutationState(ownerUserId, nextWeekStart);
     const isCopyBlocked = sourceState.isSaving || destinationState.isSaving;
     const mutation = useMutation({
-        mutationKey,
-        retry: false,
         mutationFn: async (variables: CopyWeekVariables): Promise<void> => {
             const result = await copyMealPlanWeek({
                 ownerUserId: variables.ownerUserId,
                 sourceWeek: variables.weekStart,
             });
             requireActionSuccess(result);
+        },
+        mutationKey,
+        onError: (): void => {
+            showErrorNotification({
+                message: `${t('errors.meal_save')}. ${t('try_again')}`,
+                title: t('notification.error.title'),
+            });
         },
         onSuccess: async (_data, variables): Promise<void> => {
             const destination = format(
@@ -89,12 +94,7 @@ export const useWeeklyScheduleOps = (): {
                 store.set(currentWeekAtom, parseISO(destination));
             }
         },
-        onError: (): void => {
-            showErrorNotification({
-                title: t('notification.error.title'),
-                message: `${t('errors.meal_save')}. ${t('try_again')}`,
-            });
-        },
+        retry: false,
     });
     const copyToNextWeek = async (): Promise<void> => {
         if (

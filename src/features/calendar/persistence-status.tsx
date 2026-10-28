@@ -35,8 +35,8 @@ export const PersistenceStatus = (): ReactElement => {
             event.preventDefault();
             event.stopPropagation();
             showErrorNotification({
-                title: t('meal_plan.persistence.saving'),
                 message: t('meal_plan.persistence.wait'),
+                title: t('meal_plan.persistence.saving'),
             });
         };
         window.addEventListener('beforeunload', beforeUnload);

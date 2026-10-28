@@ -9,7 +9,7 @@ describe('editor submission', () => {
         const response = deferred<undefined>();
         const operation = jest.fn().mockReturnValue(response.promise);
         const { result } = renderHook(useEditorSubmit);
-        let saving: Promise<boolean>;
+        let saving: Promise<boolean> | undefined;
         act(() => {
             saving = result.current.submit(operation);
         });
@@ -19,8 +19,9 @@ describe('editor submission', () => {
         expect(operation).toHaveBeenCalledTimes(1);
         await act(async () => {
             response.reject(new Error('Offline'));
-            expect(await saving).toBe(false);
+            await saving;
         });
+        await expect(saving).resolves.toBe(false);
         expect(result.current).toMatchObject({
             error: expect.any(String),
             isSaving: false,

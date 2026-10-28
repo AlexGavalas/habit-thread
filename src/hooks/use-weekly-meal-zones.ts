@@ -72,7 +72,6 @@ export const useWeeklyMealZones = (
         queryKey,
     });
     const mutation = useMutation({
-        mutationKey: mealMutationKey(ownerUserId),
         mutationFn: async (
             variables: ScheduleMutationVariables,
         ): Promise<void> => {
@@ -97,6 +96,7 @@ export const useWeeklyMealZones = (
             });
             requireActionSuccess(response);
         },
+        mutationKey: mealMutationKey(ownerUserId),
         onError: (): void => {
             showErrorNotification({
                 message: t('meal_plan.schedule.save_error'),

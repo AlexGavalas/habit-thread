@@ -129,7 +129,10 @@ describe('copy week', () => {
         );
         await user.click(screen.getByRole('button', { name: 'Copy week' }));
         await waitFor(() => {
-            expect(copyMealPlanWeek).toHaveBeenCalled();
+            expect(copyMealPlanWeek).toHaveBeenCalledWith({
+                ownerUserId: 7,
+                sourceWeek: porridge.day,
+            });
         });
         rerender(<View ownerUserId={42} />);
         await act(async () => {

@@ -1,4 +1,4 @@
-import { renderWithUser, screen, within } from '~test/utils';
+import { renderWithUser, screen } from '~test/utils';
 import { type MealTemplate } from '~types/meal-pool';
 
 import type { useCreateMealPool } from './hooks/use-create-meal-pool';
@@ -51,8 +51,10 @@ const template: MealTemplate = {
 const mutate = jest.fn();
 const reset = jest.fn();
 
-const renderManualInput = (): ReturnType<typeof renderWithUser> =>
-    renderWithUser(<ManualInputTab onDone={jest.fn()} />);
+const renderManualInput = (): ReturnType<typeof renderWithUser> => {
+    const handleDone = jest.fn();
+    return renderWithUser(<ManualInputTab onDone={handleDone} />);
+};
 
 const openAndSearch = async (
     user: ReturnType<typeof renderWithUser>['user'],
@@ -83,31 +85,7 @@ describe('manual meal entry', () => {
         });
     });
 
-    it('starts with an empty editor and saves a new meal without a source id', async () => {
-        expect.hasAssertions();
-        const { user } = renderManualInput();
-        expect(
-            screen.queryByRole('textbox', { name: 'Search previous meals' }),
-        ).not.toBeInTheDocument();
-        const footer = within(screen.getByRole('contentinfo'));
-        expect(
-            footer.queryByRole('button', { name: 'Use a previous meal…' }),
-        ).not.toBeInTheDocument();
-        expect(footer.getByRole('button', { name: 'Cancel' })).toBeVisible();
-        expect(
-            screen.getByRole('button', { name: 'Save new meal' }),
-        ).toBeDisabled();
-        await user.type(
-            screen.getByRole('textbox', { name: /Meal description/ }),
-            '  Banana toast  ',
-        );
-        await user.click(screen.getByRole('button', { name: 'Save new meal' }));
-        expect(mutate).toHaveBeenCalledWith({
-            templates: [{ content: 'Banana toast', items: [] }],
-        });
-    });
-
-    it('copies a previous meal and its items, closes the picker and returns focus', async () => {
+    it('closes the picker, returns focus and requires a new description after copying', async () => {
         expect.hasAssertions();
         const { user } = renderManualInput();
         await openAndSearch(user);
@@ -122,6 +100,16 @@ describe('manual meal entry', () => {
         expect(
             screen.getByRole('button', { name: 'Save new meal' }),
         ).toBeDisabled();
+    });
+
+    it('saves copied items without their source ids after changing the description', async () => {
+        expect.hasAssertions();
+        const { user } = renderManualInput();
+        await openAndSearch(user);
+        await user.click(screen.getByRole('button', { name: 'Use this meal' }));
+        const description = screen.getByRole('textbox', {
+            name: /Meal description/,
+        });
         await user.type(description, ' with banana');
         await user.click(screen.getByRole('button', { name: 'Save new meal' }));
         const copiedItems = template.items.map(({ id: _id, ...item }) => item);
@@ -135,7 +123,7 @@ describe('manual meal entry', () => {
         });
     });
 
-    it('requires confirmation to replace a draft and Undo restores description and items', async () => {
+    it('keeps the draft when replacement is cancelled', async () => {
         expect.hasAssertions();
         const { user } = renderManualInput();
         const description = screen.getByRole('textbox', {
@@ -146,13 +134,17 @@ describe('manual meal entry', () => {
         await user.click(screen.getByRole('button', { name: 'Use this meal' }));
         await user.click(screen.getByRole('button', { name: 'Keep my draft' }));
         expect(description).toHaveValue('My toast');
-        await user.type(
-            screen.getByRole('textbox', { name: 'Search previous meals' }),
-            'oats',
-        );
-        await user.click(
-            await screen.findByRole('button', { name: 'Use this meal' }),
-        );
+    });
+
+    it('replaces the draft after confirmation and Undo restores description and items', async () => {
+        expect.hasAssertions();
+        const { user } = renderManualInput();
+        const description = screen.getByRole('textbox', {
+            name: /Meal description/,
+        });
+        await user.type(description, 'My toast');
+        await openAndSearch(user);
+        await user.click(screen.getByRole('button', { name: 'Use this meal' }));
         await user.click(screen.getByRole('button', { name: 'Replace draft' }));
         expect(
             screen.getByRole('textbox', { name: 'Quantity for Oats' }),

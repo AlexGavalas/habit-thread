@@ -72,8 +72,8 @@ describe('atomic week copy', () => {
         expect(savedMeals).toStrictEqual([
             expect.objectContaining({
                 day: '2026-01-19',
-                section_key: savedZones?.[0]?.zoneKey,
                 note: 'Oat milk',
+                section_key: savedZones?.[0]?.zoneKey,
             }),
         ]);
         expect(createMeals).toHaveBeenCalledWith(

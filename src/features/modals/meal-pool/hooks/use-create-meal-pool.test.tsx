@@ -11,7 +11,36 @@ describe('meal template writes', () => {
         jest.restoreAllMocks();
     });
 
-    it('exposes failed HTTP writes as errors and completes only after a successful retry', async () => {
+    it('exposes failed HTTP writes as errors without completing', async () => {
+        expect.hasAssertions();
+        jest.spyOn(global, 'fetch').mockResolvedValueOnce(
+            new Response(null, { status: 500 }),
+        );
+        const onSuccess = jest.fn();
+        const { client, Wrapper } = createQueryTestContext();
+        const { result, unmount } = renderHook(
+            () => useCreateMealPool({ onSuccess }),
+            { wrapper: Wrapper },
+        );
+        act(() => {
+            result.current.mutate({
+                templates: [{ content: 'Porridge', items: [] }],
+            });
+        });
+        await waitFor(() => {
+            expect(result.current.isError).toBe(true);
+        });
+        expect(onSuccess).not.toHaveBeenCalled();
+        expect(showErrorNotification).toHaveBeenCalledWith({
+            message: 'We could not save your changes. Please try again.',
+            position: 'top-right',
+            title: 'Error',
+        });
+        unmount();
+        client.clear();
+    });
+
+    it('completes only after a successful retry', async () => {
         expect.hasAssertions();
         const fetchMock = jest
             .spyOn(global, 'fetch')
@@ -30,8 +59,6 @@ describe('meal template writes', () => {
         await waitFor(() => {
             expect(result.current.isError).toBe(true);
         });
-        expect(onSuccess).not.toHaveBeenCalled();
-        expect(showErrorNotification).toHaveBeenCalled();
         act(() => {
             result.current.mutate(input);
         });

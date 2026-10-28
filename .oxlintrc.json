@@ -41,7 +41,7 @@
         ],
         "import/no-default-export": "error",
         "sort-keys": [
-            "warn",
+            "error",
             "asc",
             {
                 "caseSensitive": true,

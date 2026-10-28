@@ -42,9 +42,6 @@ export const useMeals = (
     const persist = useMealMutation(ownerUserId, weekStart);
     const query = useQuery({
         enabled: ownerUserId !== -1 && !state.isSaving,
-        staleTime: 30_000,
-        refetchOnWindowFocus: false,
-        queryKey,
         queryFn: async ({ signal }): Promise<EditedMeal[]> => {
             const { endDate, startDate } = getWeekRange(currentWeek);
             const ownerQuery = ownerUserId ? `&ownerUserId=${ownerUserId}` : '';
@@ -61,6 +58,9 @@ export const useMeals = (
             }
             return data;
         },
+        queryKey,
+        refetchOnWindowFocus: false,
+        staleTime: 30_000,
     });
     const saveEntryCell: SaveEntryCell = async (params) => {
         const current = queryClient.getQueryData<EditedMeal[]>(queryKey);

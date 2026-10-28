@@ -44,14 +44,11 @@ describe('tracking editors', () => {
         resource: 'activity' | 'measurement';
         value: string;
     }[])(
-        'retains $resource input on failure and closes only after a successful retry',
+        'disables pending $resource submissions and retains input on failure',
         async ({ label, resource, value }) => {
             expect.hasAssertions();
             const response = deferred<Response>();
-            const fetchMock = jest
-                .spyOn(global, 'fetch')
-                .mockReturnValueOnce(response.promise)
-                .mockResolvedValueOnce(new Response(null, { status: 200 }));
+            jest.spyOn(global, 'fetch').mockReturnValueOnce(response.promise);
             const onSave = jest
                 .fn<Promise<void>, []>()
                 .mockResolvedValue(undefined);
@@ -80,6 +77,52 @@ describe('tracking editors', () => {
             });
             expect(input).toHaveValue(value);
             expect(onSave).not.toHaveBeenCalled();
+            unmount();
+            client.clear();
+        },
+    );
+
+    it.each([
+        { label: 'Activity', resource: 'activity', value: 'Walk in the park' },
+        { label: 'Weight', resource: 'measurement', value: '75' },
+    ] satisfies {
+        label: string;
+        resource: 'activity' | 'measurement';
+        value: string;
+    }[])(
+        'retains $resource input on failure and closes only after a successful retry',
+        async ({ label, resource, value }) => {
+            expect.hasAssertions();
+            const response = deferred<Response>();
+            const fetchMock = jest
+                .spyOn(global, 'fetch')
+                .mockReturnValueOnce(response.promise)
+                .mockResolvedValueOnce(new Response(null, { status: 200 }));
+            const onSave = jest
+                .fn<Promise<void>, []>()
+                .mockResolvedValue(undefined);
+            const { client, Wrapper } = createQueryTestContext();
+            const { user, unmount } = renderWithUser(
+                <ContextModalsProvider>
+                    <TrackingEditorOpener resource={resource} onSave={onSave} />
+                </ContextModalsProvider>,
+                { Wrapper },
+            );
+            await user.click(
+                screen.getByRole('button', { name: 'Open editor' }),
+            );
+            const input = screen.getByLabelText(label);
+            await user.type(input, value);
+            await user.click(screen.getByRole('button', { name: 'Save' }));
+            await act(async () => {
+                response.reject(new Error('Offline'));
+                await response.promise.catch(() => undefined);
+            });
+            await waitFor(() => {
+                expect(
+                    screen.getByRole('button', { name: 'Save' }),
+                ).toBeEnabled();
+            });
             await user.click(screen.getByRole('button', { name: 'Save' }));
             await waitFor(() => {
                 expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

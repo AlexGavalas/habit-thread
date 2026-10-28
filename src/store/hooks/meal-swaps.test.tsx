@@ -14,14 +14,14 @@ describe('immediate meal moves', () => {
         const soup = {
             ...porridge,
             id: 'soup-id',
-            section_key: 'tuesday',
             meal: 'Soup',
+            section_key: 'tuesday',
         };
         const salad = {
             ...porridge,
             id: 'salad-id',
-            section_key: 'wednesday',
             meal: 'Salad',
+            section_key: 'wednesday',
         };
         const { Wrapper, queryClient } = createMealPlanTestContext([
             porridge,
@@ -92,8 +92,8 @@ describe('immediate meal moves', () => {
         expect.hasAssertions();
         const moved = {
             ...porridge,
-            section_key: 'tuesday',
             day: '2026-01-13',
+            section_key: 'tuesday',
         };
         const { Wrapper, queryClient } = createMealPlanTestContext();
         jest.mocked(saveMealOperation).mockResolvedValueOnce({
