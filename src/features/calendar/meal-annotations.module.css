@@ -1,0 +1,11 @@
+.noteButton {
+    cursor: pointer;
+}
+
+.note {
+    max-width: calc(100vw - 2 * var(--mantine-spacing-md));
+    max-height: 60vh;
+    overflow-y: auto;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
