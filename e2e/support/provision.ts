@@ -14,7 +14,6 @@ const profileResponseSchema = z.object({
         id: z.number(),
         is_discoverable: z.boolean(),
         language: z.string(),
-        professional_is_discoverable: z.boolean(),
         roles: z.array(z.string()),
         target_weight: z.number().nullable(),
     }),
@@ -37,23 +36,6 @@ export const provisionFixture = async (
         data: fixture.profile,
     });
     await expect(response).toBeOK();
-    if (fixture.user.professional) {
-        await page.goto('/settings');
-        await page.getByRole('tab', { name: 'Advanced Settings' }).click();
-        const discoverable = page.getByRole('switch', {
-            name: 'Allow clients to find me',
-        });
-        // This controlled switch changes only after its Server Action resolves.
-        await discoverable.click();
-        await expect
-            .poll(
-                async () =>
-                    (await readFixtureProfile(page.request))
-                        .professional_is_discoverable,
-            )
-            .toBe(true);
-        await expect(discoverable).toBeChecked();
-    }
     for (const measurement of fixture.measurements) {
         const saved = await page.request.post('/api/v1/measurement', {
             data: measurement,
@@ -67,9 +49,9 @@ export const provisionFixture = async (
         full_name: fixture.user.fullName,
         has_completed_onboarding: fixture.profile.hasCompletedOnboarding,
         height: fixture.profile.height,
-        is_discoverable: fixture.profile.isDiscoverable,
+        is_discoverable:
+            fixture.user.professional || fixture.profile.isDiscoverable,
         language: fixture.profile.language,
-        professional_is_discoverable: fixture.user.professional,
         roles: fixture.user.professional ? ['professional'] : [],
         target_weight: fixture.profile.targetWeight,
     });

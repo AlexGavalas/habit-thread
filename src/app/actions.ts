@@ -19,7 +19,6 @@ import {
     acceptProfessionalInvitation as acceptProfessionalInvitationAction,
     inviteProfessional as inviteProfessionalAction,
     removeProfessionalRelationship as removeProfessionalRelationshipAction,
-    setProfessionalDiscoverable as setProfessionalDiscoverableAction,
     setProfessionalRole as setProfessionalRoleAction,
 } from './professional-actions';
 
@@ -39,12 +38,6 @@ export const removeProfessionalRelationship = async (
     input: unknown,
 ): Promise<ProfessionalActionResult> => {
     return removeProfessionalRelationshipAction(input);
-};
-
-export const setProfessionalDiscoverable = async (
-    input: unknown,
-): Promise<ProfessionalActionResult> => {
-    return setProfessionalDiscoverableAction(input);
 };
 
 export const setProfessionalRole = async (

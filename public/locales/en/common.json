@@ -455,7 +455,8 @@
                 "profile": {
                     "title": "Profile visibility",
                     "toggle_discoverable_label": "Is my profile visible to other users?",
-                    "toggle_discoverable_description": "Other users can discover your profile and send you a request to connect."
+                    "toggle_discoverable_description": "Control whether other users can find your profile in personal and professional searches and send you a request to connect.",
+                    "professional_visibility_description": "Your profile is visible in personal and professional searches while you use HabitThread as a professional. Clients can find you by name or email. Disable professional mode before hiding your profile."
                 }
             },
             "general": {
@@ -491,10 +492,8 @@
         "navigation": "Professional dashboard",
         "settings": {
             "title": "Professional account",
-            "description": "Enable professional tools while keeping your normal HabitThread experience.",
+            "description": "Enable professional tools while keeping your normal HabitThread experience. Your profile will be visible in all searches while professional mode is enabled.",
             "role_label": "Use HabitThread as a professional",
-            "discoverable_label": "Allow clients to find me",
-            "discoverable_description": "Your name and email will appear when clients search for a professional.",
             "active_clients_error": "Stop managing all active clients before disabling professional tools."
         },
         "connections": {

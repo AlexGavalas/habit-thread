@@ -22,7 +22,6 @@ const user: UserProfile = {
     id: 7,
     is_discoverable: true,
     language: 'en',
-    professional_is_discoverable: false,
     roles: [],
     target_weight: 75,
 };

@@ -16,7 +16,6 @@ export const profileResponseSchema = z.object({
         id: z.number().int().positive(),
         is_discoverable: z.boolean(),
         language: z.string(),
-        professional_is_discoverable: z.boolean(),
         roles: z.array(z.literal('professional')),
         target_weight: z.number().nullable(),
     }) satisfies z.ZodType<UserProfile>,

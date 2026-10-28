@@ -92,6 +92,11 @@ export default defineConfig({
                   }
                 : {}),
         },
+        launchOptions: {
+            // Linux hinting rounds glyph advances differently from macOS, even
+            // with the same bundled font. Keep text wrapping consistent.
+            args: ['--font-render-hinting=none'],
+        },
         trace: 'on-first-retry',
     },
     workers: 1,

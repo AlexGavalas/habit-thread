@@ -60,7 +60,6 @@ describe('<Onboarding />', () => {
                 id: 1,
                 is_discoverable: false,
                 language: 'en',
-                professional_is_discoverable: false,
                 roles: [],
                 target_weight: null,
             },

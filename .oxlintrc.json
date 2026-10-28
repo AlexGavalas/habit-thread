@@ -352,7 +352,7 @@
                 "jest/max-expects": [
                     "warn",
                     {
-                        "max": 3
+                        "max": 5
                     }
                 ],
                 "jest/max-nested-describe": [

@@ -46,7 +46,12 @@ export const createCredentialsUser = async ({
     getDb().transaction(async (transaction) => {
         const [user] = await transaction
             .insert(users)
-            .values({ email, full_name: fullName, language: 'en' })
+            .values({
+                email,
+                full_name: fullName,
+                is_discoverable: professional,
+                language: 'en',
+            })
             .returning({ id: users.id });
         if (!user) {
             throw new Error('Could not create user');

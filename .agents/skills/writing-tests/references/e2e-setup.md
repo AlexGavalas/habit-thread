@@ -19,8 +19,10 @@ Do not overwrite an existing `.env.e2e`.
 Local preparation applies the committed Drizzle migrations and clears only the
 dedicated e2e database. The reset refuses to run unless the database name contains
 `e2e`. Fixture provisioning then uses exactly the same application flows locally
-and against previews: public registration, credentials login, profile and
-measurement APIs, and professional discoverability settings.
+and against previews: public registration, credentials login, and profile and
+measurement APIs.
+Professional accounts are automatically visible; provisioning verifies this
+without a separate professional discoverability toggle.
 
 `e2e/support/fixtures.ts` defines the client, professional, and visual scenarios.
 Setup verifies persisted profiles, roles, and all measurement rows before tests
@@ -57,6 +59,19 @@ Stop the local e2e database with:
 ```sh
 mise exec -- pnpm db:e2e:down
 ```
+
+## Fonts and screenshot consistency
+
+The app self-hosts the pinned `@fontsource-variable/noto-sans` font files,
+and Mantine uses that family for body text, controls, and headings. Keep the
+same Playwright version locally and in the CI container.
+
+All Playwright projects launch Chromium with `--font-render-hinting=none`.
+Without it, Linux rounds glyph advances differently from macOS, which can
+change line wrapping and screenshot dimensions even with identical font files.
+Keep this option when configuring browser launches; do not compensate by
+changing font sizes or loosening screenshot thresholds. Playwright waits for
+fonts to load before taking screenshot assertions.
 
 ## Preview deployments
 

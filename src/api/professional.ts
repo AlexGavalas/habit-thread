@@ -20,6 +20,5 @@ export {
     findDiscoverableProfessionals,
     hasProfessionalRole,
     requireProfessional,
-    setProfessionalDiscoverable,
     setProfessionalRole,
 } from './professional/roles';

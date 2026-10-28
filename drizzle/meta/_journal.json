@@ -71,6 +71,13 @@
             "when": 1792857622495,
             "tag": "0009_overconfident_millenium_guard",
             "breakpoints": true
+        },
+        {
+            "idx": 10,
+            "version": "7",
+            "when": 1793190471491,
+            "tag": "0010_unify_profile_visibility",
+            "breakpoints": true
         }
     ]
 }

@@ -65,7 +65,6 @@ jest.mock('../app/actions', () => ({
     saveMealPlan: jest.fn(),
     saveMealZoneTimes: jest.fn(),
     saveProfile: jest.fn(),
-    setProfessionalDiscoverable: jest.fn(),
     setProfessionalRole: jest.fn(),
 }));
 
