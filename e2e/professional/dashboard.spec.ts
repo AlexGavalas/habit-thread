@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { type Page, expect, test } from '@playwright/test';
 
 import { getResponseSchema } from '../../src/schemas/meal';
 import { expectAccessible } from '../support/accessibility';
@@ -8,6 +8,50 @@ import {
     PROFESSIONAL_E2E_USER,
 } from '../support/auth';
 import { readFixtureProfile } from '../support/provision';
+
+const expectReadOnlyFeedback = async (
+    page: Page,
+    screenshot: string,
+): Promise<void> => {
+    const drawer = page.getByRole('dialog').filter({
+        has: page.getByRole('heading', {
+            exact: true,
+            name: E2E_USER.fullName,
+        }),
+    });
+    const noteButton = drawer.getByRole('button', {
+        exact: true,
+        name: 'Note',
+    });
+    await expect(
+        drawer.getByText('Rating: 4/5').filter({ visible: true }),
+    ).toBeVisible();
+    await noteButton.click();
+    const note = page.getByRole('dialog', { name: 'Note' });
+    await expect(note).toContainText('Client note');
+    await expect(note.getByRole('textbox')).toHaveCount(0);
+    await expect(
+        drawer.getByRole('button', { name: /^(Edit note|Rate)$/ }),
+    ).toHaveCount(0);
+    await expectAccessible(page, 'professional-meal-feedback');
+    await expect(note.getByText('Client note')).toBeFocused();
+    // The accessibility scan can scroll the drawer while checking offscreen content.
+    // Capture the same viewport on local builds and remote previews.
+    await drawer.evaluate((element) => {
+        element.scrollTo(0, 0);
+    });
+    await expect(page).toHaveScreenshot(screenshot, {
+        mask: [
+            drawer.getByRole('banner'),
+            // Mask the fixed-width identity row, not variable-width account text.
+            drawer.getByText(E2E_USER.email, { exact: true }).locator('..'),
+        ],
+    });
+    await page.keyboard.press('Escape');
+    await expect(note).toBeHidden();
+    await expect(drawer).toBeVisible();
+    await expect(noteButton).toBeFocused();
+};
 
 test(
     'accepts an invitation and opens the assigned client meal plan',
@@ -118,7 +162,12 @@ test(
             })
             .click();
 
-        const drawer = page.getByRole('dialog');
+        const drawer = page.getByRole('dialog').filter({
+            has: page.getByRole('heading', {
+                exact: true,
+                name: E2E_USER.fullName,
+            }),
+        });
 
         await expect(drawer).toBeVisible();
         await expect(
@@ -133,6 +182,12 @@ test(
         await expect(
             drawer.getByRole('heading', { name: 'Meal schedule' }),
         ).toBeVisible();
+        await expectReadOnlyFeedback(page, 'professional-meal-feedback.png');
+        await page.setViewportSize({ height: 844, width: 390 });
+        await expectReadOnlyFeedback(
+            page,
+            'professional-meal-feedback-mobile.png',
+        );
         await expectAccessible(page, 'professional-client-drawer');
 
         await page.keyboard.press('Escape');

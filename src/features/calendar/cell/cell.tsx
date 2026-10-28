@@ -1,6 +1,6 @@
-import { Badge, Box, Center, Stack, Text } from '@mantine/core';
+import { Box, Center, Stack, Text } from '@mantine/core';
 import { useFocusWithin, useHover, useMergedRef } from '@mantine/hooks';
-import { Cutlery, MultiplePages } from 'iconoir-react';
+import { Cutlery } from 'iconoir-react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -11,6 +11,7 @@ import {
 import { useMeals } from '~store/hooks';
 import { type EditedMeal, type Meal, type MealChange } from '~types/meal';
 
+import { MealAnnotations } from '../meal-annotations';
 import { NutritionSummary } from '../nutrition-summary';
 import styles from './cell.module.css';
 import { CellOverlay } from './overlay';
@@ -57,24 +58,15 @@ export const Cell = ({ id, meal, timestamp }: CellProps): ReactElement => {
         await deleteEntryCell({ meal });
     };
 
-    const hasNote = !!meal?.note;
+    const hasAnnotations = !!(meal?.note || meal?.rating);
 
     return (
         <Box ref={mergedRef} style={{ position: 'relative' }} tabIndex={0}>
-            {!isSaving && (isHovered || isFocusedWithin) && (
-                <CellOverlay
-                    canEditAnnotations={canEditAnnotations}
-                    meal={meal}
-                    onDelete={handleDelete}
-                    onSave={handleSave}
-                    ownerUserId={ownerUserId}
-                />
-            )}
             <Box
                 className={styles.cell}
                 aria-busy={isSaving}
                 style={{
-                    ...(hasNote && { gridTemplateRows: 'auto 1fr' }),
+                    ...(hasAnnotations && { gridTemplateRows: 'auto 1fr' }),
                 }}
             >
                 {isSaving && (
@@ -82,28 +74,27 @@ export const Cell = ({ id, meal, timestamp }: CellProps): ReactElement => {
                         {t('meal_plan.persistence.saving')}
                     </Text>
                 )}
-                {hasNote && (
-                    <Badge
-                        fullWidth
-                        leftSection={<MultiplePages fontSize="90%" />}
-                        size="xs"
-                        variant="light"
-                    >
-                        {t('note')}
-                    </Badge>
-                )}
-                <Center
-                    style={{
-                        ...(!isSaving &&
-                            (isHovered || isFocusedWithin) && {
-                                opacity: 0.15,
-                            }),
-                    }}
-                >
+                <MealAnnotations meal={meal} />
+                <Center pos="relative">
+                    {!isSaving && (isHovered || isFocusedWithin) && (
+                        <CellOverlay
+                            canEditAnnotations={canEditAnnotations}
+                            meal={meal}
+                            onDelete={handleDelete}
+                            onSave={handleSave}
+                            ownerUserId={ownerUserId}
+                        />
+                    )}
                     <Stack
                         align="center"
                         gap="xs"
                         p="var(--app-space-calendar-cell)"
+                        style={{
+                            ...(!isSaving &&
+                                (isHovered || isFocusedWithin) && {
+                                    opacity: 0.15,
+                                }),
+                        }}
                     >
                         <Text c={meal?.meal ? undefined : 'dimmed'} ta="center">
                             {meal?.meal || <Cutlery />}

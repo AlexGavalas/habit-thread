@@ -2,6 +2,7 @@ import { ModalsProvider } from '@mantine/modals';
 import type { ReactElement } from 'react';
 import { type ReactNode } from 'react';
 
+import { MealPlanOwnerProvider } from '~features/meal-plan-owner';
 import { renderWithUser, screen } from '~test/utils';
 import { type Meal } from '~types/meal';
 
@@ -76,6 +77,33 @@ describe('<Cell />', () => {
             });
 
             expect(screen.getByText('test meal')).toBeVisible();
+        });
+
+        it('lets a managing professional read feedback without editing it', async () => {
+            expect.hasAssertions();
+            const { user } = renderWithUser(
+                <MealPlanOwnerProvider
+                    canEditAnnotations={false}
+                    ownerUserId={1}
+                >
+                    <Cell
+                        {...props}
+                        meal={{ ...meal, note: 'Client feedback', rating: 3 }}
+                    />
+                </MealPlanOwnerProvider>,
+                { Wrapper },
+            );
+
+            expect(screen.getByText('Rating: 3/5')).toBeVisible();
+            await user.click(screen.getByRole('button', { name: 'Note' }));
+            expect(screen.getByText('Client feedback')).toBeVisible();
+            expect(
+                screen.queryByRole('button', { name: 'Edit note' }),
+            ).not.toBeInTheDocument();
+            expect(
+                screen.queryByRole('button', { name: 'Rate' }),
+            ).not.toBeInTheDocument();
+            expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
         });
 
         describe('when the meal has a note', () => {
