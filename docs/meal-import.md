@@ -2,10 +2,9 @@
 
 ## Configuration
 
-File import is gated by the Vercel boolean flag `meal-import`, defaulting to
-hidden in every environment. Enable it for the intended users through Vercel
-Flags; the tab and upload endpoint use the same flag. A disabled endpoint
-returns 404 before reading the document or consuming AI quota.
+File import is always available in the meal library. The upload endpoint
+requires authentication; missing OpenAI configuration returns an `unavailable`
+error (503) for valid documents without consuming AI quota.
 
 Set `OPENAI_API_KEY` in `.env.local` and in the appropriate Vercel deployment
 environments. Never expose it through `NEXT_PUBLIC_` or commit it. API billing
@@ -35,7 +34,7 @@ only for PDF requests.
 Document text is sent directly to OpenAI using the Vercel AI SDK, without AI
 Gateway or tools. Requests disable response storage (`store: false`); this does
 not disable the provider's abuse-monitoring retention. Review OpenAI's data
-controls and your privacy notice before enabling imports for real user data.
+controls and your privacy notice before configuring imports for real user data.
 Source files/text and raw AI responses are not persisted or logged by the app.
 Only token counts are logged. Output is schema-validated and whitespace-normalized;
 only exact duplicates are removed. Requests have a 45-second model timeout and
@@ -49,4 +48,4 @@ and add its extension/signature to the reader registry. Update the picker, copy
 and tests; the shared AI extraction and response contract remain unchanged.
 
 See the testing skill's [meal-import checks](../.agents/skills/writing-tests/references/e2e-setup.md#meal-import-checks)
-for local feature overrides and screenshot variants.
+for local verification and screenshot coverage.

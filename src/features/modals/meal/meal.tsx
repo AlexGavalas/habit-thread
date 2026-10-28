@@ -1,5 +1,5 @@
-import { Grid, Textarea } from '@mantine/core';
-import { useDebouncedValue, useMediaQuery } from '@mantine/hooks';
+import { Textarea } from '@mantine/core';
+import { useDebouncedValue } from '@mantine/hooks';
 import { type ContextModalProps } from '@mantine/modals';
 import type { ReactElement } from 'react';
 import {
@@ -10,7 +10,6 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useFeatureFlags } from '~features/feature-flags';
 import { useProfile } from '~hooks/use-profile';
 import { type FoodSearchResult } from '~types/food-search';
 import { type EditedMealItem } from '~types/meal';
@@ -19,7 +18,6 @@ import { useGetMealPool } from '../meal-pool/hooks/use-get-meal-pool';
 import { useEditorSubmit } from '../use-editor-submit';
 import { useMealItems } from './hooks/use-meal-items';
 import { MealActions } from './meal-actions';
-import { MealEditorPanel } from './meal-editor-panel';
 import { MealFoodWorkspace } from './meal-food-workspace';
 import { type OnMealEdit } from './meal-result';
 import { MealSearch } from './meal-search';
@@ -46,9 +44,7 @@ export const MealModal = ({
     },
 }: ContextModalProps<MealModalProps>): ReactElement => {
     const { t } = useTranslation();
-    const { isFoodDatabaseSearchEnabled } = useFeatureFlags();
     const { profile } = useProfile();
-    const isMobile = useMediaQuery('(max-width: 48em)');
     const [error, setError] = useState('');
     const submission = useEditorSubmit(id);
     const [preview, setPreview] = useState(initialMeal);
@@ -131,62 +127,40 @@ export const MealModal = ({
 
     const sources = (
         <MealSourcePanel
-            foodDatabaseEnabled={isFoodDatabaseSearchEnabled}
             mealSearch={mealSearch}
             onFoodSelect={handleFoodSelect}
             selectedItems={items}
         />
     );
-    const editor = (
-        <MealEditorPanel
-            error={error}
-            items={items}
-            meal={preview}
-            onItemsChange={handleItemsChange}
-            onMealChange={handleChange}
-            onMealFocus={resetError}
-            sourcePanel={isMobile ? sources : undefined}
-        />
-    );
-
     return (
         <form className={styles.form} onSubmit={handleSubmit}>
             <div
                 inert={submission.isSaving}
-                className={`${styles.content} ${isFoodDatabaseSearchEnabled ? styles.workspaceContent : ''}`}
+                className={`${styles.content} ${styles.workspaceContent}`}
             >
-                {isFoodDatabaseSearchEnabled ? (
-                    <MealFoodWorkspace
-                        details={
-                            <Textarea
-                                autosize
-                                error={error}
-                                label={t('modals.meal_edit.details.label')}
-                                maxRows={3}
-                                minRows={1}
-                                name="meal"
-                                onChange={handleChange}
-                                onFocus={resetError}
-                                placeholder={t('meal_placeholder')}
-                                value={preview}
-                            />
-                        }
-                        detailsInvalid={Boolean(error)}
-                        initialView={initialMeal ? 'selected' : 'search'}
-                        items={items}
-                        onItemsChange={handleItemsChange}
-                        recentlyAddedIndex={recentlyAddedIndex}
-                    >
-                        {sources}
-                    </MealFoodWorkspace>
-                ) : isMobile ? (
-                    editor
-                ) : (
-                    <Grid gap="md">
-                        <Grid.Col span={8}>{editor}</Grid.Col>
-                        <Grid.Col span={4}>{sources}</Grid.Col>
-                    </Grid>
-                )}
+                <MealFoodWorkspace
+                    details={
+                        <Textarea
+                            autosize
+                            error={error}
+                            label={t('modals.meal_edit.details.label')}
+                            maxRows={3}
+                            minRows={1}
+                            name="meal"
+                            onChange={handleChange}
+                            onFocus={resetError}
+                            placeholder={t('meal_placeholder')}
+                            value={preview}
+                        />
+                    }
+                    detailsInvalid={Boolean(error)}
+                    initialView={initialMeal ? 'selected' : 'search'}
+                    items={items}
+                    onItemsChange={handleItemsChange}
+                    recentlyAddedIndex={recentlyAddedIndex}
+                >
+                    {sources}
+                </MealFoodWorkspace>
             </div>
             <MealActions
                 canDelete={Boolean(initialMeal)}

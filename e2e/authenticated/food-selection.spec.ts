@@ -25,11 +25,6 @@ const food = (
     source,
 });
 
-test.skip(
-    process.env.E2E_FOOD_DATABASE_SEARCH !== 'true',
-    'Enable E2E_FOOD_DATABASE_SEARCH for food selection journeys',
-);
-
 for (const viewport of [
     { height: 800, width: 1280 },
     { height: 844, width: 390 },

@@ -5,7 +5,6 @@ import {
 } from '~api/meal-import/extract-meals';
 import { readMealDocument } from '~api/meal-import/read-document';
 import { consumeMealImportAttempt } from '~api/meal-import/usage';
-import { mealImport } from '~flags';
 import {
     MAX_IMPORT_FILE_SIZE,
     type MealImportErrorCode,
@@ -67,9 +66,6 @@ const readUpload = async (request: Request): Promise<File> => {
 };
 
 export const POST = withUser(async ({ request, user }) => {
-    if (!(await mealImport())) {
-        return Response.json({ message: 'Not Found' }, { status: 404 });
-    }
     try {
         const file = await readUpload(request);
         const document = await readMealDocument(file);

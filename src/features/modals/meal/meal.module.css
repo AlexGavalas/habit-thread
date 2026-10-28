@@ -34,7 +34,6 @@
     padding: var(--mantine-spacing-md);
 }
 
-.editorColumn,
 .sourcePanel {
     height: 100%;
 }

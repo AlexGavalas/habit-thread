@@ -3,13 +3,6 @@ import { expect, test } from '@playwright/test';
 import en from '../../public/locales/en/common.json';
 import { createMealPdf } from '../../src/test/meal-import-fixtures';
 
-test.beforeEach(async ({ request }) => {
-    const response = await request.post('/api/v1/pool/upload', {
-        multipart: { description: 'Check import availability' },
-    });
-    test.skip(response.status() === 404, 'Meal import is disabled');
-});
-
 test('keeps imported meals open after a failed save and closes after a successful retry', async ({
     page,
 }) => {

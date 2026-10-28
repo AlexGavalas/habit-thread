@@ -82,15 +82,15 @@ enumerate or delete other preview users.
 
 ## Meal-import checks
 
-For local import E2E tests, set `E2E_MEAL_IMPORT=true`, for example:
+Run the import E2E tests directly:
 
 ```sh
-E2E_MEAL_IMPORT=true mise exec -- pnpm test:e2e e2e/authenticated/meal-import.spec.ts e2e/authenticated/meal-import-save.spec.ts --project=authenticated
+mise exec -- pnpm test:e2e e2e/authenticated/meal-import.spec.ts e2e/authenticated/meal-import-save.spec.ts --project=authenticated
 ```
 
-This override only applies in local E2E mode; normal app environments use Vercel Flags.
+File import and food database search are always enabled. Local E2E mode clears
+`OPENAI_API_KEY` so uploaded documents never reach a paid external provider.
 
-Import preview screenshots have separate compact and food-database-enabled
-baselines; verify both locally with `E2E_FOOD_DATABASE_SEARCH=false` and `true`.
-See the [meal import guide](../../../../docs/meal-import.md) for feature
+Import preview screenshots use the wide meal-library layout.
+See the [meal import guide](../../../../docs/meal-import.md) for provider
 configuration, document limits, and privacy considerations.

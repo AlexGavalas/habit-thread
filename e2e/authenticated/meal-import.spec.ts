@@ -7,13 +7,6 @@ import {
 } from '../../src/test/meal-import-fixtures';
 import { loadE2eEnvironment } from '../support/environment';
 
-test.beforeEach(async ({ request }) => {
-    const response = await request.post('/api/v1/pool/upload', {
-        multipart: { description: 'Check import availability' },
-    });
-    test.skip(response.status() === 404, 'Meal import is disabled');
-});
-
 test('reviews, edits and removes imported meals before explicitly saving', async ({
     page,
 }) => {
@@ -65,15 +58,7 @@ test('reviews, edits and removes imported meals before explicitly saving', async
         .getByRole('button', { exact: true, name: 'Remove meal 2' })
         .click();
     await expect(firstMeal).toHaveValue('Eggs with toast');
-    // The food-database flag deliberately changes the entire modal's dimensions.
-    const hasFoodDatabase = await dialog
-        .getByRole('tab', { name: en.modals.meal_pool.tabs.food_database })
-        .isVisible();
-    await expect(dialog).toHaveScreenshot(
-        hasFoodDatabase
-            ? 'meal-import-preview-wide.png'
-            : 'meal-import-preview.png',
-    );
+    await expect(dialog).toHaveScreenshot('meal-import-preview-wide.png');
     const saved = page.waitForRequest(
         (request) =>
             request.url().endsWith('/api/v1/pool/meal') &&

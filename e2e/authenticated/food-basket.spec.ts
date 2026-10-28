@@ -53,11 +53,6 @@ const templatesSchema = z.object({
     ),
 });
 
-test.skip(
-    process.env.E2E_FOOD_DATABASE_SEARCH !== 'true',
-    'Enable E2E_FOOD_DATABASE_SEARCH for basket journeys',
-);
-
 for (const viewport of [
     { height: 800, name: 'desktop', width: 1280 },
     { height: 720, name: 'small-desktop', width: 1024 },

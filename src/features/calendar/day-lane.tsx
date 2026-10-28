@@ -84,7 +84,7 @@ export const DayLane = ({
                     <Popover position="bottom" width={300} withArrow>
                         <Popover.Target>
                             <UnstyledButton
-                                aria-label={t('nutrition.details')}
+                                aria-description={t('nutrition.details')}
                                 className={styles.nutritionButton}
                             >
                                 <NutritionSummary compact meals={dayMeals} />

@@ -68,14 +68,24 @@ export const NutritionSummary = ({
                     </Text>
                     <Progress.Root
                         aria-label={t('nutrition.macro_distribution')}
+                        role="group"
                         size="md"
                     >
-                        <Progress.Section color="blue" value={macros.protein} />
                         <Progress.Section
+                            aria-label={t('nutrition.protein')}
+                            color="blue"
+                            value={macros.protein}
+                        />
+                        <Progress.Section
+                            aria-label={t('nutrition.carbohydrates')}
                             color="yellow"
                             value={macros.carbohydrates}
                         />
-                        <Progress.Section color="red" value={macros.fat} />
+                        <Progress.Section
+                            aria-label={t('nutrition.fat')}
+                            color="red"
+                            value={macros.fat}
+                        />
                     </Progress.Root>
                     <SimpleGrid cols={3} spacing="xs">
                         {(
@@ -103,6 +113,7 @@ export const NutritionSummary = ({
                             </Text>
                             <Progress.Root
                                 aria-label={t('nutrition.calories_by_meal')}
+                                role="group"
                                 size="md"
                             >
                                 {mealCalories.map((meal, index) => (

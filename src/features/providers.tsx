@@ -16,10 +16,6 @@ import { I18nProvider } from 'next-i18next/client';
 import type { ReactElement } from 'react';
 import { type PropsWithChildren, useEffect, useState } from 'react';
 
-import {
-    type FeatureFlags,
-    FeatureFlagsProvider,
-} from '~features/feature-flags';
 import { Header } from '~features/header';
 import { Onboarding } from '~features/onboarding';
 import { currentWeekAtom } from '~store/atoms';
@@ -33,7 +29,6 @@ type ProvidersProps = PropsWithChildren<
     Readonly<{
         session: SessionProviderProps['session'];
         dehydratedState: DehydratedState;
-        featureFlags: FeatureFlags;
         language: string;
         resources: Resource;
         initialWeek: string;
@@ -43,7 +38,6 @@ type ProvidersProps = PropsWithChildren<
 export const Providers = ({
     children,
     dehydratedState,
-    featureFlags,
     session,
     language,
     resources,
@@ -93,11 +87,9 @@ export const Providers = ({
                 <SessionProvider session={session}>
                     <QueryClientProvider client={queryClient}>
                         <HydrationBoundary state={dehydratedState}>
-                            <FeatureFlagsProvider value={featureFlags}>
-                                <JotaiProvider store={store}>
-                                    {modalsContent}
-                                </JotaiProvider>
-                            </FeatureFlagsProvider>
+                            <JotaiProvider store={store}>
+                                {modalsContent}
+                            </JotaiProvider>
                         </HydrationBoundary>
                     </QueryClientProvider>
                 </SessionProvider>

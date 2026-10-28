@@ -317,7 +317,6 @@
     "modals": {
         "meal_edit": {
             "helper": "Search your previous meals or a food database and use a result as a starting point. You can also write a new meal directly.",
-            "helper_without_food_database": "Search your previous meals and use one as a starting point. You can also write a new meal directly.",
             "my_meals": "My meals",
             "no_saved_meals": "No saved meals found.",
             "no_client_meals": "No client meals found.",

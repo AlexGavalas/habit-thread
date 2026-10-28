@@ -45,9 +45,8 @@ a required branch-protection check.
 
 The food database basket additionally scans the populated selected-food state on
 desktop and mobile, including modal controls, and checks that selected foods
-disappear from search and return when removed. These opt-in journeys require
-`E2E_FOOD_DATABASE_SEARCH=true` in local runs; preview CI retains its configured
-feature flags rather than forcing the food database on.
+disappear from search and return when removed. These journeys run by default
+locally and in preview CI.
 
 The duplicate-email response is deliberately stubbed to exercise the real form
 and alert deterministically without creating accounts. Other browser scans use

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 
-// Exercise the layout rule without authentication or the food-database flag.
+// Exercise the layout rule without authentication.
 // The fixture mirrors the two input wrappers and button in FoodDatabaseSearch.
 for (const viewportWidth of [390, 1024, 1280]) {
     test(`food search controls fit narrow panels at viewport ${viewportWidth}`, async ({

@@ -36,7 +36,8 @@ maintaining a separate copy of the schema or API contracts in documentation.
 
 ## AI meal import
 
-Optional DOCX and PDF meal import is controlled by the `meal-import` feature flag.
+DOCX and PDF meal import is available in the meal library alongside manual entry
+and food database search. AI extraction requires server-side OpenAI configuration.
 See the [AI meal import guide](docs/meal-import.md) for configuration, limits,
 privacy considerations, and extension points.
 
@@ -73,7 +74,7 @@ Drizzle configuration falls back to `DATABASE_URL` for local PostgreSQL.
 
 See the [writing-tests skill](.agents/skills/writing-tests/SKILL.md) for testing
 conventions and its [E2E setup guide](.agents/skills/writing-tests/references/e2e-setup.md)
-for local and preview commands, isolated fixtures, cleanup, and feature-flag checks.
+for local and preview commands, isolated fixtures, cleanup, and meal-import checks.
 Never run the browser suite against production or a development database.
 
 ## Accessibility
