@@ -179,22 +179,3 @@ test('accepts a connection request atomically and removes the connection', async
     ).toBeHidden();
     await other.close();
 });
-
-test('enforces upload size and missing-file responses', async ({ request }) => {
-    const missing = await request.post('/api/v1/pool/upload', {
-        multipart: { description: 'No file' },
-    });
-    test.skip(missing.status() === 404, 'Meal import is disabled');
-    expect(missing.status()).toBe(400);
-    const oversized = await request.post('/api/v1/pool/upload', {
-        multipart: {
-            file: {
-                buffer: Buffer.alloc(10 * 1024 * 1024 + 1),
-                mimeType:
-                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                name: 'large.docx',
-            },
-        },
-    });
-    expect(oversized.status()).toBe(413);
-});

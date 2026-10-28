@@ -117,15 +117,27 @@ test('the optional tour still navigates and persists completion', async ({
             { exact: true },
         ),
     ).toBeVisible();
-    // Reproduce the latency of a preview deployment when persisting completion.
+    // Hold persistence until the tour has closed, without a fixed preview-latency sleep.
+    const saveStarted = Promise.withResolvers<undefined>();
+    const releaseSave = Promise.withResolvers<undefined>();
     await page.route('**/meal-plan', async (route) => {
         if (route.request().method() === 'POST') {
-            await new Promise((resolve) => setTimeout(resolve, 5000));
+            saveStarted.resolve(undefined);
+            await releaseSave.promise;
         }
         await route.continue();
     });
-    await page.getByRole('button', { exact: true, name: 'Skip' }).click();
-    await expect(page.getByRole('dialog')).toHaveCount(0);
+    try {
+        await page.getByRole('button', { exact: true, name: 'Skip' }).click();
+        await saveStarted.promise;
+        await expect(page.getByRole('dialog')).toHaveCount(0);
+        const beforeSave = completionResponseSchema.parse(
+            await (await page.request.get('/api/v1/user')).json(),
+        );
+        expect(beforeSave.data.has_completed_onboarding).toBe(false);
+    } finally {
+        releaseSave.resolve(undefined);
+    }
     await expectOnboardingCompleted(page);
     await page.reload();
     await expect(

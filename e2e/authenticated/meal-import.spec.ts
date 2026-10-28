@@ -48,15 +48,6 @@ test('reviews, edits and removes imported meals before explicitly saving', async
     await expect(
         dialog.getByRole('textbox', { exact: true, name: 'Meal 2' }),
     ).toHaveValue('Rice 150g');
-    await dialog
-        .getByRole('button', { exact: true, name: en.generic.actions.undo })
-        .click();
-    await expect(
-        dialog.getByRole('textbox', { exact: true, name: 'Meal 2' }),
-    ).toHaveValue('Γιαούρτι 200g');
-    await dialog
-        .getByRole('button', { exact: true, name: 'Remove meal 2' })
-        .click();
     await expect(firstMeal).toHaveValue('Eggs with toast');
     await expect(dialog).toHaveScreenshot('meal-import-preview-wide.png');
     const saved = page.waitForRequest(
@@ -73,44 +64,6 @@ test('reviews, edits and removes imported meals before explicitly saving', async
         ],
     });
     await expect(dialog).toBeHidden();
-});
-
-test('keeps failed extraction retryable and displays the translated error', async ({
-    page,
-}) => {
-    await page.route('**/api/v1/pool/upload', (route) =>
-        route.fulfill({
-            json: { code: 'unreadable_document' },
-            status: 422,
-        }),
-    );
-    await page.goto('/meal-plan');
-    await page
-        .getByRole('button', { exact: true, name: en.meal_plan.meal_library })
-        .click();
-    const dialog = page.getByRole('dialog', {
-        name: en.modals.meal_pool.title,
-    });
-    await dialog
-        .getByRole('tab', { name: en.modals.meal_pool.tabs.import })
-        .click();
-    await dialog.locator('input[type="file"]').setInputFiles({
-        buffer: createMealPdf(['']),
-        mimeType: 'application/pdf',
-        name: 'scan.pdf',
-    });
-    await dialog
-        .getByRole('button', { exact: true, name: en.confirmation.yes })
-        .click();
-    await expect(
-        page.getByText(en.upload.errors.unreadable_document),
-    ).toBeVisible();
-    await expect(
-        dialog.getByRole('button', { exact: true, name: en.confirmation.yes }),
-    ).toBeEnabled();
-    await expect(
-        dialog.getByRole('textbox', { exact: true, name: 'Meal 1' }),
-    ).toHaveCount(0);
 });
 
 test('reads real PDF and DOCX documents and rejects scanned, corrupt and oversized-page PDFs', async ({

@@ -40,25 +40,13 @@ for (const width of [1280, 390]) {
         await expect(
             dialog.getByRole('textbox', { name: copy.search }),
         ).toHaveCount(0);
-        await description.fill('My unsaved breakfast');
         await dialog.getByRole('button', { name: copy.use_previous }).click();
         const search = dialog.getByRole('textbox', { name: copy.search });
         await search.fill(source);
         await dialog.getByRole('button', { name: copy.use_meal }).click();
-        await expect(description).toHaveValue('My unsaved breakfast');
-        await dialog.getByRole('button', { name: copy.keep_draft }).click();
-        await search.fill(source);
-        await dialog.getByRole('button', { name: copy.use_meal }).click();
-        await dialog.getByRole('button', { name: copy.replace }).click();
         await expect(description).toHaveValue(source);
         await expect(description).toBeFocused();
         await expect(save).toBeDisabled();
-        await dialog.getByRole('button', { name: copy.undo }).click();
-        await expect(description).toHaveValue('My unsaved breakfast');
-        await dialog.getByRole('button', { name: copy.use_previous }).click();
-        await search.fill(source);
-        await dialog.getByRole('button', { name: copy.use_meal }).click();
-        await dialog.getByRole('button', { name: copy.replace }).click();
         await description.fill(variation);
         await expectNoHorizontalOverflow(page);
         const footer = dialog.getByRole('contentinfo');

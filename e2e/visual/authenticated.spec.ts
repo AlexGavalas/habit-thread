@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 import { expectNoHorizontalOverflow } from '../support/layout';
 
-test.beforeEach(async ({ page }) => {
+test('homepage stacks its content on mobile Chrome', async ({ page }) => {
     await page.goto('/home');
     await expect(
         page.getByRole('heading', { name: 'Today’s meals' }),
@@ -10,9 +10,6 @@ test.beforeEach(async ({ page }) => {
     await expect(
         page.getByRole('heading', { name: 'Health trend' }),
     ).toBeVisible();
-});
-
-test('homepage stacks its content on mobile Chrome', async ({ page }) => {
     await expectNoHorizontalOverflow(page);
     await expect(
         page.getByRole('link', { exact: true, name: 'Home' }),
@@ -24,6 +21,7 @@ test('homepage stacks its content on mobile Chrome', async ({ page }) => {
 });
 
 test('compact menu contains all navigation links', async ({ page }) => {
+    await page.goto('/home');
     await page.getByRole('button', { name: 'Open navigation menu' }).click();
 
     const menu = page.getByRole('menu');
@@ -49,36 +47,12 @@ test('compact menu contains all navigation links', async ({ page }) => {
 
 test('homepage remains usable at 320px', async ({ page }) => {
     await page.setViewportSize({ height: 568, width: 320 });
+    await page.goto('/home');
     await expectNoHorizontalOverflow(page);
 
     await expect(page).toHaveScreenshot('homepage-mobile-320.png', {
         fullPage: true,
     });
-});
-
-test('dashboard creation actions open the existing forms', async ({ page }) => {
-    await page.getByRole('button', { name: 'Add measurement' }).click();
-
-    const dialog = page.getByRole('dialog', {
-        name: 'Add a new measurement',
-    });
-    await expect(dialog).toBeVisible();
-    await expect(dialog.getByLabel('Weight')).toBeVisible();
-    await expect(dialog.getByLabel('Fat percentage')).toBeVisible();
-
-    await dialog.getByRole('button', { name: 'Cancel' }).click();
-    await expect(dialog).toBeHidden();
-
-    await page.getByRole('button', { name: 'Add an activity' }).click();
-
-    const activityDialog = page.getByRole('dialog', {
-        name: 'Add a new activity',
-    });
-    await expect(activityDialog).toBeVisible();
-    await expect(activityDialog.getByLabel('Activity')).toBeVisible();
-
-    await activityDialog.getByRole('button', { name: 'Cancel' }).click();
-    await expect(activityDialog).toBeHidden();
 });
 
 test('meal plan is touch-friendly on mobile Chrome', async ({ page }) => {

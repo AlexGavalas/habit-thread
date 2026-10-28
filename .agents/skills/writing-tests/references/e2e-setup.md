@@ -100,7 +100,7 @@ enumerate or delete other preview users.
 Run the import E2E tests directly:
 
 ```sh
-mise exec -- pnpm test:e2e e2e/authenticated/meal-import.spec.ts e2e/authenticated/meal-import-save.spec.ts --project=authenticated
+mise exec -- pnpm test:e2e e2e/authenticated/meal-import.spec.ts --project=authenticated
 ```
 
 File import and food database search are always enabled. Local E2E mode clears
@@ -109,3 +109,10 @@ File import and food database search are always enabled. Local E2E mode clears
 Import preview screenshots use the wide meal-library layout.
 See the [meal import guide](../../../../docs/meal-import.md) for provider
 configuration, document limits, and privacy considerations.
+
+## Coverage ownership
+
+See [test coverage layers](../../../../docs/test-coverage-layers.md) before adding
+browser cases for failure/retry flows or repeating persistence at each viewport.
+Those rules have focused Jest coverage; browser tests retain real integration,
+accessibility, geometry and screenshot checks.

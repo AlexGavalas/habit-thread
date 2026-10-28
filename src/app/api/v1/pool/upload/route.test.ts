@@ -97,6 +97,19 @@ describe('meal upload transport', () => {
         expect(readMealDocument).not.toHaveBeenCalled();
     });
 
+    it('rejects an oversized multipart request before reading or extracting the document', async () => {
+        expect.hasAssertions();
+        const body =
+            '--meal-import-test\r\nContent-Disposition: form-data; name="file"; filename="large.docx"\r\nContent-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document\r\n\r\n' +
+            'x'.repeat(10 * 1024 * 1024 + 1) +
+            '\r\n--meal-import-test--\r\n';
+        const response = await POST(makeRequest(body));
+        expect(response.status).toBe(413);
+        expect(readMealDocument).not.toHaveBeenCalled();
+        expect(extractMeals).not.toHaveBeenCalled();
+        expect(consumeMealImportAttempt).not.toHaveBeenCalled();
+    });
+
     it('does not consume quota or call OpenAI when the document is unreadable', async () => {
         expect.hasAssertions();
         jest.mocked(readMealDocument).mockRejectedValueOnce(
