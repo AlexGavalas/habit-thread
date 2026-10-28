@@ -60,6 +60,19 @@ Stop the local e2e database with:
 mise exec -- pnpm db:e2e:down
 ```
 
+## Fonts and screenshot consistency
+
+The app self-hosts the pinned `@fontsource-variable/noto-sans` font files,
+and Mantine uses that family for body text, controls, and headings. Keep the
+same Playwright version locally and in the CI container.
+
+All Playwright projects launch Chromium with `--font-render-hinting=none`.
+Without it, Linux rounds glyph advances differently from macOS, which can
+change line wrapping and screenshot dimensions even with identical font files.
+Keep this option when configuring browser launches; do not compensate by
+changing font sizes or loosening screenshot thresholds. Playwright waits for
+fonts to load before taking screenshot assertions.
+
 ## Preview deployments
 
 Vercel preview deployments use the Neon branch injected by the Neon–Vercel
