@@ -44,7 +44,7 @@ export const Controls = ({
 
     const handleMealCreation = (): void => {
         openMealPoolModal({
-            ...(isFoodDatabaseSearchEnabled ? MEAL_MODAL_OPTIONS : {}),
+            ...MEAL_MODAL_OPTIONS,
             innerProps: {},
             size: isFoodDatabaseSearchEnabled ? '72rem' : 'lg',
             title: t('modals.meal_pool.title'),

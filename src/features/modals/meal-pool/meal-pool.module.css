@@ -13,10 +13,30 @@
 .tabs > .panel {
     flex: 1;
     min-height: 0;
+    overflow: hidden;
+}
+
+.libraryPanel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
+
+.content {
+    flex: 1;
+    min-height: 0;
     overflow: auto;
     padding: 0 var(--mantine-spacing-md) var(--mantine-spacing-md);
 }
 
-.tabs > .foodPanel {
+.workspace {
     overflow: hidden;
+}
+
+.actions {
+    flex-shrink: 0;
+    border-top: 1px solid var(--mantine-color-default-border);
+    background: var(--app-color-surface-sticky);
+    padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
 }

@@ -172,6 +172,7 @@ export const MealModal = ({
                             />
                         }
                         detailsInvalid={Boolean(error)}
+                        initialView={initialMeal ? 'selected' : 'search'}
                         items={items}
                         onItemsChange={handleItemsChange}
                         recentlyAddedIndex={recentlyAddedIndex}

@@ -116,6 +116,7 @@ describe('meal upload mutation', () => {
         });
         expect(showErrorNotification).toHaveBeenCalledWith({
             message: 'notification.error.message',
+            position: 'top-right',
             title: 'notification.error.title',
         });
     });

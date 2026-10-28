@@ -1,4 +1,4 @@
-import { renderWithUser, screen } from '~test/utils';
+import { renderWithUser, screen, within } from '~test/utils';
 import { type MealTemplate } from '~types/meal-pool';
 
 import type { useCreateMealPool } from './hooks/use-create-meal-pool';
@@ -89,6 +89,11 @@ describe('manual meal entry', () => {
         expect(
             screen.queryByRole('textbox', { name: 'Search previous meals' }),
         ).not.toBeInTheDocument();
+        const footer = within(screen.getByRole('contentinfo'));
+        expect(
+            footer.queryByRole('button', { name: 'Use a previous meal…' }),
+        ).not.toBeInTheDocument();
+        expect(footer.getByRole('button', { name: 'Cancel' })).toBeVisible();
         expect(
             screen.getByRole('button', { name: 'Save new meal' }),
         ).toBeDisabled();

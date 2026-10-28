@@ -63,6 +63,7 @@ export const useUpload: UseUpload = ({ onSuccess }) => {
         onError: (error) => {
             showErrorNotification({
                 message: error.message,
+                position: 'top-right',
                 title: t('notification.error.title'),
             });
         },

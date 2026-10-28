@@ -8,6 +8,7 @@ import { type MealTemplate } from '~types/meal-pool';
 
 import { MealItemsEditor } from '../meal/meal-items-editor';
 import { useCreateMealPool } from './hooks/use-create-meal-pool';
+import { MealLibraryPanel } from './meal-library-panel';
 import { PreviousMealPicker, ReplaceMealDraft } from './previous-meal-picker';
 
 type ManualInputTabProps = Readonly<{
@@ -92,7 +93,48 @@ export const ManualInputTab = ({
     };
 
     return (
-        <Stack gap="md">
+        <MealLibraryPanel
+            actions={
+                <Group gap="sm" justify="end">
+                    {pendingTemplate && (
+                        <ReplaceMealDraft
+                            meal={pendingTemplate.content}
+                            onCancel={() => {
+                                setPendingTemplate(undefined);
+                            }}
+                            onConfirm={() => {
+                                handleApplyTemplate(pendingTemplate);
+                            }}
+                        />
+                    )}
+                    {draft.source && previousDraft && (
+                        <Button
+                            variant="subtle"
+                            disabled={isPending}
+                            onClick={handleUndoSelection}
+                        >
+                            {t('modals.meal_pool.manual.undo')}
+                        </Button>
+                    )}
+                    <Button
+                        variant="default"
+                        disabled={isPending}
+                        onClick={onDone}
+                    >
+                        {t('generic.actions.cancel')}
+                    </Button>
+                    <Button
+                        disabled={
+                            !draft.content.trim() || sourceDescriptionUnchanged
+                        }
+                        loading={isPending}
+                        onClick={handleSaveMeal}
+                    >
+                        {t('modals.meal_pool.manual.save')}
+                    </Button>
+                </Group>
+            }
+        >
             <Stack gap="md" inert={isPending}>
                 <Textarea
                     ref={descriptionRef}
@@ -116,16 +158,6 @@ export const ManualInputTab = ({
                             <Text size="xs" c="dimmed">
                                 {t('modals.meal_pool.manual.copy_hint')}
                             </Text>
-                            {previousDraft && (
-                                <Button
-                                    variant="subtle"
-                                    size="compact-sm"
-                                    w="fit-content"
-                                    onClick={handleUndoSelection}
-                                >
-                                    {t('modals.meal_pool.manual.undo')}
-                                </Button>
-                            )}
                         </Stack>
                     </Paper>
                 )}
@@ -140,51 +172,24 @@ export const ManualInputTab = ({
                 <Button
                     variant="light"
                     w="fit-content"
+                    disabled={isPending}
                     aria-expanded={pickerOpen}
                     aria-controls="previous-meal-picker"
                     onClick={handleTogglePicker}
                 >
                     {t('modals.meal_pool.manual.use_previous')}
                 </Button>
-                {pickerOpen && (
+                {pickerOpen && !pendingTemplate && (
                     <Paper
                         id="previous-meal-picker"
                         withBorder
                         p="md"
                         radius="md"
                     >
-                        {pendingTemplate ? (
-                            <ReplaceMealDraft
-                                meal={pendingTemplate.content}
-                                onCancel={() => {
-                                    setPendingTemplate(undefined);
-                                }}
-                                onConfirm={() => {
-                                    handleApplyTemplate(pendingTemplate);
-                                }}
-                            />
-                        ) : (
-                            <PreviousMealPicker
-                                onSelect={handleSelectTemplate}
-                            />
-                        )}
+                        <PreviousMealPicker onSelect={handleSelectTemplate} />
                     </Paper>
                 )}
             </Stack>
-            <Group gap="md" justify="end">
-                <Button variant="default" disabled={isPending} onClick={onDone}>
-                    {t('generic.actions.cancel')}
-                </Button>
-                <Button
-                    disabled={
-                        !draft.content.trim() || sourceDescriptionUnchanged
-                    }
-                    loading={isPending}
-                    onClick={handleSaveMeal}
-                >
-                    {t('modals.meal_pool.manual.save')}
-                </Button>
-            </Group>
-        </Stack>
+        </MealLibraryPanel>
     );
 };
