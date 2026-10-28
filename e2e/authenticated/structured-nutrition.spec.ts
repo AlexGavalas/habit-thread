@@ -92,10 +92,10 @@ test('keeps saved meal nutrition immutable when its template changes', async ({
     await expect(
         page.getByText('278.4 kcal', { exact: true }).first(),
     ).toBeVisible();
-    await page.getByRole('button', { name: 'Nutrition details' }).click();
+    await page.getByRole('button', { name: /^278\.4 kcal/ }).click();
     await expect(
         page
-            .getByRole('dialog', { name: 'Nutrition details' })
+            .getByRole('dialog', { name: /^278\.4 kcal/ })
             .getByText('Calories by meal', { exact: true }),
     ).toBeVisible();
 });

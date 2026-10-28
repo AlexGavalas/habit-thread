@@ -39,9 +39,6 @@
       "~features/*": [
         "./src/features/*"
       ],
-      "~flags": [
-        "./src/flags"
-      ],
       "~hooks/*": [
         "./src/hooks/*"
       ],

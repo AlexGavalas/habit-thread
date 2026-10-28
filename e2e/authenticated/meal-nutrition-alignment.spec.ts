@@ -46,10 +46,10 @@ for (const width of [1440, 1100]) {
         const board = page.getByRole('region', { name: 'Weekly meal plan' });
         const days = board.getByRole('group', { name: 'Carousel slide' });
         await expect(
-            days.first().getByRole('button', { name: 'Nutrition details' }),
+            days.first().getByRole('button', { name: /^204 kcal/ }),
         ).toBeVisible();
         await expect(
-            days.nth(1).getByRole('button', { name: 'Nutrition details' }),
+            days.nth(1).getByRole('button', { name: /kcal/ }),
         ).toHaveCount(0);
         const firstMeal = await days
             .first()

@@ -8,13 +8,11 @@ import {
 } from '~api/meal-import/extract-meals';
 import { readMealDocument } from '~api/meal-import/read-document';
 import { consumeMealImportAttempt } from '~api/meal-import/usage';
-import { mealImport } from '~flags';
 import { MAX_IMPORT_FILE_SIZE } from '~schemas/meal-import';
 import type { RouteHandlerWithUser } from '~util/session';
 
 import { POST } from './route';
 
-jest.mock('~flags', () => ({ mealImport: jest.fn() }));
 jest.mock('~api/meal-import/extract-meals', () => ({
     assertMealImportConfigured: jest.fn(),
     extractMeals: jest.fn(),
@@ -65,22 +63,12 @@ const uploadForm = (): string =>
 
 describe('meal upload transport', () => {
     beforeEach(() => {
-        jest.mocked(mealImport).mockResolvedValue(true);
         jest.mocked(readMealDocument).mockResolvedValue('Eggs');
         jest.mocked(extractMeals).mockResolvedValue(['Eggs']);
         jest.mocked(consumeMealImportAttempt).mockResolvedValue(undefined);
         jest.mocked(assertMealImportConfigured).mockImplementation(
             () => undefined,
         );
-    });
-
-    it('rejects disabled imports before reading documents or consuming AI quota', async () => {
-        expect.hasAssertions();
-        jest.mocked(mealImport).mockResolvedValueOnce(false);
-        const response = await POST(makeRequest(uploadForm()));
-        expect(response.status).toBe(404);
-        expect(readMealDocument).not.toHaveBeenCalled();
-        expect(consumeMealImportAttempt).not.toHaveBeenCalled();
     });
 
     it('returns the existing preview contract without saving meals', async () => {

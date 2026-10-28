@@ -68,15 +68,9 @@ for (const width of [1280, 390]) {
         await expect(
             footer.getByRole('button', { name: copy.use_previous }),
         ).toHaveCount(0);
-        // The food-search flag changes the modal width, including in previews.
-        const layout = (await dialog
-            .getByRole('tab', { name: en.modals.meal_pool.tabs.food_database })
-            .isVisible())
-            ? 'wide'
-            : 'compact';
         await expectModalScreenshot(
             dialog,
-            `meal-library-manual-${width}-${layout}.png`,
+            `meal-library-manual-${width}-wide.png`,
         );
         const saved = page.waitForResponse(
             (response) =>
