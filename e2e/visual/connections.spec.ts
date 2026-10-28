@@ -66,6 +66,19 @@ test('connections remains usable at 320px', async ({ page }) => {
         page.getByRole('button', { name: 'Add person' }),
     ).toBeVisible();
     await expect(page.getByRole('heading', { name: 'People' })).toBeVisible();
+    // Each card streams in a separate Suspense boundary. People being ready
+    // does not mean the full-page height is final yet.
+    await expect(
+        page.getByText('You are not currently managed by a professional.', {
+            exact: true,
+        }),
+    ).toBeVisible();
+    await expect(
+        page.getByText("You don't have any connection requests", {
+            exact: true,
+        }),
+    ).toBeVisible();
+    await expect(page.getByRole('status', { name: 'Loading' })).toHaveCount(0);
     await expectNoHorizontalOverflow(page);
     await expect(page).toHaveScreenshot('connections-mobile-320.png', {
         fullPage: true,
