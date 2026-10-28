@@ -11,7 +11,6 @@ export const testUser: UserProfile = {
     id: 7,
     is_discoverable: false,
     language: 'en',
-    professional_is_discoverable: false,
     roles: [],
     target_weight: null,
 };

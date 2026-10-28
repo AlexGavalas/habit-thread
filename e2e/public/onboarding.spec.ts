@@ -78,12 +78,17 @@ for (const viewport of [
         await page.getByRole('tab', { name: 'Advanced Settings' }).click();
         await expect(
             page.getByRole('switch', {
-                name: 'Use HabitThread as a professional',
+                name: /^Use HabitThread as a professional/,
             }),
         ).toBeChecked();
+        const visibility = page.getByRole('switch', {
+            name: /^Is my profile visible to other users\?/,
+        });
+        await expect(visibility).toBeChecked();
+        await expect(visibility).toBeDisabled();
         await expect(
             page.getByRole('switch', { name: 'Allow clients to find me' }),
-        ).not.toBeChecked();
+        ).toHaveCount(0);
     });
 }
 

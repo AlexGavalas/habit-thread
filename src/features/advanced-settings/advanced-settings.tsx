@@ -9,6 +9,7 @@ import { useProfile } from '~hooks/use-profile';
 export const AdvancedSettings = (): ReactElement => {
     const { t } = useTranslation();
     const { isFetching, profile, updateProfile } = useProfile();
+    const isProfessional = profile?.roles.includes('professional') ?? false;
 
     const handleIsDiscoverableChange: SwitchProps['onChange'] = ({
         target: { checked },
@@ -26,11 +27,15 @@ export const AdvancedSettings = (): ReactElement => {
                     {t('account_settings.sections.advanced.profile.title')}
                 </Title>
                 <Switch
-                    checked={profile?.is_discoverable}
+                    checked={
+                        isProfessional || (profile?.is_discoverable ?? false)
+                    }
                     description={t(
-                        'account_settings.sections.advanced.profile.toggle_discoverable_description',
+                        isProfessional
+                            ? 'account_settings.sections.advanced.profile.professional_visibility_description'
+                            : 'account_settings.sections.advanced.profile.toggle_discoverable_description',
                     )}
-                    disabled={isFetching}
+                    disabled={!profile || isFetching || isProfessional}
                     label={t(
                         'account_settings.sections.advanced.profile.toggle_discoverable_label',
                     )}

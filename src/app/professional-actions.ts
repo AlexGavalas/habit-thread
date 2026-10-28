@@ -8,7 +8,6 @@ import {
     acceptProfessionalInvitation as acceptProfessional,
     inviteProfessional as createProfessionalInvitation,
     removeProfessionalRelationship as removeProfessional,
-    setProfessionalDiscoverable as updateProfessionalDiscoverability,
     setProfessionalRole as updateProfessionalRole,
 } from '~api/professional';
 import { type ProfessionalErrorCode } from '~api/professional/errors';
@@ -45,31 +44,6 @@ export const setProfessionalRole = async (
         revalidatePath('/', 'layout');
         revalidatePath('/connections');
         revalidatePath('/professional');
-        return { ok: true };
-    } catch (error) {
-        return actionError(error);
-    }
-};
-
-export const setProfessionalDiscoverable = async (
-    input: unknown,
-): Promise<ProfessionalActionResult> => {
-    const user = await getCurrentUser();
-    const parsed = z.object({ discoverable: z.boolean() }).safeParse(input);
-    if (!user) {
-        return { error: 'unauthorized', ok: false };
-    }
-    if (!parsed.success) {
-        return { error: 'invalid', ok: false };
-    }
-
-    try {
-        await updateProfessionalDiscoverability({
-            discoverable: parsed.data.discoverable,
-            userId: user.id,
-        });
-        revalidatePath('/', 'layout');
-        revalidatePath('/connections');
         return { ok: true };
     } catch (error) {
         return actionError(error);

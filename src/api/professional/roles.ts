@@ -37,15 +37,19 @@ export const setProfessionalRole = async ({
     userId: number;
 }): Promise<void> => {
     const db = getDb();
-    if (enabled) {
-        await db
-            .insert(userRoles)
-            .values({ role: 'professional', user_id: userId })
-            .onConflictDoNothing();
-        return;
-    }
     await db.transaction(async (tx) => {
         await tx.execute(sql`SELECT pg_advisory_xact_lock(${userId})`);
+        if (enabled) {
+            await tx
+                .insert(userRoles)
+                .values({ role: 'professional', user_id: userId })
+                .onConflictDoNothing();
+            await tx
+                .update(users)
+                .set({ is_discoverable: true })
+                .where(eq(users.id, userId));
+            return;
+        }
         const [{ value: activeClientCount } = { value: 0 }] = await tx
             .select({ value: count() })
             .from(professionalClients)
@@ -77,28 +81,6 @@ export const setProfessionalRole = async ({
     });
 };
 
-export const setProfessionalDiscoverable = async ({
-    discoverable,
-    userId,
-}: {
-    discoverable: boolean;
-    userId: number;
-}): Promise<void> => {
-    const [updated] = await getDb()
-        .update(userRoles)
-        .set({ is_discoverable: discoverable })
-        .where(
-            and(
-                eq(userRoles.user_id, userId),
-                eq(userRoles.role, 'professional'),
-            ),
-        )
-        .returning({ userId: userRoles.user_id });
-    if (!updated) {
-        throw new ProfessionalError('not_professional');
-    }
-};
-
 export const findDiscoverableProfessionals = async ({
     query,
     userId,
@@ -116,7 +98,7 @@ export const findDiscoverableProfessionals = async ({
         .where(
             and(
                 eq(userRoles.role, 'professional'),
-                eq(userRoles.is_discoverable, true),
+                eq(users.is_discoverable, true),
                 ne(users.id, userId),
                 or(
                     ilike(users.full_name, `%${query.trim()}%`),

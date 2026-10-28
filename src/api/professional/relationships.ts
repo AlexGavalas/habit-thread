@@ -26,7 +26,7 @@ export const inviteProfessional = async ({
             and(
                 eq(userRoles.user_id, professionalUserId),
                 eq(userRoles.role, 'professional'),
-                eq(userRoles.is_discoverable, true),
+                eq(users.is_discoverable, true),
             ),
         )
         .limit(1);

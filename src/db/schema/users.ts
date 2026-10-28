@@ -40,7 +40,6 @@ export const userCredentials = pgTable('user_credentials', {
 export const userRoles = pgTable(
     'user_roles',
     {
-        is_discoverable: boolean('is_discoverable').notNull().default(false),
         role: text('role').notNull(),
         user_id: bigint('user_id', { mode: 'number' })
             .notNull()
@@ -53,9 +52,6 @@ export const userRoles = pgTable(
             columns: [table.user_id, table.role],
             name: 'user_roles_user_id_role_pk',
         }),
-        index('user_roles_role_discoverable_idx').on(
-            table.role,
-            table.is_discoverable,
-        ),
+        index('user_roles_role_idx').on(table.role),
     ],
 );

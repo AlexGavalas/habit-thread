@@ -19,8 +19,10 @@ Do not overwrite an existing `.env.e2e`.
 Local preparation applies the committed Drizzle migrations and clears only the
 dedicated e2e database. The reset refuses to run unless the database name contains
 `e2e`. Fixture provisioning then uses exactly the same application flows locally
-and against previews: public registration, credentials login, profile and
-measurement APIs, and professional discoverability settings.
+and against previews: public registration, credentials login, and profile and
+measurement APIs.
+Professional accounts are automatically visible; provisioning verifies this
+without a separate professional discoverability toggle.
 
 `e2e/support/fixtures.ts` defines the client, professional, and visual scenarios.
 Setup verifies persisted profiles, roles, and all measurement rows before tests

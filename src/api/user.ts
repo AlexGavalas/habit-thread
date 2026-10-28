@@ -1,4 +1,4 @@
-import { and, eq, ilike, ne } from 'drizzle-orm';
+import { and, eq, ilike, ne, sql } from 'drizzle-orm';
 import 'server-only';
 
 import { getDb } from '~db';
@@ -29,17 +29,13 @@ export const fetchUser = async ({
 
     const roles = await db
         .select({
-            isDiscoverable: userRoles.is_discoverable,
             role: userRoles.role,
         })
         .from(userRoles)
         .where(eq(userRoles.user_id, user.id));
 
-    const professionalRole = roles.find(({ role }) => role === 'professional');
-
     return {
         ...user,
-        professional_is_discoverable: professionalRole?.isDiscoverable ?? false,
         roles: roles.map(({ role }) => role as UserRole),
     };
 };
@@ -115,18 +111,32 @@ export const updateProfile = async ({
     targetWeight?: number | null;
     userId: number;
 }): Promise<{ error: null }> => {
-    await getDb()
-        .update(users)
-        .set({
-            food_preferences_negative: foodPreferencesNegative,
-            food_preferences_positive: foodPreferencesPositive,
-            has_completed_onboarding: hasCompletedOnboarding,
-            height,
-            is_discoverable: isDiscoverable,
-            language,
-            target_weight: targetWeight,
-        })
-        .where(eq(users.id, userId));
+    await getDb().transaction(async (tx) => {
+        // Serialize visibility writes with professional role changes.
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(${userId})`);
+        const [professionalRole] = await tx
+            .select({ userId: userRoles.user_id })
+            .from(userRoles)
+            .where(
+                and(
+                    eq(userRoles.user_id, userId),
+                    eq(userRoles.role, 'professional'),
+                ),
+            )
+            .limit(1);
+        await tx
+            .update(users)
+            .set({
+                food_preferences_negative: foodPreferencesNegative,
+                food_preferences_positive: foodPreferencesPositive,
+                has_completed_onboarding: hasCompletedOnboarding,
+                height,
+                is_discoverable: professionalRole ? true : isDiscoverable,
+                language,
+                target_weight: targetWeight,
+            })
+            .where(eq(users.id, userId));
+    });
 
     return { error: null };
 };
