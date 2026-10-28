@@ -128,6 +128,13 @@ for (const viewport of [
         await basket
             .getByRole('textbox', { exact: true, name: 'The meal' })
             .fill(`Basket ${viewport.name}`);
+        // Keep layout at every breakpoint, but one real library save/read-back.
+        if (viewport.name !== 'desktop') {
+            await dialog
+                .getByRole('button', { exact: true, name: 'Cancel' })
+                .click();
+            return;
+        }
         await dialog.getByRole('button', { exact: true, name: 'Save' }).click();
         await expect(dialog).toBeHidden();
         const savedResponse = await page.request.get(

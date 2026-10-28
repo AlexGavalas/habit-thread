@@ -123,11 +123,15 @@ describe('tracking editors', () => {
                     screen.getByRole('button', { name: 'Save' }),
                 ).toBeEnabled();
             });
+            expect(input).toHaveValue(value);
             await user.click(screen.getByRole('button', { name: 'Save' }));
             await waitFor(() => {
                 expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
             });
             expect(fetchMock).toHaveBeenCalledTimes(2);
+            expect(fetchMock.mock.calls[1]).toStrictEqual(
+                fetchMock.mock.calls[0],
+            );
             expect(onSave).toHaveBeenCalledTimes(1);
             unmount();
             client.clear();

@@ -41,6 +41,16 @@ Object.defineProperties(global, {
 });
 
 if (typeof window !== 'undefined') {
+    // jsdom has no layout observer. Geometry and scrolling stay in Playwright.
+    Object.defineProperty(window, 'ResizeObserver', {
+        configurable: true,
+        value: jest.fn(() => ({
+            disconnect: jest.fn(),
+            observe: jest.fn(),
+            unobserve: jest.fn(),
+        })),
+        writable: true,
+    });
     Object.defineProperty(window, 'matchMedia', {
         value: jest.fn().mockImplementation((query: string) => ({
             addEventListener: jest.fn(),
