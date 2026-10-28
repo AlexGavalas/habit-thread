@@ -29,8 +29,8 @@ run. These tests also run as part of `test:e2e`. The existing Playwright workflo
 runs validation, Jest, and the complete browser suite after successful preview
 deployments. Shared application-level provisioning covers professional accounts
 in both local and preview modes, without CI database credentials or a separate
-accessibility workflow. See the README's end-to-end section for run namespaces
-and cleanup. Repository administrators should make **End-to-end and accessibility**
+accessibility workflow. See the testing skill's [E2E setup guide](.agents/skills/writing-tests/references/e2e-setup.md)
+for run namespaces and cleanup. Repository administrators should make **End-to-end and accessibility**
 a required branch-protection check.
 
 ## Current automated coverage
