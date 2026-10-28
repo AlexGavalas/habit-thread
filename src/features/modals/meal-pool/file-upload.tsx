@@ -1,19 +1,11 @@
-import {
-    ActionIcon,
-    Alert,
-    Button,
-    FileButton,
-    Group,
-    Stack,
-    Text,
-    Textarea,
-} from '@mantine/core';
-import { InfoCircle, Redo, Trash, Undo } from 'iconoir-react';
+import { Alert, Button, FileButton, Group, Stack } from '@mantine/core';
+import { InfoCircle, Redo, Undo } from 'iconoir-react';
 import {
     type ChangeEventHandler,
     type MouseEventHandler,
     type ReactElement,
     type SubmitEventHandler,
+    useId,
     useRef,
     useState,
 } from 'react';
@@ -25,11 +17,14 @@ import { mealImportResponseSchema } from '~schemas/meal-import';
 import { FileActions } from './file-actions';
 import { useCreateMealPool } from './hooks/use-create-meal-pool';
 import { useUpload } from './hooks/use-upload';
+import { ImportedMealsEditor } from './imported-meals-editor';
+import { MealLibraryPanel } from './meal-library-panel';
 
 type FileUploadTabProps = Readonly<{ onDone: () => void }>;
 
 export const FileUploadTab = ({ onDone }: FileUploadTabProps): ReactElement => {
     const { t } = useTranslation();
+    const formId = useId();
     const [file, setFile] = useState<File | null>(null);
     const resetRef = useRef<() => void>(null);
     const {
@@ -97,101 +92,91 @@ export const FileUploadTab = ({ onDone }: FileUploadTabProps): ReactElement => {
     };
 
     return (
-        <Stack gap="md">
-            <Alert icon={<InfoCircle />} variant="outline">
-                {t('file_types_info')}
-            </Alert>
-            {!isSuccess && (
-                <FileButton
-                    accept=".docx,.pdf"
-                    disabled={isUploading}
-                    onChange={setFile}
-                    // oxlint-disable-next-line react/jsx-handler-names
-                    resetRef={resetRef}
-                >
-                    {(props) => <Button {...props}>{t('upload.label')}</Button>}
-                </FileButton>
-            )}
-            <FileActions
-                file={file}
-                isSuccess={isSuccess}
-                isUploading={isUploading}
-                onClear={handleClear}
-                onReset={handleClear}
-                onUpload={handleUpload}
-            />
-
-            {isSuccess && (
-                <>
-                    <Group gap="md">
-                        <Alert icon={<InfoCircle />} variant="outline">
-                            {t('upload.helper')}
-                        </Alert>
-                        <Button
-                            disabled={!canUndo}
-                            leftSection={<Undo />}
-                            onClick={handleUndo}
-                            variant="outline"
+        <MealLibraryPanel
+            actions={
+                <Group gap="sm" justify="end">
+                    <Button
+                        variant="default"
+                        disabled={isUploading || isCreating}
+                        onClick={onDone}
+                    >
+                        {t('generic.actions.cancel')}
+                    </Button>
+                    {!isSuccess && (
+                        <FileButton
+                            accept=".docx,.pdf"
+                            disabled={isUploading}
+                            onChange={setFile}
+                            // oxlint-disable-next-line react/jsx-handler-names
+                            resetRef={resetRef}
                         >
-                            {t('generic.actions.undo')}
-                        </Button>
-                        <Button
-                            disabled={!canRedo}
-                            leftSection={<Redo />}
-                            onClick={handleRedo}
-                            variant="outline"
-                        >
-                            {t('generic.actions.redo')}
-                        </Button>
-                    </Group>
-                    <form onSubmit={handleSubmit}>
-                        <Stack gap="sm">
-                            <Text fw="var(--mantine-font-weight-medium)">
-                                {t('import_success')}
-                            </Text>
-                            {currentState?.map((result, idx) => (
-                                <Group key={idx} gap="sm">
-                                    <Textarea
-                                        aria-label={t('upload.meal_label', {
-                                            index: idx + 1,
-                                        })}
-                                        autosize
-                                        data-item-index={idx}
-                                        maxLength={4000}
-                                        minRows={1}
-                                        name="meal"
-                                        onChange={handleEditItem}
-                                        style={{ flexGrow: 1 }}
-                                        value={result}
-                                    />
+                            {(props) => (
+                                <Button {...props}>{t('upload.label')}</Button>
+                            )}
+                        </FileButton>
+                    )}
+                    <FileActions
+                        file={file}
+                        isSuccess={isSuccess}
+                        isUploading={isUploading || isCreating}
+                        onClear={handleClear}
+                        onReset={handleClear}
+                        onUpload={handleUpload}
+                    />
 
-                                    <ActionIcon
-                                        aria-label={t('upload.remove_meal', {
-                                            index: idx + 1,
-                                        })}
-                                        color="danger"
-                                        data-item-index={idx}
-                                        onClick={handleRemoveItem}
-                                        variant="outline"
-                                    >
-                                        <Trash />
-                                    </ActionIcon>
-                                </Group>
-                            ))}
+                    {isSuccess && (
+                        <>
+                            <Button
+                                disabled={!canUndo || isCreating}
+                                leftSection={<Undo />}
+                                onClick={handleUndo}
+                                variant="outline"
+                            >
+                                {t('generic.actions.undo')}
+                            </Button>
+                            <Button
+                                disabled={!canRedo || isCreating}
+                                leftSection={<Redo />}
+                                onClick={handleRedo}
+                                variant="outline"
+                            >
+                                {t('generic.actions.redo')}
+                            </Button>
                             <Button
                                 disabled={
                                     !currentState?.length ||
                                     currentState.some((meal) => !meal.trim())
                                 }
+                                form={formId}
                                 loading={isCreating}
                                 type="submit"
                             >
                                 {t('create')}
                             </Button>
-                        </Stack>
-                    </form>
-                </>
-            )}
-        </Stack>
+                        </>
+                    )}
+                </Group>
+            }
+        >
+            <Stack gap="md" inert={isCreating}>
+                <Alert icon={<InfoCircle />} variant="outline">
+                    {t('file_types_info')}
+                </Alert>
+                {isSuccess && (
+                    <>
+                        <Alert icon={<InfoCircle />} variant="outline">
+                            {t('upload.helper')}
+                        </Alert>
+                        <form id={formId} onSubmit={handleSubmit}>
+                            <ImportedMealsEditor
+                                meals={currentState ?? []}
+                                onEdit={handleEditItem}
+                                onRemove={handleRemoveItem}
+                            />
+                        </form>
+                    </>
+                )}
+            </Stack>
+        </MealLibraryPanel>
     );
 };

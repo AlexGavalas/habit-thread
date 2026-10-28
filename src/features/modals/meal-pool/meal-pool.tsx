@@ -22,17 +22,8 @@ export const MealPoolModal = ({
     };
 
     return (
-        <Tabs
-            className={isFoodDatabaseSearchEnabled ? styles.tabs : undefined}
-            defaultValue="manually"
-        >
-            <Tabs.List
-                className={
-                    isFoodDatabaseSearchEnabled ? styles.tabList : undefined
-                }
-                mb="md"
-                mt="sm"
-            >
+        <Tabs className={styles.tabs} defaultValue="manually">
+            <Tabs.List className={styles.tabList} mb="md" mt="sm">
                 <Tabs.Tab value="manually">
                     {t('modals.meal_pool.tabs.manual')}
                 </Tabs.Tab>
@@ -56,10 +47,7 @@ export const MealPoolModal = ({
                 </Tabs.Panel>
             )}
             {isFoodDatabaseSearchEnabled && (
-                <Tabs.Panel
-                    className={`${styles.panel} ${styles.foodPanel}`}
-                    value="food-database"
-                >
+                <Tabs.Panel className={styles.panel} value="food-database">
                     <FoodDatabaseTab onDone={closeModal} />
                 </Tabs.Panel>
             )}

@@ -12,6 +12,7 @@ type MealFoodWorkspaceProps = Readonly<{
     children: ReactNode;
     details: ReactNode;
     detailsInvalid?: boolean;
+    initialView?: 'search' | 'selected';
     items: EditedMealItem[];
     onItemsChange: (items: EditedMealItem[]) => void;
     recentlyAddedIndex: number | null;
@@ -21,12 +22,13 @@ export const MealFoodWorkspace = ({
     children,
     details,
     detailsInvalid = false,
+    initialView = 'search',
     items,
     onItemsChange,
     recentlyAddedIndex,
 }: MealFoodWorkspaceProps): ReactElement => {
     const { t } = useTranslation();
-    const [view, setView] = useState('search');
+    const [view, setView] = useState(initialView);
     const workspaceRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
         workspaceRef.current

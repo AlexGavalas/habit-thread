@@ -44,6 +44,7 @@ export const useCreateMealPool: UseCreateMealPool = ({ onSuccess } = {}) => {
         onError: () => {
             showErrorNotification({
                 message: t('notification.error.message'),
+                position: 'top-right',
                 title: t('notification.error.title'),
             });
         },

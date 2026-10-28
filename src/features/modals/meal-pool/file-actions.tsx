@@ -29,7 +29,11 @@ export const FileActions = ({
         return (
             <Group gap="md">
                 <Text>{t('upload.reset_prompt')}</Text>
-                <Button onClick={onReset} size="compact-sm">
+                <Button
+                    disabled={isUploading}
+                    onClick={onReset}
+                    size="compact-sm"
+                >
                     {t('generic.actions.reset')}
                 </Button>
             </Group>

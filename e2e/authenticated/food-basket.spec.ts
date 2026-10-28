@@ -90,7 +90,6 @@ for (const viewport of [
             'Added Oats to Selected foods (1).',
         );
         await results.getByRole('button', { name: /^Blueberries / }).click();
-
         if (viewport.width <= 768) {
             await dialog.getByRole('button', { name: 'Selected (2)' }).click();
         }
@@ -109,7 +108,6 @@ for (const viewport of [
         ).toBeVisible();
         await expectNoHorizontalOverflow(page);
         await expectModalScreenshot(dialog, `food-basket-${viewport.name}.png`);
-
         if (viewport.width <= 768) {
             await dialog
                 .getByRole('button', { exact: true, name: 'Search' })
@@ -125,7 +123,6 @@ for (const viewport of [
         await expect
             .poll(async () => results.evaluate((element) => element.scrollTop))
             .toBe(searchScroll);
-
         if (viewport.width <= 768) {
             await dialog.getByRole('button', { name: 'Selected (3)' }).click();
         }
@@ -153,7 +150,6 @@ for (const viewport of [
         ]);
     });
 }
-
 test('meal editor keeps the basket available across searches and source tabs', async ({
     page,
 }) => {
@@ -191,8 +187,12 @@ test('meal editor keeps the basket available across searches and source tabs', a
     await dialog.getByRole('button', { name: 'Save changes' }).click();
     await expect(dialog).toBeHidden();
     // Reopen the locally saved meal to verify the existing save contract is intact.
-    const savedMeal = page.getByRole('article').filter({ hasText: 'Oats' });
-    await savedMeal.hover();
-    await savedMeal.getByRole('button', { exact: true, name: 'Edit' }).click();
+    await page.setViewportSize({ height: 844, width: 390 });
+    await page.getByRole('button', { exact: true, name: 'Edit Lunch' }).click();
+    await expect(
+        dialog.getByRole('button', { name: 'Selected (2)' }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    await expect(dialog.getByLabel('Food or brand')).toBeHidden();
     await expect(oatsQuantity).toHaveValue('80 g');
+    await expectModalScreenshot(dialog, 'food-basket-edit-mobile.png');
 });

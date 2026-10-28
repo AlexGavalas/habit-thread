@@ -1,4 +1,4 @@
-import { Button, Group, Stack, TextInput } from '@mantine/core';
+import { Button, Group, TextInput } from '@mantine/core';
 import type { ReactElement } from 'react';
 import { type MouseEventHandler, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +10,7 @@ import { useMealItems } from '../meal/hooks/use-meal-items';
 import { MealFoodWorkspace } from '../meal/meal-food-workspace';
 import styles from './food-database.module.css';
 import { useCreateMealPool } from './hooks/use-create-meal-pool';
+import { MealLibraryPanel } from './meal-library-panel';
 
 type FoodDatabaseTabProps = Readonly<{
     onDone: () => void;
@@ -43,8 +44,29 @@ export const FoodDatabaseTab = ({
         setPreview(event.target.value);
     };
     return (
-        <Stack className={styles.tab} gap="md">
-            <div className={styles.workspace}>
+        <MealLibraryPanel
+            workspace
+            actions={
+                <Group gap="md" justify="end">
+                    <Button
+                        disabled={isLoading}
+                        onClick={onDone}
+                        type="button"
+                        variant="default"
+                    >
+                        {t('generic.actions.cancel')}
+                    </Button>
+                    <Button
+                        disabled={!preview.trim() || items.length === 0}
+                        loading={isLoading}
+                        onClick={handleCreate}
+                    >
+                        {t('generic.actions.save')}
+                    </Button>
+                </Group>
+            }
+        >
+            <div className={styles.tab}>
                 <MealFoodWorkspace
                     details={
                         <TextInput
@@ -66,23 +88,6 @@ export const FoodDatabaseTab = ({
                     />
                 </MealFoodWorkspace>
             </div>
-            <Group gap="md" justify="end">
-                <Button
-                    disabled={isLoading}
-                    onClick={onDone}
-                    type="button"
-                    variant="default"
-                >
-                    {t('generic.actions.cancel')}
-                </Button>
-                <Button
-                    disabled={!preview.trim() || items.length === 0}
-                    loading={isLoading}
-                    onClick={handleCreate}
-                >
-                    {t('generic.actions.save')}
-                </Button>
-            </Group>
-        </Stack>
+        </MealLibraryPanel>
     );
 };

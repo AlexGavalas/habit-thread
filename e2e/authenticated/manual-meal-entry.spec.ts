@@ -2,7 +2,10 @@ import { expect, test } from '@playwright/test';
 import { z } from 'zod';
 
 import en from '../../public/locales/en/common.json';
-import { expectNoHorizontalOverflow } from '../support/layout';
+import {
+    expectModalScreenshot,
+    expectNoHorizontalOverflow,
+} from '../support/layout';
 
 for (const width of [1280, 390]) {
     test(`creates a meal variation without replacing the source at ${width}px`, async ({
@@ -58,6 +61,14 @@ for (const width of [1280, 390]) {
         await dialog.getByRole('button', { name: copy.replace }).click();
         await description.fill(variation);
         await expectNoHorizontalOverflow(page);
+        const footer = dialog.getByRole('contentinfo');
+        await expect(
+            footer.getByRole('button', { name: copy.save }),
+        ).toBeVisible();
+        await expect(
+            footer.getByRole('button', { name: copy.use_previous }),
+        ).toHaveCount(0);
+        await expectModalScreenshot(dialog, `meal-library-manual-${width}.png`);
         const saved = page.waitForResponse(
             (response) =>
                 response.url().includes('/api/v1/pool/meal') &&

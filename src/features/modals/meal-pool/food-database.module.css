@@ -2,12 +2,3 @@
     height: 100%;
     min-height: 0;
 }
-
-.tab > :last-child {
-    flex-shrink: 0;
-}
-
-.workspace {
-    flex: 1;
-    min-height: 0;
-}
