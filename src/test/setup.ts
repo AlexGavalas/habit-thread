@@ -73,13 +73,13 @@ jest.mock('../app/actions', () => ({
     inviteProfessional: jest.fn(),
     removeProfessionalRelationship: jest.fn(),
     saveMealPlan: jest.fn(),
-    saveMealZoneTimes: jest.fn(),
     saveProfile: jest.fn(),
     setProfessionalRole: jest.fn(),
 }));
 
-jest.mock('../app/weekly-meal-zone-actions', () => ({
-    saveWeeklyMealSchedule: jest.fn().mockResolvedValue({ ok: true }),
+jest.mock('../app/schedule-actions', () => ({
+    saveDaySchedule: jest.fn().mockResolvedValue({ ok: true }),
+    saveDefaultSchedule: jest.fn().mockResolvedValue({ ok: true }),
 }));
 
 jest.mock('../app/meal-mutation-actions', () => ({

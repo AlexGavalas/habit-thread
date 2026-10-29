@@ -1,199 +1,168 @@
-import { format, parseISO } from 'date-fns';
-import { type ChangeEvent, useEffect, useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { z } from 'zod';
 
+import { weeklyMealZoneSchema } from '~schemas/weekly-meal-zone';
 import { type WeeklyMealZone } from '~types/meal-zone';
-import { getDaysOfWeek } from '~util/date';
+import { ScheduleConflictError } from '~util/schedule-result';
 
-import { useEditorSubmit } from '../modals/use-editor-submit';
-import {
-    getDuplicateTimes,
-    getNextMealTime,
-    normalizeSchedule,
-    type ScheduleEditorOptions,
-} from './schedule-editor-utils';
+import { type ScheduleEditorProps } from './schedule-editor';
+import { getNextMealTime } from './schedule-editor-utils';
 
-type ScheduleEditor = {
-    copySource: string | null;
-    dayZones: WeeklyMealZone[];
-    days: ReturnType<typeof getDaysOfWeek>;
-    duplicateTimes: Set<string>;
-    handleAdd: () => void;
-    handleCopy: () => void;
-    handleRemove: (zoneKey: string) => void;
-    handleSave: () => Promise<void>;
-    handleZoneChange: (
-        zoneKey: string,
+type DayScheduleEditor = {
+    draft: WeeklyMealZone[];
+    error: string;
+    handleAddSlot: () => void;
+    handleClose: () => void;
+    handleRemoveSlot: (key: string) => void;
+    handleSave: (reset: boolean) => Promise<void>;
+    handleSlotChange: (
+        key: string,
         field: 'label' | 'time',
-    ) => (event: ChangeEvent<HTMLInputElement>) => void;
+        value: string,
+    ) => void;
     hasErrors: boolean;
     removedMealCount: number;
-    selectedDay: string;
-    setCopySource: (source: string | null) => void;
-    setSelectedDay: (day: string) => void;
 };
 
 export const useScheduleEditor = ({
-    initialDay,
+    initialDay: day,
+    isSaving,
     meals,
     onClose,
     onSave,
-    opened,
     weekStart,
     zones,
-}: ScheduleEditorOptions): ScheduleEditor => {
-    const { i18n, t } = useTranslation();
-    const submission = useEditorSubmit();
-    const days = useMemo(
-        () =>
-            getDaysOfWeek(
-                parseISO(weekStart),
-                'EEEE dd/MM',
-                i18n.language === 'gr' ? 'gr' : 'en',
-            ),
-        [i18n.language, weekStart],
-    );
-    const [draft, setDraft] = useState<WeeklyMealZone[]>(zones);
-    const [selectedDay, setSelectedDay] = useState(zones[0]?.day ?? weekStart);
-    const [copySource, setCopySource] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (!opened) {
-            return;
-        }
-        setDraft(
-            zones.map((zone) => ({
+}: ScheduleEditorProps): DayScheduleEditor => {
+    const { t } = useTranslation();
+    // The calendar keys the editor by owner/week/date. Refetches never replace
+    // an open draft; navigation unmounts it and cannot close the next editor.
+    const [draft, setDraft] = useState(() =>
+        zones
+            .filter((zone) => zone.day === day)
+            .map((zone) => ({
                 ...zone,
                 label: zone.legacyKey
                     ? t(`meal_zone_settings.labels.${zone.legacyKey}`)
                     : zone.label,
             })),
-        );
-        setSelectedDay(
-            zones.some(({ day }) => day === initialDay)
-                ? initialDay
-                : (zones[0]?.day ?? weekStart),
-        );
-        setCopySource(null);
-    }, [initialDay, opened, t, weekStart, zones]);
-
-    const dayZones = draft
-        .filter(({ day }) => day === selectedDay)
-        .toSorted((a, b) => a.position - b.position);
-    const duplicateTimes = getDuplicateTimes(dayZones);
-    const hasErrors =
-        draft.some(({ label }) => !label.trim()) ||
-        days.some(({ timestamp }) => {
-            const day = format(timestamp, 'yyyy-MM-dd');
-            const values = draft.filter((zone) => zone.day === day);
-            return (
-                values.length < 1 ||
-                values.length > 10 ||
-                new Set(values.map(({ time }) => time)).size !== values.length
-            );
-        });
-    const removedMealCount = meals.filter(
-        (meal) => !draft.some(({ zoneKey }) => zoneKey === meal.section_key),
-    ).length;
-
-    const handleZoneChange =
-        (
-            zoneKey: string,
-            field: 'label' | 'time',
-        ): ((event: ChangeEvent<HTMLInputElement>) => void) =>
-        (event: ChangeEvent<HTMLInputElement>) => {
-            const value = event.currentTarget.value;
-            setDraft((current) =>
-                current.map((zone) =>
-                    zone.zoneKey === zoneKey
-                        ? { ...zone, [field]: value }
-                        : zone,
-                ),
-            );
+    );
+    const [error, setError] = useState('');
+    const active = useRef(true);
+    const submitting = useRef(false);
+    useEffect(() => {
+        active.current = true;
+        return (): void => {
+            active.current = false;
         };
-    const handleRemove = (zoneKey: string): void => {
-        if (dayZones.length <= 1) {
-            return;
-        }
+    }, []);
+    const hasErrors =
+        !z.array(weeklyMealZoneSchema).min(1).max(10).safeParse(draft)
+            .success ||
+        new Set(draft.map(({ time }) => time)).size !== draft.length;
+    const removedMealCount = meals.filter(
+        (meal) =>
+            meal.day === day &&
+            !draft.some((zone) => zone.zoneKey === meal.section_key),
+    ).length;
+    const handleSlotChange = (
+        key: string,
+        field: 'label' | 'time',
+        value: string,
+    ): void => {
         setDraft((current) =>
-            current
-                .filter((zone) => zone.zoneKey !== zoneKey)
-                .map((zone) =>
-                    zone.day === selectedDay
-                        ? {
-                              ...zone,
-                              position: current
-                                  .filter(
-                                      (candidate) =>
-                                          candidate.day === selectedDay &&
-                                          candidate.zoneKey !== zoneKey,
-                                  )
-                                  .findIndex(
-                                      (candidate) =>
-                                          candidate.zoneKey === zone.zoneKey,
-                                  ),
-                          }
-                        : zone,
-                ),
+            current.map((zone) =>
+                zone.zoneKey === key
+                    ? {
+                          ...zone,
+                          [field]: value,
+                          ...(field === 'label'
+                              ? { legacyKey: undefined }
+                              : {}),
+                      }
+                    : zone,
+            ),
         );
     };
-    const handleAdd = (): void => {
-        if (dayZones.length >= 10) {
+    const handleAddSlot = (): void => {
+        if (draft.length >= 10) {
             return;
         }
         setDraft((current) => [
             ...current,
             {
-                day: selectedDay,
+                day,
                 label: t('meal_plan.schedule.new_slot', {
-                    number: dayZones.length + 1,
+                    number: current.length + 1,
                 }),
-                position: dayZones.length,
-                time: getNextMealTime(dayZones),
+                position: current.length,
+                time: getNextMealTime(current),
                 weekStart,
                 zoneKey: crypto.randomUUID(),
             },
         ]);
     };
-    const handleCopy = (): void => {
-        if (!copySource || copySource === selectedDay) {
+    const handleRemoveSlot = (key: string): void => {
+        setDraft((current) =>
+            current.length > 1
+                ? current.filter((zone) => zone.zoneKey !== key)
+                : current,
+        );
+    };
+    const handleSave = async (reset: boolean): Promise<void> => {
+        if (
+            submitting.current ||
+            isSaving ||
+            (!reset && (hasErrors || removedMealCount > 0))
+        ) {
             return;
         }
-        const source = draft
-            .filter(({ day }) => day === copySource)
-            .toSorted((a, b) => a.position - b.position);
-        setDraft((current) => [
-            ...current.filter(({ day }) => day !== selectedDay),
-            ...source.map((zone, position) => ({
-                ...zone,
-                day: selectedDay,
-                position,
-                weekStart,
-                zoneKey: crypto.randomUUID(),
-            })),
-        ]);
+        submitting.current = true;
+        setError('');
+        try {
+            await onSave(
+                day,
+                reset
+                    ? null
+                    : draft
+                          .toSorted((a, b) => a.time.localeCompare(b.time))
+                          .map((zone, position) => ({
+                              ...zone,
+                              label: zone.label.trim(),
+                              position,
+                          })),
+            );
+            if (active.current) {
+                onClose();
+            }
+        } catch (failure) {
+            if (active.current) {
+                setError(
+                    failure instanceof ScheduleConflictError
+                        ? t('meal_plan.schedule.conflict', {
+                              dates: failure.days.join(', '),
+                          })
+                        : t('meal_plan.schedule.save_error'),
+                );
+            }
+        } finally {
+            submitting.current = false;
+        }
     };
-    const handleSave = async (): Promise<void> => {
-        const normalized = normalizeSchedule(draft, days);
-        if (await submission.submit(() => onSave(normalized))) {
+    const handleClose = (): void => {
+        if (!isSaving && !submitting.current) {
             onClose();
         }
     };
-
     return {
-        copySource,
-        dayZones,
-        days,
-        duplicateTimes,
-        handleAdd,
-        handleCopy,
-        handleRemove,
+        draft,
+        error,
+        handleAddSlot,
+        handleClose,
+        handleRemoveSlot,
         handleSave,
-        handleZoneChange,
+        handleSlotChange,
         hasErrors,
         removedMealCount,
-        selectedDay,
-        setCopySource,
-        setSelectedDay,
     };
 };

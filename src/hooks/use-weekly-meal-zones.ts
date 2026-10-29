@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, startOfWeek } from 'date-fns';
-import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 
 import { useMealPlanOwnerId } from '~features/meal-plan-owner';
@@ -10,19 +9,16 @@ import {
     mealMutationKey,
 } from '~store/hooks/meal-mutation-state';
 import { type WeeklyMealZone } from '~types/meal-zone';
-import { requireActionSuccess } from '~util/action-result';
-import {
-    showErrorNotification,
-    showSuccessNotification,
-} from '~util/notification';
 import { getMealsQueryKey, getWeeklyMealZonesQueryKey } from '~util/query-keys';
+import { requireScheduleSuccess } from '~util/schedule-result';
 
-import { saveWeeklyMealSchedule } from '../app/weekly-meal-zone-actions';
+import { saveDaySchedule } from '../app/schedule-actions';
 
 type ScheduleMutationVariables = {
+    day: string;
     ownerUserId?: number;
     weekStart: string;
-    zones: WeeklyMealZone[];
+    zones: WeeklyMealZone[] | null;
 };
 const responseSchema = z.object({ data: z.array(weeklyMealZoneSchema) });
 
@@ -39,11 +35,10 @@ export const useWeeklyMealZones = (
     isSaving: boolean;
     isError: boolean;
     retry: () => void;
-    save: (zones: WeeklyMealZone[]) => Promise<void>;
+    save: (day: string, zones: WeeklyMealZone[] | null) => Promise<void>;
     weekStart: string;
     zones: WeeklyMealZone[];
 } => {
-    const { t } = useTranslation();
     const ownerUserId = useMealPlanOwnerId(explicitOwnerUserId);
     const queryClient = useQueryClient();
     const weekStart = format(
@@ -87,22 +82,16 @@ export const useWeeklyMealZones = (
             ) {
                 throw new Error('Another meal operation is pending');
             }
-            const response = await saveWeeklyMealSchedule({
+            const response = await saveDaySchedule({
                 ...(variables.ownerUserId
                     ? { ownerUserId: variables.ownerUserId }
                     : {}),
-                weekStart: variables.weekStart,
+                day: variables.day,
                 zones: variables.zones,
             });
-            requireActionSuccess(response);
+            requireScheduleSuccess(response);
         },
         mutationKey: mealMutationKey(ownerUserId),
-        onError: (): void => {
-            showErrorNotification({
-                message: t('meal_plan.schedule.save_error'),
-                title: t('notification.error.title'),
-            });
-        },
         onSuccess: async (_data, variables): Promise<void> => {
             await Promise.all([
                 queryClient.invalidateQueries({
@@ -118,14 +107,14 @@ export const useWeeklyMealZones = (
                     ),
                 }),
             ]);
-            showSuccessNotification({
-                message: t('meal_plan.schedule.save_success'),
-                title: t('notification.success.title'),
-            });
         },
+        retry: false,
     });
-    const save = async (zones: WeeklyMealZone[]): Promise<void> => {
-        await mutation.mutateAsync({ ownerUserId, weekStart, zones });
+    const save = async (
+        day: string,
+        zones: WeeklyMealZone[] | null,
+    ): Promise<void> => {
+        await mutation.mutateAsync({ day, ownerUserId, weekStart, zones });
     };
 
     return {

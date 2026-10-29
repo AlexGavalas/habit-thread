@@ -1,14 +1,6 @@
 'use client';
 
-import {
-    Button,
-    Container,
-    Group,
-    Modal,
-    Stack,
-    Text,
-    Title,
-} from '@mantine/core';
+import { Button, Container, Group, Stack, Text, Title } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import { UserPlus } from 'iconoir-react';
 import type { ReactElement } from 'react';
@@ -16,6 +8,7 @@ import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Card } from '~components/card';
+import { AppModal } from '~components/overlays/overlays';
 import { FindUsers } from '~features/find-users';
 
 import styles from './connections.module.css';
@@ -73,7 +66,7 @@ export const Connections = ({
                 </div>
             </Stack>
 
-            <Modal
+            <AppModal
                 centered
                 fullScreen={isMobile}
                 onClose={closeAddPerson}
@@ -82,7 +75,7 @@ export const Connections = ({
                 title={t('connections.add_person')}
             >
                 <FindUsers />
-            </Modal>
+            </AppModal>
         </Container>
     );
 };

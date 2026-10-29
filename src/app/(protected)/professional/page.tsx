@@ -13,7 +13,6 @@ import {
 import { getRequestDate, requireUser } from '~api/session';
 import { fetchWeeklyMealZones } from '~api/weekly-meal-zone';
 import { MealPlanPageSkeleton } from '~components/loading-skeleton';
-import { MealZoneSettings } from '~features/meal-zone-settings';
 import { ProfessionalDashboard } from '~features/professional-dashboard';
 import { MealPlan } from '~features/screens/meal-plan';
 import { createQueryClient } from '~util/query-client';
@@ -109,10 +108,6 @@ const ProfessionalDashboardContent = async ({
                     initialDate={format(now, 'yyyy-MM-dd')}
                     initialWeeklyMealZones={weeklyMealZones}
                     initialWeekStart={startDate}
-                    ownerUserId={selectedClient.id}
-                />
-                <MealZoneSettings
-                    key={selectedClient.id}
                     ownerUserId={selectedClient.id}
                 />
             </HydrationBoundary>

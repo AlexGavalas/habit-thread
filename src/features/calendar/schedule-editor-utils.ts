@@ -1,19 +1,8 @@
 import { addMinutes, format, parse } from 'date-fns';
 
-import { type EditedMeal } from '~types/meal';
 import { type WeeklyMealZone } from '~types/meal-zone';
 
-export type ScheduleEditorOptions = {
-    initialDay: string;
-    meals: EditedMeal[];
-    onClose: () => void;
-    onSave: (zones: WeeklyMealZone[]) => Promise<void>;
-    opened: boolean;
-    weekStart: string;
-    zones: WeeklyMealZone[];
-};
-
-export const getNextMealTime = (zones: WeeklyMealZone[]): string => {
+export const getNextMealTime = (zones: readonly { time: string }[]): string => {
     const last = zones.toSorted((a, b) => a.time.localeCompare(b.time)).at(-1);
     if (!last) {
         return '12:00';

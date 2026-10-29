@@ -42,9 +42,14 @@ for (const width of [1440, 1100]) {
             }),
         ).toBeOK();
         await page.setViewportSize({ height: 1000, width });
+        await page.clock.setFixedTime(new Date(`${week}T12:00:00`));
         await page.goto(`/meal-plan?date=${week}`);
         const board = page.getByRole('region', { name: 'Weekly meal plan' });
         const days = board.getByRole('group', { name: 'Carousel slide' });
+        await expect(
+            days.first().getByRole('heading', { name: /^Mon / }),
+        ).toHaveAttribute('aria-current', 'date');
+        await expect(board.getByText('Today', { exact: true })).toHaveCount(0);
         await expect(
             days.first().getByRole('button', { name: /^204 kcal/ }),
         ).toBeVisible();

@@ -5,6 +5,7 @@ import type { ReactElement } from 'react';
 import { type ChangeEventHandler } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { scheduleSlotSchema } from '~schemas/schedule-template';
 import { type WeeklyMealZone } from '~types/meal-zone';
 
 import styles from './schedule-editor.module.css';
@@ -16,7 +17,7 @@ type Props = Readonly<{
     onLabelChange: ChangeEventHandler<HTMLInputElement>;
     onRemove: () => void;
     onTimeChange: ChangeEventHandler<HTMLInputElement>;
-    zone: WeeklyMealZone;
+    zone: Pick<WeeklyMealZone, 'label' | 'time'>;
 }>;
 
 export const ScheduleZoneRow = ({
@@ -48,10 +49,16 @@ export const ScheduleZoneRow = ({
                     value={zone.label}
                 />
                 <TimeInput
+                    aria-label={t('meal_plan.schedule.time_label', {
+                        number: index + 1,
+                    })}
                     error={
-                        duplicateTime
-                            ? t('meal_plan.schedule.time_error')
-                            : undefined
+                        !scheduleSlotSchema.shape.time.safeParse(zone.time)
+                            .success
+                            ? t('meal_plan.schedule.time_required')
+                            : duplicateTime
+                              ? t('meal_plan.schedule.time_error')
+                              : undefined
                     }
                     label={t('meal_plan.schedule.time')}
                     onChange={onTimeChange}
@@ -59,6 +66,7 @@ export const ScheduleZoneRow = ({
                 />
                 <ActionIcon
                     aria-label={t('meal_plan.schedule.remove_slot', {
+                        interpolation: { escapeValue: false },
                         name: zone.label,
                     })}
                     color="danger"
