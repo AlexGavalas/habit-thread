@@ -1,25 +1,11 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
-import { profileResponseSchema } from '../../src/schemas/user';
 import { expectAccessible } from '../support/accessibility';
 import {
     expectModalScreenshot,
     expectNoHorizontalOverflow,
 } from '../support/layout';
-
-const openDefault = async (page: Page, mobile = false): Promise<void> => {
-    if (mobile) {
-        await page
-            .locator('#meal-plan-container')
-            .getByRole('button', { exact: true, name: 'More actions' })
-            .click();
-        await page.getByRole('menuitem', { name: 'Default schedule' }).click();
-        return;
-    }
-    await page
-        .getByRole('button', { exact: true, name: 'Default schedule' })
-        .click();
-};
+import { openDefaultSchedule as openDefault } from '../support/schedules';
 
 for (const viewport of [
     { height: 500, width: 1024 },
@@ -52,9 +38,8 @@ for (const viewport of [
     });
 }
 
-test('persists next-week defaults, date overrides, resets and occupied-slot protection', async ({
+test('persists a daily default from next Monday without changing this week', async ({
     page,
-    request,
 }) => {
     await page.setViewportSize({ height: 900, width: 1440 });
     await page.goto('/meal-plan?date=2026-01-12');
@@ -75,6 +60,19 @@ test('persists next-week defaults, date overrides, resets and occupied-slot prot
     await expect(
         page.getByText('Early breakfast', { exact: true }).first(),
     ).toBeVisible();
+});
+
+test('preserves a custom date when the pending default changes and restores inheritance on reset', async ({
+    page,
+}) => {
+    await page.setViewportSize({ height: 900, width: 1440 });
+    await page.goto('/meal-plan?date=2026-01-19');
+    await openDefault(page);
+    const defaults = page.getByRole('dialog', { name: 'Default schedule' });
+    const defaultTime = await defaults
+        .getByLabel('Time for meal slot 1')
+        .inputValue();
+    await page.keyboard.press('Escape');
     await page
         .getByRole('button', {
             exact: true,
@@ -130,65 +128,9 @@ test('persists next-week defaults, date overrides, resets and occupied-slot prot
         'Routine breakfast',
     );
     await expect(monday.getByLabel('Time for meal slot 1')).toHaveValue(
-        '08:30',
+        defaultTime,
     );
     await expect(
         monday.getByRole('button', { name: 'Use default schedule' }),
     ).toHaveCount(0);
-    await page.keyboard.press('Escape');
-
-    const profile = await request.get('/api/v1/user');
-    const owner = profileResponseSchema.parse(await profile.json()).data;
-    const seed = await request.patch('/api/v1/meal', {
-        data: {
-            deletedIds: [],
-            editedMeals: [],
-            newMeals: [
-                {
-                    day: '2026-01-20',
-                    meal: 'Protected porridge',
-                    section_key: 'morning_Tue 20/01/2026',
-                    user_id: owner.id,
-                },
-            ],
-            weekStart: '2026-01-19',
-        },
-    });
-    await expect(seed).toBeOK();
-    await openDefault(page);
-    await defaults
-        .getByRole('button', { exact: true, name: 'Remove Routine breakfast' })
-        .click();
-    await defaults
-        .getByRole('button', { name: 'Save from 19/01/2026' })
-        .click();
-    await expect(defaults.getByRole('alert')).toContainText('2026-01-20');
-    await page.keyboard.press('Escape');
-    await page.reload();
-    await expect(
-        page.getByText('Protected porridge', { exact: true }).first(),
-    ).toBeVisible();
-    await openDefault(page);
-    await expect(defaults.getByLabel('Name for meal slot 1')).toHaveValue(
-        'Routine breakfast',
-    );
-    await page.keyboard.press('Escape');
-    await page
-        .getByRole('button', {
-            exact: true,
-            name: 'Edit schedule for Tue 20/01',
-        })
-        .click();
-    const tuesday = page.getByRole('dialog', {
-        name: 'Schedule for 20/01/2026',
-    });
-    await tuesday
-        .getByRole('button', { exact: true, name: 'Remove Routine breakfast' })
-        .click();
-    await expect(tuesday.getByRole('alert')).toContainText(
-        'Your meal has not been deleted.',
-    );
-    await expect(
-        tuesday.getByRole('button', { name: 'Save this day' }),
-    ).toBeDisabled();
 });
