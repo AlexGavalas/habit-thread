@@ -36,6 +36,13 @@ export const getMealZoneTimesQueryKey = (
     weekStart ?? 'next-week',
 ];
 
+export const getScheduleTemplateQueryKey = (
+    ownerUserId: number | undefined,
+): readonly ['schedule-template', number | undefined] => [
+    'schedule-template',
+    ownerUserId,
+];
+
 export const getWeekActivitiesQueryKey = (
     ownerUserId: number | undefined,
     weekStart: string,

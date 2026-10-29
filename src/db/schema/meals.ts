@@ -4,6 +4,7 @@ import {
     doublePrecision,
     index,
     integer,
+    jsonb,
     pgTable,
     primaryKey,
     text,
@@ -115,6 +116,18 @@ export const weeklyMealZones = pgTable(
             table.position,
         ),
     ],
+);
+
+export const scheduleTemplates = pgTable(
+    'schedule_templates',
+    {
+        effective_from: date('effective_from').notNull(),
+        template: jsonb('template').notNull(),
+        user_id: bigint('user_id', { mode: 'number' })
+            .notNull()
+            .references(() => users.id, { onDelete: 'cascade' }),
+    },
+    (table) => [primaryKey({ columns: [table.user_id, table.effective_from] })],
 );
 
 export const mealPool = pgTable(

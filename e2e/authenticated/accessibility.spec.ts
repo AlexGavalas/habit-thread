@@ -59,19 +59,19 @@ for (const viewport of [
                     name:
                         viewport.name === 'mobile'
                             ? 'Edit schedule for Mon'
-                            : 'Edit schedule',
+                            : 'Edit schedule for Mon 12/01',
                 });
                 await expect(edit).toBeVisible();
                 await expectAccessible(page, 'meal-plan');
                 await edit.focus();
                 await page.keyboard.press('Enter');
                 const dialog = page.getByRole('dialog', {
-                    name: 'Edit week schedule',
+                    name: 'Schedule for 12/01/2026',
                 });
                 await expect(dialog).toBeVisible();
                 await expectDialogFocusContained(
                     page,
-                    dialog.getByRole('button', { name: 'Save schedule' }),
+                    dialog.getByRole('button', { name: 'Save this day' }),
                 );
                 await expectAccessible(page, 'schedule-drawer');
                 await page.keyboard.press('Escape');

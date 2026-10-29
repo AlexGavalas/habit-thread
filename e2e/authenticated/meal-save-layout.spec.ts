@@ -74,7 +74,7 @@ for (const width of [1440, 1100]) {
             page.getByRole('button', { exact: true, name: 'See overview' }),
         ).toBeEnabled();
         await expect(
-            page.getByRole('button', { exact: true, name: 'Edit schedule' }),
+            page.getByRole('button', { exact: true, name: 'Default schedule' }),
         ).toBeDisabled();
         await expect(page).toHaveScreenshot(`meal-drag-saving-${width}.png`);
         await page
@@ -99,7 +99,7 @@ for (const width of [1440, 1100]) {
             source.getByText('Layout test porridge', { exact: true }),
         ).toHaveCount(0);
         await expect(
-            page.getByRole('button', { exact: true, name: 'Edit schedule' }),
+            page.getByRole('button', { exact: true, name: 'Default schedule' }),
         ).toBeEnabled();
         gate.resolve(undefined);
         await expect(saving).toHaveCount(0);

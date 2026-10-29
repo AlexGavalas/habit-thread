@@ -1,173 +1,128 @@
 'use client';
 
-import {
-    Alert,
-    Button,
-    Drawer,
-    Group,
-    Paper,
-    ScrollArea,
-    Select,
-    Stack,
-    Text,
-} from '@mantine/core';
-import { format } from 'date-fns';
-import type { ReactElement } from 'react';
+import { Alert, Button, Group, ScrollArea, Stack, Text } from '@mantine/core';
+import { format, parseISO } from 'date-fns';
+import { type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { AppDrawer } from '~components/overlays/overlays';
+import { useMealPlanOwnerId } from '~features/meal-plan-owner';
 import { type EditedMeal } from '~types/meal';
 import { type WeeklyMealZone } from '~types/meal-zone';
 
 import styles from './schedule-editor.module.css';
-import { ScheduleZoneRow } from './schedule-zone-row';
+import { ScheduleSlotFields } from './schedule-slot-fields';
 import { useScheduleEditor } from './use-schedule-editor';
 
-type Props = Readonly<{
+export type ScheduleEditorProps = Readonly<{
     isSaving: boolean;
     initialDay: string;
     meals: EditedMeal[];
     onClose: () => void;
-    onSave: (zones: WeeklyMealZone[]) => Promise<void>;
-    opened: boolean;
+    onSave: (day: string, zones: WeeklyMealZone[] | null) => Promise<void>;
+    opened?: boolean;
     weekStart: string;
     zones: WeeklyMealZone[];
 }>;
 
-export const ScheduleEditor = (props: Props): ReactElement => {
+const ScheduleEditorContent = (props: ScheduleEditorProps): ReactElement => {
     const { t } = useTranslation();
     const editor = useScheduleEditor(props);
-    const dayOptions = editor.days.map(({ label, timestamp }) => ({
-        label,
-        value: format(timestamp, 'yyyy-MM-dd'),
-    }));
-    const copyOptions = dayOptions.filter(
-        ({ value }) => value !== editor.selectedDay,
-    );
-    const handleDayChange = (value: string | null): void => {
-        if (value) {
-            editor.setSelectedDay(value);
-        }
-    };
-    const handleCopySourceChange = (value: string | null): void => {
-        editor.setCopySource(value);
-    };
-    const handleClose = (): void => {
-        if (!props.isSaving) {
-            props.onClose();
-        }
-    };
-
+    const { initialDay: day, isSaving, zones } = props;
     return (
-        <Drawer
-            classNames={{
-                body: styles.drawerBody,
-                content: styles.drawerContent,
-            }}
-            closeButtonProps={{ 'aria-label': t('generic.actions.close') }}
-            onClose={handleClose}
-            opened={props.opened}
-            position="right"
-            size="md"
-            title={t('meal_plan.schedule.title')}
-        >
+        <>
             <ScrollArea className={styles.editorScrollArea} offsetScrollbars>
                 <Stack className={styles.editorContent} gap="lg">
                     <Text c="dimmed" size="sm">
-                        {t('meal_plan.schedule.description')}
+                        {t('meal_plan.schedule.day_description')}
                     </Text>
-                    <Select
-                        allowDeselect={false}
-                        data={dayOptions}
-                        label={t('meal_plan.schedule.day')}
-                        onChange={handleDayChange}
-                        value={editor.selectedDay}
-                    />
-                    <Group justify="space-between">
-                        <Text fw={600}>
-                            {t('meal_plan.schedule.meal_slots')}
-                        </Text>
-                        <Text c="dimmed" size="sm">
-                            {editor.dayZones.length} / 10
-                        </Text>
-                    </Group>
-                    <Stack gap="sm">
-                        {editor.dayZones.map((zone, index) => (
-                            <ScheduleZoneRow
-                                duplicateTime={editor.duplicateTimes.has(
-                                    zone.time,
-                                )}
-                                index={index}
-                                isOnlyZone={editor.dayZones.length === 1}
-                                key={zone.zoneKey}
-                                onLabelChange={editor.handleZoneChange(
-                                    zone.zoneKey,
-                                    'label',
-                                )}
-                                onRemove={editor.handleRemove.bind(
-                                    undefined,
-                                    zone.zoneKey,
-                                )}
-                                onTimeChange={editor.handleZoneChange(
-                                    zone.zoneKey,
-                                    'time',
-                                )}
-                                zone={zone}
-                            />
-                        ))}
-                    </Stack>
-                    <Button
-                        disabled={editor.dayZones.length >= 10}
-                        onClick={editor.handleAdd}
-                        variant="outline"
-                    >
-                        {t('meal_plan.schedule.add_slot')}
-                    </Button>
-                    <Paper p="sm" withBorder>
-                        <Stack gap="sm">
-                            <Select
-                                clearable
-                                data={copyOptions}
-                                label={t('meal_plan.schedule.copy_from')}
-                                onChange={handleCopySourceChange}
-                                value={editor.copySource}
-                            />
-                            <Button
-                                disabled={!editor.copySource}
-                                onClick={editor.handleCopy}
-                                variant="default"
-                            >
-                                {t('meal_plan.schedule.copy')}
-                            </Button>
-                        </Stack>
-                    </Paper>
-                    {editor.removedMealCount > 0 && (
-                        <Alert
-                            color="warning"
-                            title={t('meal_plan.schedule.warning_title')}
+                    <fieldset className={styles.fields} disabled={isSaving}>
+                        <ScheduleSlotFields
+                            slots={editor.draft.map((zone) => ({
+                                ...zone,
+                                key: zone.zoneKey,
+                            }))}
+                            onChange={editor.handleSlotChange}
+                            onAdd={editor.handleAddSlot}
+                            onRemove={editor.handleRemoveSlot}
+                        />
+                    </fieldset>
+                    {zones.some(
+                        (zone) => zone.day === day && zone.isOverride,
+                    ) && (
+                        <Button
+                            disabled={isSaving}
+                            onClick={() => editor.handleSave(true)}
+                            variant="subtle"
                         >
-                            {t('meal_plan.schedule.removed_meals_warning', {
+                            {t('meal_plan.schedule.use_default')}
+                        </Button>
+                    )}
+                    {editor.removedMealCount > 0 && (
+                        <Alert color="warning" role="alert">
+                            {t('meal_plan.schedule.removal_blocked', {
                                 count: editor.removedMealCount,
                             })}
+                        </Alert>
+                    )}
+                    {editor.error && (
+                        <Alert color="danger" role="alert">
+                            {editor.error}
                         </Alert>
                     )}
                 </Stack>
             </ScrollArea>
             <Group className={styles.actions} justify="flex-end">
                 <Button
-                    disabled={props.isSaving}
-                    onClick={handleClose}
+                    disabled={isSaving}
+                    onClick={editor.handleClose}
                     variant="default"
                 >
                     {t('generic.actions.cancel')}
                 </Button>
                 <Button
-                    disabled={editor.hasErrors}
-                    loading={props.isSaving}
-                    onClick={editor.handleSave}
+                    disabled={editor.hasErrors || editor.removedMealCount > 0}
+                    loading={isSaving}
+                    onClick={() => editor.handleSave(false)}
                 >
-                    {t('meal_plan.schedule.save')}
+                    {t('meal_plan.schedule.save_day')}
                 </Button>
             </Group>
-        </Drawer>
+        </>
+    );
+};
+
+export const ScheduleEditor = (props: ScheduleEditorProps): ReactElement => {
+    const { t } = useTranslation();
+    const ownerUserId = useMealPlanOwnerId();
+    const handleClose = (): void => {
+        if (!props.isSaving) {
+            props.onClose();
+        }
+    };
+    return (
+        <AppDrawer
+            classNames={{
+                body: styles.drawerBody,
+                content: styles.drawerContent,
+            }}
+            closeButtonProps={{
+                'aria-label': t('generic.actions.close'),
+                disabled: props.isSaving,
+            }}
+            onClose={handleClose}
+            opened={props.opened ?? true}
+            position="right"
+            size="md"
+            title={t('meal_plan.schedule.day_title', {
+                date: format(parseISO(props.initialDay), 'dd/MM/yyyy'),
+                interpolation: { escapeValue: false },
+            })}
+        >
+            <ScheduleEditorContent
+                key={`${ownerUserId}-${props.weekStart}-${props.initialDay}`}
+                {...props}
+            />
+        </AppDrawer>
     );
 };

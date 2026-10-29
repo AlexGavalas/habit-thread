@@ -1,10 +1,12 @@
 'use client';
 
-import { List, Menu, Modal, Stack, Text, UnstyledButton } from '@mantine/core';
+import { List, Menu, Stack, Text, UnstyledButton } from '@mantine/core';
 import { CheckCircle, DownloadCircle } from 'iconoir-react';
 import type { ReactElement } from 'react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { AppModal } from '~components/overlays/overlays';
 
 import styles from './install-app.module.css';
 
@@ -107,7 +109,7 @@ export const InstallApp = ({
     return (
         <>
             {trigger}
-            <Modal
+            <AppModal
                 centered
                 onClose={handleCloseIosInstall}
                 opened={isIosInstallOpen}
@@ -121,7 +123,7 @@ export const InstallApp = ({
                         <List.Item>{t('install.ios.add')}</List.Item>
                     </List>
                 </Stack>
-            </Modal>
+            </AppModal>
         </>
     );
 };
