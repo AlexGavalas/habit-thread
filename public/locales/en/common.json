@@ -1,4 +1,12 @@
 {
+    "account_export": {
+        "title": "Export your account data",
+        "description": "Download your stored profile, preferences, meals, schedules, tracking and relationship information as a ZIP with JSON, CSV and a field guide. Keep the archive private: it may contain health data. Deleted data and other people's records are not included.",
+        "download": "Download my data",
+        "pending": "Preparing your download…",
+        "failed": "Your export could not be prepared. Please try again. If your session expired, sign in again.",
+        "complete": "Your archive is ready. Check your browser downloads."
+    },
     "logout": "Logout",
     "navigation": {
         "label": "Navigation",
