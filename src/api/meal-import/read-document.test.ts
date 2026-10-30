@@ -42,7 +42,7 @@ describe('meal document readers', () => {
                 '<w:tc><w:p><w:r><w:t>Rice 150g</w:t></w:r></w:p></w:tc></w:tr></w:tbl>',
         );
         const text = await readMealDocument(
-            new File([buffer], 'schedule.DOCX'),
+            new File([new Uint8Array(buffer)], 'schedule.DOCX'),
         );
         expect(text).toContain('Γιαούρτι 200g');
         expect(text).toContain('Eggs');
@@ -115,10 +115,12 @@ describe('meal document readers', () => {
             `<w:p><w:r><w:t>${'a'.repeat(MAX_IMPORT_CHARACTERS + 1)}</w:t></w:r></w:p>`,
         );
         await expect(
-            readMealDocument(new File([empty], 'empty.docx')),
+            readMealDocument(new File([new Uint8Array(empty)], 'empty.docx')),
         ).rejects.toMatchObject({ code: 'unreadable_document' });
         await expect(
-            readMealDocument(new File([oversized], 'large.docx')),
+            readMealDocument(
+                new File([new Uint8Array(oversized)], 'large.docx'),
+            ),
         ).rejects.toMatchObject({ code: 'document_too_large' });
     });
 });
