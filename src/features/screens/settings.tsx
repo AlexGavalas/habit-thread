@@ -7,6 +7,7 @@ import { type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Card } from '~components/card';
+import { AccountExport } from '~features/account-export/account-export';
 import { AdvancedSettings } from '~features/advanced-settings';
 import { DeleteAccount } from '~features/delete-account';
 import { FoodPreferences } from '~features/food-preferences';
@@ -103,6 +104,10 @@ export const Settings = ({
                 <Tabs.Panel pt="md" value="advanced">
                     <Card>
                         <AdvancedSettings />
+                    </Card>
+                    <Space h="lg" />
+                    <Card>
+                        <AccountExport />
                     </Card>
                     <Space h="lg" />
                     <Card>
