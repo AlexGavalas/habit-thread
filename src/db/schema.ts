@@ -15,5 +15,6 @@ export {
     pushSubscriptions,
 } from './schema/reminders';
 export { connections, notifications } from './schema/social';
+export { userSignupOrigins } from './schema/signup-origins';
 export { activities, measurements } from './schema/tracking';
 export { userCredentials, userRoles, users } from './schema/users';

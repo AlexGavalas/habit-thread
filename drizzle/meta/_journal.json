@@ -85,6 +85,20 @@
             "when": 1793265964590,
             "tag": "0011_military_felicia_hardy",
             "breakpoints": true
+        },
+        {
+            "idx": 12,
+            "version": "7",
+            "when": 1793356677906,
+            "tag": "0012_track_signup_origin",
+            "breakpoints": true
+        },
+        {
+            "idx": 13,
+            "version": "7",
+            "when": 1793356678390,
+            "tag": "0013_backfill_password_signup_origin",
+            "breakpoints": true
         }
     ]
 }

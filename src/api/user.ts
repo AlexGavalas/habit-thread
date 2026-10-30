@@ -150,21 +150,3 @@ export const deleteProfile = async ({
 
     return { error: null };
 };
-
-export const createUser = async ({
-    email,
-    fullName,
-    language,
-}: {
-    email: string;
-    fullName: string;
-    language: string;
-}): Promise<void> => {
-    await getDb()
-        .insert(users)
-        .values({ email, full_name: fullName, language })
-        .onConflictDoUpdate({
-            set: { full_name: fullName, language },
-            target: users.email,
-        });
-};

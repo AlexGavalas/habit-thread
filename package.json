@@ -16,6 +16,7 @@
         "push:generate-vapid-keys": "web-push generate-vapid-keys",
         "data:generate-bls": "python3 scripts/generate-bls-index.py BLS_4_0_2025_DE/BLS_4_0_Daten_2025_DE.xlsx src/data/bls-foods.json",
         "test": "TZ=UTC jest",
+        "test:integration": "TZ=UTC jest --testMatch '**/*.integration.test.ts'",
         "test:a11y": "playwright test --grep @a11y",
         "test:e2e": "playwright test",
         "test:e2e:watch": "playwright test --ui",

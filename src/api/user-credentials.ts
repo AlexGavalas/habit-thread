@@ -2,7 +2,12 @@ import { eq } from 'drizzle-orm';
 import 'server-only';
 
 import { getDb } from '~db';
-import { userCredentials, userRoles, users } from '~db/schema';
+import {
+    userCredentials,
+    userRoles,
+    users,
+    userSignupOrigins,
+} from '~db/schema';
 
 type CredentialsUser = {
     email: string;
@@ -60,6 +65,9 @@ export const createCredentialsUser = async ({
         await transaction
             .insert(userCredentials)
             .values({ password_hash: passwordHash, user_id: user.id });
+        await transaction
+            .insert(userSignupOrigins)
+            .values({ method: 'password', user_id: user.id });
         if (professional) {
             await transaction
                 .insert(userRoles)
