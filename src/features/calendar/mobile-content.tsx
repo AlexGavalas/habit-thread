@@ -10,6 +10,8 @@ import { type MealsMap } from '~types/meal';
 import { type WeeklyMealZone } from '~types/meal-zone';
 import { getDaysOfWeek } from '~util/date';
 
+import calendarStyles from './content.module.css';
+import { CustomScheduleIndicator } from './custom-schedule-indicator';
 import styles from './mobile-content.module.css';
 import { MobileDayButton } from './mobile-day-button';
 import { MobileMeal } from './mobile-meal';
@@ -21,7 +23,7 @@ export const MobileContent = ({
     zones,
 }: Readonly<{
     initialDate: string;
-    onEditSchedule: (day?: string) => void;
+    onEditSchedule: (day: string) => void;
     zones: WeeklyMealZone[];
 }>): ReactElement | null => {
     const { i18n, t } = useTranslation();
@@ -73,8 +75,13 @@ export const MobileContent = ({
             </div>
             <Stack gap="sm">
                 <Title order={3}>
-                    {localizedDays[selectedDay]?.label}{' '}
-                    {format(day.timestamp, 'dd/MM')}
+                    <span className={calendarStyles.dayTitleContent}>
+                        {localizedDays[selectedDay]?.label}{' '}
+                        {format(day.timestamp, 'dd/MM')}
+                        {dayZones.some((zone) => zone.isOverride) && (
+                            <CustomScheduleIndicator />
+                        )}
+                    </span>
                 </Title>
                 <NutritionSummary meals={dayMeals} />
                 {dayZones.map((zone) => (

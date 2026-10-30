@@ -1,4 +1,4 @@
-import { Button, Modal } from '@mantine/core';
+import { Button } from '@mantine/core';
 import { LogIn } from 'iconoir-react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -12,6 +12,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 
+import { AppModal } from '~components/overlays/overlays';
 import { useLocalizedPath } from '~hooks/use-localized-path';
 
 import { AUTH_DIALOG_EVENT, type AuthDialogMode } from './auth-dialog-event';
@@ -125,7 +126,7 @@ export const AuthDialog = (): ReactElement => {
             <Button leftSection={<LogIn />} onClick={handleOpenModal}>
                 {t('login.button')}
             </Button>
-            <Modal
+            <AppModal
                 centered
                 closeButtonProps={{ 'aria-label': t('generic.actions.close') }}
                 onClose={closeModal}
@@ -142,7 +143,7 @@ export const AuthDialog = (): ReactElement => {
                     onSubmit={handleEmailSubmit}
                     onToggleMode={toggleMode}
                 />
-            </Modal>
+            </AppModal>
         </>
     );
 };

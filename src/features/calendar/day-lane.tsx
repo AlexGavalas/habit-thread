@@ -1,6 +1,5 @@
 import {
     ActionIcon,
-    Badge,
     Button,
     Group,
     Popover,
@@ -18,13 +17,14 @@ import { type MealsMap } from '~types/meal';
 import { type WeeklyMealZone } from '~types/meal-zone';
 
 import styles from './content.module.css';
+import { CustomScheduleIndicator } from './custom-schedule-indicator';
 import { NutritionSummary } from './nutrition-summary';
 import { SwappableMeal } from './swappable-meal';
 
 type Props = Readonly<{
     label: string;
     meals: MealsMap;
-    onEditSchedule: (day?: string) => void;
+    onEditSchedule: (day: string) => void;
     timestamp: Date;
     zones: WeeklyMealZone[];
 }>;
@@ -38,6 +38,7 @@ export const DayLane = ({
 }: Props): ReactElement => {
     const { t } = useTranslation();
     const day = format(timestamp, 'yyyy-MM-dd');
+    const today = isToday(timestamp);
     const dayZones = zones
         .filter((zone) => zone.day === day)
         .toSorted((a, b) => a.position - b.position);
@@ -50,20 +51,19 @@ export const DayLane = ({
             <header className={styles.dayHeader}>
                 <Group align="flex-start" justify="space-between" wrap="nowrap">
                     <div>
-                        <Group gap="xs">
-                            <Title
-                                c={isToday(timestamp) ? 'success.8' : undefined}
-                                order={3}
-                                size="h4"
-                            >
+                        <Title
+                            aria-current={today ? 'date' : undefined}
+                            c={today ? 'success.8' : undefined}
+                            order={3}
+                            size="h4"
+                        >
+                            <span className={styles.dayTitleContent}>
                                 {label}
-                            </Title>
-                            {isToday(timestamp) && (
-                                <Badge size="xs" variant="light">
-                                    {t('meal_plan.today')}
-                                </Badge>
-                            )}
-                        </Group>
+                                {dayZones.some((zone) => zone.isOverride) && (
+                                    <CustomScheduleIndicator />
+                                )}
+                            </span>
+                        </Title>
                         <Text c="dimmed" size="xs">
                             {t('meal_plan.schedule.slot_count', {
                                 count: dayZones.length,
@@ -73,6 +73,7 @@ export const DayLane = ({
                     <ActionIcon
                         aria-label={t('meal_plan.schedule.edit_day', {
                             day: label,
+                            interpolation: { escapeValue: false },
                         })}
                         onClick={handleEditSchedule}
                         variant="subtle"

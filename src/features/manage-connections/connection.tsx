@@ -3,7 +3,6 @@ import {
     Button,
     Group,
     Menu,
-    Modal,
     Paper,
     Stack,
     Text,
@@ -14,6 +13,7 @@ import { type MouseEventHandler, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { NameAvatar } from '~components/name-avatar';
+import { AppModal } from '~components/overlays/overlays';
 import { type Connection, type ConnectionWithUser } from '~types/connection';
 
 import styles from './connection.module.css';
@@ -77,7 +77,7 @@ export const ConnectionItem = ({
                 </Menu>
             </Group>
 
-            <Modal
+            <AppModal
                 centered
                 onClose={closeConfirmation}
                 opened={isConfirmOpen}
@@ -108,7 +108,7 @@ export const ConnectionItem = ({
                         </Button>
                     </Group>
                 </Stack>
-            </Modal>
+            </AppModal>
         </Paper>
     );
 };

@@ -6,6 +6,7 @@ export type WeeklyMealZone = {
     day: string;
     label: string;
     legacyKey?: MealZoneKey;
+    isOverride?: boolean;
     position: number;
     time: string;
     weekStart: string;

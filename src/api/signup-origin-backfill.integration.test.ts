@@ -14,7 +14,7 @@ describe('password signup provenance data migration', () => {
         const migration = readFileSync(
             join(
                 process.cwd(),
-                'drizzle/0012_backfill_password_signup_origin.sql',
+                'drizzle/0013_backfill_password_signup_origin.sql',
             ),
             'utf8',
         );

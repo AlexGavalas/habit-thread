@@ -6,8 +6,8 @@ as the user (and password credentials, when applicable). Application code never
 updates this record. Deleting the user cascades to the provenance record.
 
 Apply the normal Drizzle migrations before deploying the updated auth code.
-Migration `0011_track_signup_origin` creates the table.
-Migration `0012_backfill_password_signup_origin` records `password` for existing
+Migration `0012_track_signup_origin` creates the table.
+Migration `0013_backfill_password_signup_origin` records `password` for existing
 accounts with password credentials, without overwriting any recorded provenance.
 This one-sided backfill relies on the historical registration invariant: password
 credentials were created together with new users, not attached to existing users.

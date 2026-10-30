@@ -10,6 +10,7 @@ import { useCurrentWeek, useMeals } from '~store/hooks';
 import { type EditedMealItem } from '~types/meal';
 import { type MealZoneKey, type WeeklyMealZone } from '~types/meal-zone';
 import { useOpenContextModal } from '~util/modal';
+import { findScheduleZone } from '~util/schedule';
 
 import { MEAL_MODAL_OPTIONS } from '../modals/meal/meal-modal-options';
 
@@ -54,12 +55,7 @@ export const DeepLinkedMealModal = ({
             return;
         }
 
-        const zone = zones.find(
-            (candidate) =>
-                candidate.day === date &&
-                (candidate.zoneKey === slotKey ||
-                    candidate.legacyKey === mealZone),
-        );
+        const zone = findScheduleZone(zones, { day: date, mealZone, slotKey });
         if (!zone) {
             return;
         }

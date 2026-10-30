@@ -1,86 +1,178 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import type { ReactElement } from 'react';
-import { type PropsWithChildren } from 'react';
+import { deferred } from '~test/meal-plan';
+import { createQueryTestContext } from '~test/query';
+import { act, renderWithUser, screen, waitFor } from '~test/utils';
+import { type ScheduleActionResult } from '~util/schedule-result';
 
-import { DEFAULT_MEAL_ZONE_TIMES } from '~constants/calendar';
-import { useMealZoneTimes } from '~hooks/use-meal-zone-times';
-import { renderWithUser, screen, waitFor } from '~test/utils';
+import { saveDefaultSchedule } from '../../app/schedule-actions';
+import { MealZoneSettings as ScheduleFields } from './meal-zone-settings';
+import { useDefaultSchedule } from './use-default-schedule';
 
-import { saveMealZoneTimes } from '../../app/actions';
-import { MealZoneSettings } from './meal-zone-settings';
+const MealZoneSettings = ({
+    ownerUserId,
+    onClose,
+}: Readonly<{
+    ownerUserId?: number;
+    onClose?: () => void;
+}>): ReactElement => {
+    const schedule = useDefaultSchedule(ownerUserId);
+    return <ScheduleFields schedule={schedule} onClose={onClose} />;
+};
 
-jest.mock('~hooks/use-meal-zone-times');
-jest.mock('~util/notification');
+const response = {
+    effectiveFrom: '2026-01-19',
+    template: {
+        kind: 'daily',
+        slots: [
+            { key: 'morning', label: 'Breakfast', time: '08:00' },
+            { key: 'lunch', label: 'Lunch', time: '13:00' },
+        ],
+    },
+};
 
-describe('meal zone settings', () => {
-    it('captures a changed native time value before saving', async () => {
+describe('default schedule settings', () => {
+    beforeEach(() => {
+        jest.spyOn(global, 'fetch').mockResolvedValue(Response.json(response));
+        jest.mocked(saveDefaultSchedule).mockResolvedValue({ ok: true });
+    });
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    it('edits names and native time values while retaining slot identities', async () => {
         expect.hasAssertions();
-
-        jest.mocked(useMealZoneTimes).mockReturnValue({
-            effectiveFrom: '2026-10-12',
-            isError: false,
-            isFetching: false,
-            retry: jest.fn(),
-            times: DEFAULT_MEAL_ZONE_TIMES,
-        });
-        jest.mocked(saveMealZoneTimes).mockResolvedValue({
-            effectiveFrom: '2026-10-12',
-            ok: true,
-        });
-
-        const client = new QueryClient({
-            defaultOptions: { mutations: { retry: false } },
-        });
-        const Wrapper = ({ children }: PropsWithChildren): ReactElement => (
-            <QueryClientProvider client={client}>
-                {children}
-            </QueryClientProvider>
+        const { client, Wrapper } = createQueryTestContext();
+        const { user, unmount } = renderWithUser(
+            <MealZoneSettings ownerUserId={7} />,
+            { Wrapper },
         );
-        const { user } = renderWithUser(<MealZoneSettings />, { Wrapper });
-
-        const morningInput = screen.getByLabelText('Morning');
-        await user.clear(morningInput);
-        await user.type(morningInput, '08:30');
-        await user.click(screen.getByRole('button', { name: 'Save' }));
-
+        const name = await screen.findByLabelText('Name for meal slot 1');
+        await user.clear(name);
+        await user.type(name, 'Early breakfast');
+        const time = screen.getByLabelText('Time for meal slot 1');
+        await user.clear(time);
+        await user.type(time, '07:30');
+        await user.click(
+            screen.getByRole('button', { name: 'Save from 19/01/2026' }),
+        );
         await waitFor(() => {
-            expect(saveMealZoneTimes).toHaveBeenCalledWith({
-                times: {
-                    ...DEFAULT_MEAL_ZONE_TIMES,
-                    morning: '08:30',
+            expect(saveDefaultSchedule).toHaveBeenCalledWith({
+                effectiveFrom: '2026-01-19',
+                ownerUserId: 7,
+                template: {
+                    kind: 'daily',
+                    slots: [
+                        {
+                            key: 'morning',
+                            label: 'Early breakfast',
+                            time: '07:30',
+                        },
+                        response.template.slots[1],
+                    ],
                 },
             });
         });
+        unmount();
+        client.clear();
+    });
 
+    it('retains the draft and explains occupied-slot conflicts', async () => {
+        expect.hasAssertions();
+        const onClose = jest.fn();
+        jest.mocked(saveDefaultSchedule).mockResolvedValue({
+            days: ['2026-01-20'],
+            ok: false,
+            reason: 'schedule_conflict',
+        });
+        const { client, Wrapper } = createQueryTestContext();
+        const { user, unmount } = renderWithUser(
+            <MealZoneSettings onClose={onClose} />,
+            {
+                Wrapper,
+            },
+        );
+        const name = await screen.findByLabelText('Name for meal slot 1');
+        await user.clear(name);
+        await user.type(name, 'My breakfast');
+        await user.click(
+            screen.getByRole('button', { name: 'Save from 19/01/2026' }),
+        );
+        await expect(screen.findByRole('alert')).resolves.toHaveTextContent(
+            '2026-01-20',
+        );
+        expect(name).toHaveValue('My breakfast');
+        expect(onClose).not.toHaveBeenCalled();
+        unmount();
+        client.clear();
+    });
+
+    it('closes only after success and disables editing while saving', async () => {
+        expect.hasAssertions();
+        const pending = deferred<ScheduleActionResult>();
+        jest.mocked(saveDefaultSchedule).mockReturnValue(pending.promise);
+        const { client, Wrapper } = createQueryTestContext();
+        const onClose = jest.fn();
+        const { user, unmount } = renderWithUser(
+            <MealZoneSettings onClose={onClose} />,
+            { Wrapper },
+        );
+        const name = await screen.findByLabelText('Name for meal slot 1');
+        await user.click(
+            screen.getByRole('button', { name: 'Save from 19/01/2026' }),
+        );
+        expect(name).toBeDisabled();
+        expect(onClose).not.toHaveBeenCalled();
+        await act(async () => {
+            pending.resolve({ ok: true });
+            await pending.promise;
+        });
+        await waitFor(() => {
+            expect(onClose).toHaveBeenCalledTimes(1);
+        });
+        unmount();
+        client.clear();
+    });
+
+    it('does not replace an unsaved draft on refetch', async () => {
+        expect.hasAssertions();
+        const { client, Wrapper } = createQueryTestContext();
+        const { user, unmount } = renderWithUser(<MealZoneSettings />, {
+            Wrapper,
+        });
+        const name = await screen.findByLabelText('Name for meal slot 1');
+        await user.clear(name);
+        await user.type(name, 'Unsaved');
+        await act(async () => {
+            await client.invalidateQueries({ queryKey: ['schedule-template'] });
+        });
+        expect(name).toHaveValue('Unsaved');
+        unmount();
         client.clear();
     });
 
     it('offers retry instead of editing defaults after a failed read', async () => {
         expect.hasAssertions();
-        const retry = jest.fn();
-        jest.mocked(useMealZoneTimes).mockReturnValue({
-            isError: true,
-            isFetching: false,
-            retry,
-            times: DEFAULT_MEAL_ZONE_TIMES,
-        });
-        const client = new QueryClient();
-        const Wrapper = ({ children }: PropsWithChildren): ReactElement => (
-            <QueryClientProvider client={client}>
-                {children}
-            </QueryClientProvider>
+        jest.spyOn(global, 'fetch').mockResolvedValue(
+            new Response(null, { status: 500 }),
         );
-        const { user } = renderWithUser(<MealZoneSettings />, { Wrapper });
-        expect(screen.getByRole('alert')).toHaveTextContent(
+        const { client, Wrapper } = createQueryTestContext();
+        const { user, unmount } = renderWithUser(<MealZoneSettings />, {
+            Wrapper,
+        });
+        await expect(screen.findByRole('alert')).resolves.toHaveTextContent(
             'We could not load your data.',
         );
         expect(
-            screen.queryByRole('button', { name: 'Save' }),
+            screen.queryByLabelText('Name for meal slot 1'),
         ).not.toBeInTheDocument();
+        jest.spyOn(global, 'fetch').mockResolvedValue(Response.json(response));
         await user.click(
             screen.getByRole('button', { name: 'Please try again' }),
         );
-        expect(retry).toHaveBeenCalledTimes(1);
+        await expect(
+            screen.findByLabelText('Name for meal slot 1'),
+        ).resolves.toHaveValue('Breakfast');
+        unmount();
         client.clear();
     });
 });
+import { type ReactElement } from 'react';

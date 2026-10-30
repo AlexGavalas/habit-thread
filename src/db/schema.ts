@@ -5,6 +5,7 @@ export {
     mealPoolItems,
     meals,
     mealZoneTimes,
+    scheduleTemplates,
     weeklyMealZones,
 } from './schema/meals';
 export { professionalClients } from './schema/professional';

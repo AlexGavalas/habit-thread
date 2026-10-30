@@ -1,5 +1,5 @@
 {
-    "id": "df1bd727-f878-4328-8167-9496e4432a2b",
+    "id": "c063c408-0bce-4f13-8965-7cbc37f2b5a2",
     "prevId": "9a733cdf-b415-48d2-8ba4-28d78925bc49",
     "version": "7",
     "dialect": "postgresql",
@@ -1194,6 +1194,52 @@
             "checkConstraints": {},
             "isRLSEnabled": false
         },
+        "public.schedule_templates": {
+            "name": "schedule_templates",
+            "schema": "",
+            "columns": {
+                "user_id": {
+                    "name": "user_id",
+                    "type": "bigint",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "effective_from": {
+                    "name": "effective_from",
+                    "type": "date",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "template": {
+                    "name": "template",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": true
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "schedule_templates_user_id_users_id_fk": {
+                    "name": "schedule_templates_user_id_users_id_fk",
+                    "tableFrom": "schedule_templates",
+                    "tableTo": "users",
+                    "columnsFrom": ["user_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {
+                "schedule_templates_user_id_effective_from_pk": {
+                    "name": "schedule_templates_user_id_effective_from_pk",
+                    "columns": ["user_id", "effective_from"]
+                }
+            },
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
         "public.user_credentials": {
             "name": "user_credentials",
             "schema": "",
@@ -1283,46 +1329,6 @@
             "uniqueConstraints": {},
             "policies": {},
             "checkConstraints": {},
-            "isRLSEnabled": false
-        },
-        "public.user_signup_origins": {
-            "name": "user_signup_origins",
-            "schema": "",
-            "columns": {
-                "method": {
-                    "name": "method",
-                    "type": "text",
-                    "primaryKey": false,
-                    "notNull": true
-                },
-                "user_id": {
-                    "name": "user_id",
-                    "type": "bigint",
-                    "primaryKey": true,
-                    "notNull": true
-                }
-            },
-            "indexes": {},
-            "foreignKeys": {
-                "user_signup_origins_user_id_users_id_fk": {
-                    "name": "user_signup_origins_user_id_users_id_fk",
-                    "tableFrom": "user_signup_origins",
-                    "tableTo": "users",
-                    "columnsFrom": ["user_id"],
-                    "columnsTo": ["id"],
-                    "onDelete": "cascade",
-                    "onUpdate": "no action"
-                }
-            },
-            "compositePrimaryKeys": {},
-            "uniqueConstraints": {},
-            "policies": {},
-            "checkConstraints": {
-                "user_signup_origins_method_check": {
-                    "name": "user_signup_origins_method_check",
-                    "value": "\"user_signup_origins\".\"method\" in ('password', 'google')"
-                }
-            },
             "isRLSEnabled": false
         },
         "public.users": {

@@ -3,6 +3,7 @@
 }
 
 .drawerBody {
+    --meal-plan-day-min-width: 16rem;
     padding-bottom: var(--mantine-spacing-xl);
 }
 

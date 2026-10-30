@@ -1,6 +1,6 @@
 {
-    "id": "eae64ac5-6665-481b-9ddd-0fd950773a85",
-    "prevId": "df1bd727-f878-4328-8167-9496e4432a2b",
+    "id": "7fc6610f-d8e7-41a0-ae7c-af9515c6943d",
+    "prevId": "c063c408-0bce-4f13-8965-7cbc37f2b5a2",
     "version": "7",
     "dialect": "postgresql",
     "tables": {
@@ -52,20 +52,20 @@
                         }
                     ],
                     "isUnique": false,
-                    "with": {},
+                    "concurrently": false,
                     "method": "btree",
-                    "concurrently": false
+                    "with": {}
                 }
             },
             "foreignKeys": {
                 "activities_user_id_users_id_fk": {
                     "name": "activities_user_id_users_id_fk",
                     "tableFrom": "activities",
-                    "columnsFrom": ["user_id"],
                     "tableTo": "users",
+                    "columnsFrom": ["user_id"],
                     "columnsTo": ["id"],
-                    "onUpdate": "no action",
-                    "onDelete": "cascade"
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
                 }
             },
             "compositePrimaryKeys": {},
@@ -110,29 +110,29 @@
                         }
                     ],
                     "isUnique": false,
-                    "with": {},
+                    "concurrently": false,
                     "method": "btree",
-                    "concurrently": false
+                    "with": {}
                 }
             },
             "foreignKeys": {
                 "connections_connection_user_id_users_id_fk": {
                     "name": "connections_connection_user_id_users_id_fk",
                     "tableFrom": "connections",
-                    "columnsFrom": ["connection_user_id"],
                     "tableTo": "users",
+                    "columnsFrom": ["connection_user_id"],
                     "columnsTo": ["id"],
-                    "onUpdate": "no action",
-                    "onDelete": "cascade"
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
                 },
                 "connections_user_id_users_id_fk": {
                     "name": "connections_user_id_users_id_fk",
                     "tableFrom": "connections",
-                    "columnsFrom": ["user_id"],
                     "tableTo": "users",
+                    "columnsFrom": ["user_id"],
                     "columnsTo": ["id"],
-                    "onUpdate": "no action",
-                    "onDelete": "cascade"
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
                 }
             },
             "compositePrimaryKeys": {},
@@ -169,11 +169,11 @@
                 "meal_import_usage_user_id_users_id_fk": {
                     "name": "meal_import_usage_user_id_users_id_fk",
                     "tableFrom": "meal_import_usage",
-                    "columnsFrom": ["user_id"],
                     "tableTo": "users",
+                    "columnsFrom": ["user_id"],
                     "columnsTo": ["id"],
-                    "onUpdate": "no action",
-                    "onDelete": "cascade"
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
                 }
             },
             "compositePrimaryKeys": {},
@@ -303,20 +303,20 @@
                         }
                     ],
                     "isUnique": false,
-                    "with": {},
+                    "concurrently": false,
                     "method": "btree",
-                    "concurrently": false
+                    "with": {}
                 }
             },
             "foreignKeys": {
                 "meal_items_meal_id_meals_id_fk": {
                     "name": "meal_items_meal_id_meals_id_fk",
                     "tableFrom": "meal_items",
-                    "columnsFrom": ["meal_id"],
                     "tableTo": "meals",
+                    "columnsFrom": ["meal_id"],
                     "columnsTo": ["id"],
-                    "onUpdate": "no action",
-                    "onDelete": "cascade"
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
                 }
             },
             "compositePrimaryKeys": {},
@@ -341,15 +341,15 @@
                     "primaryKey": true,
                     "notNull": true,
                     "identity": {
+                        "type": "byDefault",
                         "name": "meals_pool_id_seq",
+                        "schema": "public",
                         "increment": "1",
+                        "startWith": "1",
                         "minValue": "1",
                         "maxValue": "9223372036854775807",
-                        "startWith": "1",
                         "cache": "1",
-                        "cycle": false,
-                        "schema": "public",
-                        "type": "byDefault"
+                        "cycle": false
                     }
                 },
                 "user_id": {
@@ -364,19 +364,19 @@
                 "meals_pool_user_id_users_id_fk": {
                     "name": "meals_pool_user_id_users_id_fk",
                     "tableFrom": "meals_pool",
-                    "columnsFrom": ["user_id"],
                     "tableTo": "users",
+                    "columnsFrom": ["user_id"],
                     "columnsTo": ["id"],
-                    "onUpdate": "no action",
-                    "onDelete": "cascade"
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
                 }
             },
             "compositePrimaryKeys": {},
             "uniqueConstraints": {
                 "meals_pool_user_id_content_unique": {
                     "name": "meals_pool_user_id_content_unique",
-                    "columns": ["user_id", "content"],
-                    "nullsNotDistinct": false
+                    "nullsNotDistinct": false,
+                    "columns": ["user_id", "content"]
                 }
             },
             "policies": {},
@@ -504,20 +504,20 @@
                         }
                     ],
                     "isUnique": false,
-                    "with": {},
+                    "concurrently": false,
                     "method": "btree",
-                    "concurrently": false
+                    "with": {}
                 }
             },
             "foreignKeys": {
                 "meal_pool_items_meal_pool_id_meals_pool_id_fk": {
                     "name": "meal_pool_items_meal_pool_id_meals_pool_id_fk",
                     "tableFrom": "meal_pool_items",
-                    "columnsFrom": ["meal_pool_id"],
                     "tableTo": "meals_pool",
+                    "columnsFrom": ["meal_pool_id"],
                     "columnsTo": ["id"],
-                    "onUpdate": "no action",
-                    "onDelete": "cascade"
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
                 }
             },
             "compositePrimaryKeys": {},
@@ -562,19 +562,19 @@
                 "meal_reminder_deliveries_user_id_users_id_fk": {
                     "name": "meal_reminder_deliveries_user_id_users_id_fk",
                     "tableFrom": "meal_reminder_deliveries",
-                    "columnsFrom": ["user_id"],
                     "tableTo": "users",
+                    "columnsFrom": ["user_id"],
                     "columnsTo": ["id"],
-                    "onUpdate": "no action",
-                    "onDelete": "cascade"
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
                 }
             },
             "compositePrimaryKeys": {},
             "uniqueConstraints": {
                 "meal_reminder_deliveries_user_id_local_date_unique": {
                     "name": "meal_reminder_deliveries_user_id_local_date_unique",
-                    "columns": ["user_id", "local_date"],
-                    "nullsNotDistinct": false
+                    "nullsNotDistinct": false,
+                    "columns": ["user_id", "local_date"]
                 }
             },
             "policies": {},
@@ -628,20 +628,20 @@
                         }
                     ],
                     "isUnique": false,
-                    "with": {},
+                    "concurrently": false,
                     "method": "btree",
-                    "concurrently": false
+                    "with": {}
                 }
             },
             "foreignKeys": {
                 "meal_zone_times_user_id_users_id_fk": {
                     "name": "meal_zone_times_user_id_users_id_fk",
                     "tableFrom": "meal_zone_times",
-                    "columnsFrom": ["user_id"],
                     "tableTo": "users",
+                    "columnsFrom": ["user_id"],
                     "columnsTo": ["id"],
-                    "onUpdate": "no action",
-                    "onDelete": "cascade"
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
                 }
             },
             "compositePrimaryKeys": {
@@ -721,20 +721,20 @@
                         }
                     ],
                     "isUnique": false,
-                    "with": {},
+                    "concurrently": false,
                     "method": "btree",
-                    "concurrently": false
+                    "with": {}
                 }
             },
             "foreignKeys": {
                 "meals_user_id_users_id_fk": {
                     "name": "meals_user_id_users_id_fk",
                     "tableFrom": "meals",
-                    "columnsFrom": ["user_id"],
                     "tableTo": "users",
+                    "columnsFrom": ["user_id"],
                     "columnsTo": ["id"],
-                    "onUpdate": "no action",
-                    "onDelete": "cascade"
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
                 }
             },
             "compositePrimaryKeys": {},
@@ -797,20 +797,20 @@
                         }
                     ],
                     "isUnique": false,
-                    "with": {},
+                    "concurrently": false,
                     "method": "btree",
-                    "concurrently": false
+                    "with": {}
                 }
             },
             "foreignKeys": {
                 "measurements_user_id_users_id_fk": {
                     "name": "measurements_user_id_users_id_fk",
                     "tableFrom": "measurements",
-                    "columnsFrom": ["user_id"],
                     "tableTo": "users",
+                    "columnsFrom": ["user_id"],
                     "columnsTo": ["id"],
-                    "onUpdate": "no action",
-                    "onDelete": "cascade"
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
                 }
             },
             "compositePrimaryKeys": {},
@@ -861,11 +861,11 @@
                 "notification_preferences_user_id_users_id_fk": {
                     "name": "notification_preferences_user_id_users_id_fk",
                     "tableFrom": "notification_preferences",
-                    "columnsFrom": ["user_id"],
                     "tableTo": "users",
+                    "columnsFrom": ["user_id"],
                     "columnsTo": ["id"],
-                    "onUpdate": "no action",
-                    "onDelete": "cascade"
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
                 }
             },
             "compositePrimaryKeys": {},
@@ -928,29 +928,29 @@
                         }
                     ],
                     "isUnique": false,
-                    "with": {},
+                    "concurrently": false,
                     "method": "btree",
-                    "concurrently": false
+                    "with": {}
                 }
             },
             "foreignKeys": {
                 "notifications_request_user_id_users_id_fk": {
                     "name": "notifications_request_user_id_users_id_fk",
                     "tableFrom": "notifications",
-                    "columnsFrom": ["request_user_id"],
                     "tableTo": "users",
+                    "columnsFrom": ["request_user_id"],
                     "columnsTo": ["id"],
-                    "onUpdate": "no action",
-                    "onDelete": "cascade"
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
                 },
                 "notifications_target_user_id_users_id_fk": {
                     "name": "notifications_target_user_id_users_id_fk",
                     "tableFrom": "notifications",
-                    "columnsFrom": ["target_user_id"],
                     "tableTo": "users",
+                    "columnsFrom": ["target_user_id"],
                     "columnsTo": ["id"],
-                    "onUpdate": "no action",
-                    "onDelete": "cascade"
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
                 }
             },
             "compositePrimaryKeys": {},
@@ -1015,10 +1015,10 @@
                         }
                     ],
                     "isUnique": true,
-                    "with": {},
-                    "method": "btree",
                     "where": "\"professional_clients\".\"status\" = 'active'",
-                    "concurrently": false
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
                 },
                 "professional_clients_professional_status_idx": {
                     "name": "professional_clients_professional_status_idx",
@@ -1037,9 +1037,9 @@
                         }
                     ],
                     "isUnique": false,
-                    "with": {},
+                    "concurrently": false,
                     "method": "btree",
-                    "concurrently": false
+                    "with": {}
                 },
                 "professional_clients_client_status_idx": {
                     "name": "professional_clients_client_status_idx",
@@ -1058,37 +1058,37 @@
                         }
                     ],
                     "isUnique": false,
-                    "with": {},
+                    "concurrently": false,
                     "method": "btree",
-                    "concurrently": false
+                    "with": {}
                 }
             },
             "foreignKeys": {
                 "professional_clients_client_user_id_users_id_fk": {
                     "name": "professional_clients_client_user_id_users_id_fk",
                     "tableFrom": "professional_clients",
-                    "columnsFrom": ["client_user_id"],
                     "tableTo": "users",
+                    "columnsFrom": ["client_user_id"],
                     "columnsTo": ["id"],
-                    "onUpdate": "no action",
-                    "onDelete": "cascade"
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
                 },
                 "professional_clients_professional_user_id_users_id_fk": {
                     "name": "professional_clients_professional_user_id_users_id_fk",
                     "tableFrom": "professional_clients",
-                    "columnsFrom": ["professional_user_id"],
                     "tableTo": "users",
+                    "columnsFrom": ["professional_user_id"],
                     "columnsTo": ["id"],
-                    "onUpdate": "no action",
-                    "onDelete": "cascade"
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
                 }
             },
             "compositePrimaryKeys": {},
             "uniqueConstraints": {
                 "professional_clients_professional_client_unique": {
                     "name": "professional_clients_professional_client_unique",
-                    "columns": ["professional_user_id", "client_user_id"],
-                    "nullsNotDistinct": false
+                    "nullsNotDistinct": false,
+                    "columns": ["professional_user_id", "client_user_id"]
                 }
             },
             "policies": {},
@@ -1166,30 +1166,76 @@
                         }
                     ],
                     "isUnique": false,
-                    "with": {},
+                    "concurrently": false,
                     "method": "btree",
-                    "concurrently": false
+                    "with": {}
                 }
             },
             "foreignKeys": {
                 "push_subscriptions_user_id_users_id_fk": {
                     "name": "push_subscriptions_user_id_users_id_fk",
                     "tableFrom": "push_subscriptions",
-                    "columnsFrom": ["user_id"],
                     "tableTo": "users",
+                    "columnsFrom": ["user_id"],
                     "columnsTo": ["id"],
-                    "onUpdate": "no action",
-                    "onDelete": "cascade"
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
                 }
             },
             "compositePrimaryKeys": {},
             "uniqueConstraints": {
                 "push_subscriptions_endpoint_unique": {
                     "name": "push_subscriptions_endpoint_unique",
-                    "columns": ["endpoint"],
-                    "nullsNotDistinct": false
+                    "nullsNotDistinct": false,
+                    "columns": ["endpoint"]
                 }
             },
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.schedule_templates": {
+            "name": "schedule_templates",
+            "schema": "",
+            "columns": {
+                "effective_from": {
+                    "name": "effective_from",
+                    "type": "date",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "template": {
+                    "name": "template",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "user_id": {
+                    "name": "user_id",
+                    "type": "bigint",
+                    "primaryKey": false,
+                    "notNull": true
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {
+                "schedule_templates_user_id_users_id_fk": {
+                    "name": "schedule_templates_user_id_users_id_fk",
+                    "tableFrom": "schedule_templates",
+                    "tableTo": "users",
+                    "columnsFrom": ["user_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
+                }
+            },
+            "compositePrimaryKeys": {
+                "schedule_templates_user_id_effective_from_pk": {
+                    "name": "schedule_templates_user_id_effective_from_pk",
+                    "columns": ["user_id", "effective_from"]
+                }
+            },
+            "uniqueConstraints": {},
             "policies": {},
             "checkConstraints": {},
             "isRLSEnabled": false
@@ -1216,11 +1262,11 @@
                 "user_credentials_user_id_users_id_fk": {
                     "name": "user_credentials_user_id_users_id_fk",
                     "tableFrom": "user_credentials",
-                    "columnsFrom": ["user_id"],
                     "tableTo": "users",
+                    "columnsFrom": ["user_id"],
                     "columnsTo": ["id"],
-                    "onUpdate": "no action",
-                    "onDelete": "cascade"
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
                 }
             },
             "compositePrimaryKeys": {},
@@ -1258,20 +1304,20 @@
                         }
                     ],
                     "isUnique": false,
-                    "with": {},
+                    "concurrently": false,
                     "method": "btree",
-                    "concurrently": false
+                    "with": {}
                 }
             },
             "foreignKeys": {
                 "user_roles_user_id_users_id_fk": {
                     "name": "user_roles_user_id_users_id_fk",
                     "tableFrom": "user_roles",
-                    "columnsFrom": ["user_id"],
                     "tableTo": "users",
+                    "columnsFrom": ["user_id"],
                     "columnsTo": ["id"],
-                    "onUpdate": "no action",
-                    "onDelete": "cascade"
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
                 }
             },
             "compositePrimaryKeys": {
@@ -1307,11 +1353,11 @@
                 "user_signup_origins_user_id_users_id_fk": {
                     "name": "user_signup_origins_user_id_users_id_fk",
                     "tableFrom": "user_signup_origins",
-                    "columnsFrom": ["user_id"],
                     "tableTo": "users",
+                    "columnsFrom": ["user_id"],
                     "columnsTo": ["id"],
-                    "onUpdate": "no action",
-                    "onDelete": "cascade"
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
                 }
             },
             "compositePrimaryKeys": {},
@@ -1367,15 +1413,15 @@
                     "primaryKey": true,
                     "notNull": true,
                     "identity": {
+                        "type": "byDefault",
                         "name": "users_id_seq",
+                        "schema": "public",
                         "increment": "1",
+                        "startWith": "1",
                         "minValue": "1",
                         "maxValue": "9223372036854775807",
-                        "startWith": "1",
                         "cache": "1",
-                        "cycle": false,
-                        "schema": "public",
-                        "type": "byDefault"
+                        "cycle": false
                     }
                 },
                 "is_discoverable": {
@@ -1416,8 +1462,8 @@
             "uniqueConstraints": {
                 "users_email_unique": {
                     "name": "users_email_unique",
-                    "columns": ["email"],
-                    "nullsNotDistinct": false
+                    "nullsNotDistinct": false,
+                    "columns": ["email"]
                 }
             },
             "policies": {},
@@ -1495,20 +1541,20 @@
                         }
                     ],
                     "isUnique": false,
-                    "with": {},
+                    "concurrently": false,
                     "method": "btree",
-                    "concurrently": false
+                    "with": {}
                 }
             },
             "foreignKeys": {
                 "weekly_meal_zones_user_id_users_id_fk": {
                     "name": "weekly_meal_zones_user_id_users_id_fk",
                     "tableFrom": "weekly_meal_zones",
-                    "columnsFrom": ["user_id"],
                     "tableTo": "users",
+                    "columnsFrom": ["user_id"],
                     "columnsTo": ["id"],
-                    "onUpdate": "no action",
-                    "onDelete": "cascade"
+                    "onDelete": "cascade",
+                    "onUpdate": "no action"
                 }
             },
             "compositePrimaryKeys": {
@@ -1520,8 +1566,8 @@
             "uniqueConstraints": {
                 "weekly_meal_zones_user_day_position_unique": {
                     "name": "weekly_meal_zones_user_day_position_unique",
-                    "columns": ["user_id", "day", "position"],
-                    "nullsNotDistinct": false
+                    "nullsNotDistinct": false,
+                    "columns": ["user_id", "day", "position"]
                 }
             },
             "policies": {},
@@ -1531,10 +1577,10 @@
     },
     "enums": {},
     "schemas": {},
-    "views": {},
     "sequences": {},
     "roles": {},
     "policies": {},
+    "views": {},
     "_meta": {
         "columns": {},
         "schemas": {},

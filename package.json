@@ -3,7 +3,7 @@
     "private": true,
     "version": "0.0.1",
     "engines": {
-        "node": "24"
+        "node": "26"
     },
     "packageManager": "pnpm@12.3.1",
     "scripts": {
@@ -92,7 +92,7 @@
         "@types/jest": "30.0.0",
         "@types/jest-axe": "3.5.9",
         "@types/lodash": "4.17.27",
-        "@types/node": "24.13.6",
+        "@types/node": "26.6.5",
         "@types/react": "19.3.0",
         "@types/react-dom": "19.3.0",
         "@types/web-push": "3.6.4",

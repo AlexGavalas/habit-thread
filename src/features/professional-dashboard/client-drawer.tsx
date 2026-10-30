@@ -1,8 +1,9 @@
-import { Button, Drawer, Group, Stack, Text } from '@mantine/core';
+import { Button, Group, Stack, Text } from '@mantine/core';
 import type { ReactElement } from 'react';
 import { type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { AppDrawer } from '~components/overlays/overlays';
 import { type ProfessionalClientSummary } from '~types/professional';
 
 import styles from './professional-dashboard.module.css';
@@ -23,13 +24,13 @@ export const ClientDrawer = ({
     const { t } = useTranslation();
 
     return (
-        <Drawer
+        <AppDrawer
             classNames={{ body: styles.drawerBody }}
             closeButtonProps={{ 'aria-label': t('generic.actions.close') }}
             onClose={onClose}
             opened={Boolean(client)}
-            position="right"
-            size="min(100%, 76rem)"
+            position="bottom"
+            size="95dvh"
             title={client?.fullName}
         >
             {client && (
@@ -47,6 +48,6 @@ export const ClientDrawer = ({
                     {detail}
                 </Stack>
             )}
-        </Drawer>
+        </AppDrawer>
     );
 };

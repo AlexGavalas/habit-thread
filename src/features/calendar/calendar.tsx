@@ -7,6 +7,7 @@ import { Card } from '~components/card';
 import { LoadingOverlay } from '~components/loading-overlay';
 import { ReadError } from '~components/read-error';
 import { useMealPlanOwnerId } from '~features/meal-plan-owner';
+import { DefaultScheduleDrawer } from '~features/meal-zone-settings/default-schedule-drawer';
 import { useWeeklyMealZones } from '~hooks/use-weekly-meal-zones';
 import { useCurrentWeek, useMeals } from '~store/hooks';
 import { type WeeklyMealZone } from '~types/meal-zone';
@@ -32,8 +33,10 @@ export const Calendar = ({
 }>): ReactElement => {
     const ref = useRef<HTMLDivElement>(null);
     const [scheduleOpened, scheduleHandlers] = useDisclosure(false);
+    const [defaultOpened, defaultHandlers] = useDisclosure(false);
     const [scheduleDay, setScheduleDay] = useState(initialDate);
     const closeScheduleEditor = scheduleHandlers.close;
+    const closeDefaultEditor = defaultHandlers.close;
     const { currentWeek } = useCurrentWeek();
     const ownerUserId = useMealPlanOwnerId();
     const {
@@ -45,12 +48,17 @@ export const Calendar = ({
     } = useMeals();
     const schedule = useWeeklyMealZones(currentWeek, initialSchedule);
     const handleSaveSchedule = schedule.save;
-    const openScheduleEditor = (day?: string): void => {
+    const openScheduleEditor = (day: string): void => {
         if (isSaving) {
             return;
         }
-        setScheduleDay(day ?? schedule.zones[0]?.day ?? initialDate);
+        setScheduleDay(day);
         scheduleHandlers.open();
+    };
+    const openDefaultSchedule = (): void => {
+        if (!isSaving) {
+            defaultHandlers.open();
+        }
     };
 
     const handlePrint = useReactToPrint({
@@ -76,7 +84,7 @@ export const Calendar = ({
             <LoadingOverlay visible={mealsLoading || schedule.isLoading} />
             <div id="meal-plan-container">
                 <Controls
-                    onEditSchedule={openScheduleEditor}
+                    onEditSchedule={openDefaultSchedule}
                     onPrint={handlePrint}
                 />
                 <PersistenceStatus />
@@ -101,6 +109,10 @@ export const Calendar = ({
                     zones={schedule.zones}
                 />
             </div>
+            <DefaultScheduleDrawer
+                onClose={closeDefaultEditor}
+                opened={defaultOpened}
+            />
             <ScheduleEditor
                 isSaving={schedule.isSaving}
                 initialDay={scheduleDay}
