@@ -3,9 +3,12 @@ import { drizzle } from 'drizzle-orm/pg-proxy';
 import { readAccountExport } from './data';
 
 const mockQueries: { params: unknown[]; sql: string }[] = [];
+let mockTemplateRows: unknown[][];
 const mockDb = drizzle((sql, params) => {
     mockQueries.push({ params, sql });
-    return Promise.resolve({ rows: [] });
+    return Promise.resolve({
+        rows: sql.includes('from "schedule_templates"') ? mockTemplateRows : [],
+    });
 });
 const mockTransaction = jest.fn(
     async (
@@ -22,12 +25,13 @@ jest.mock('~db', () => ({
 describe('account export ownership boundary', () => {
     beforeEach(() => {
         mockQueries.length = 0;
+        mockTemplateRows = [];
     });
 
     it('scopes every table to the owner, children through owned parents, and relationships to participants', async () => {
         expect.hasAssertions();
         await readAccountExport(7);
-        expect(mockQueries).toHaveLength(16);
+        expect(mockQueries).toHaveLength(18);
         for (const query of mockQueries) {
             expect(query.sql).toContain(' where ');
             expect(query.params.length).toBeGreaterThan(0);
@@ -69,5 +73,42 @@ describe('account export ownership boundary', () => {
             mockQueries.find((query) => query.sql.includes('from "users"'))
                 ?.sql,
         ).toContain('where "users"."id" = $1');
+    });
+
+    it('validates stored recurring schedule JSON before exporting it', async () => {
+        expect.hasAssertions();
+        mockTemplateRows = [
+            [
+                '2026-01-01',
+                {
+                    kind: 'daily',
+                    slots: [
+                        { key: 'breakfast', label: 'Πρωινό', time: '08:00' },
+                    ],
+                },
+                7,
+            ],
+        ];
+        const data = await readAccountExport(7);
+        expect(data.scheduleTemplates).toStrictEqual([
+            {
+                effectiveFrom: '2026-01-01',
+                template: {
+                    kind: 'daily',
+                    slots: [
+                        { key: 'breakfast', label: 'Πρωινό', time: '08:00' },
+                    ],
+                },
+                userId: 7,
+            },
+        ]);
+    });
+
+    it('fails rather than silently dropping malformed stored schedules', async () => {
+        expect.hasAssertions();
+        mockTemplateRows = [['2026-01-01', { kind: 'invalid' }, 7]];
+        await expect(readAccountExport(7)).rejects.toThrow(
+            'Invalid discriminator',
+        );
     });
 });

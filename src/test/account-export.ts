@@ -31,6 +31,8 @@ export const emptyAccountExport = (): AccountExportData => ({
     profile: [],
     reminderDeliveries: [],
     roles: [],
+    scheduleTemplates: [],
+    signupOrigins: [],
     zoneTimes: [],
     zones: [],
 });

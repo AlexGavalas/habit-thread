@@ -3,6 +3,8 @@
 import { type ReactElement, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { SettingsActions } from '~features/settings-actions';
+
 import styles from './account-export.module.css';
 
 export const AccountExport = (): ReactElement => {
@@ -51,19 +53,21 @@ export const AccountExport = (): ReactElement => {
         >
             <h3 id="account-export-title">{t('account_export.title')}</h3>
             <p>{t('account_export.description')}</p>
-            <button
-                aria-describedby="account-export-status"
-                className={styles.button}
-                disabled={status === 'pending'}
-                onClick={handleDownload}
-                type="button"
-            >
-                {t(
-                    status === 'pending'
-                        ? 'account_export.pending'
-                        : 'account_export.download',
-                )}
-            </button>
+            <SettingsActions>
+                <button
+                    aria-describedby="account-export-status"
+                    className={styles.button}
+                    disabled={status === 'pending'}
+                    onClick={handleDownload}
+                    type="button"
+                >
+                    {t(
+                        status === 'pending'
+                            ? 'account_export.pending'
+                            : 'account_export.download',
+                    )}
+                </button>
+            </SettingsActions>
             <p
                 aria-live="polite"
                 id="account-export-status"

@@ -1,17 +1,20 @@
 import 'server-only';
 import JSZip from 'jszip';
 
+import type { ScheduleTemplate } from '~schemas/schedule-template';
+
 import { exportColumns } from './columns';
 import type { AccountExportData } from './data';
 import { EXPORT_README } from './readme';
 
-type Cell = string | number | boolean | null;
+type Cell = string | number | boolean | null | ScheduleTemplate;
 
 export const csvCell = (value: Cell): string => {
     if (value === null) {
         return '""';
     }
-    const text = String(value);
+    const text =
+        typeof value === 'object' ? JSON.stringify(value) : String(value);
     const safe =
         typeof value === 'string' &&
         (/^[\s\u0000-\u001f]*[=+\-@]/u.test(text) || /^[\t\r\n]/u.test(text))

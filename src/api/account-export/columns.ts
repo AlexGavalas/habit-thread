@@ -15,8 +15,10 @@ import {
     notificationPreferences,
     notifications,
     professionalClients,
+    scheduleTemplates,
     userRoles,
     users,
+    userSignupOrigins,
     weeklyMealZones,
 } from '~db/schema';
 
@@ -141,6 +143,15 @@ export const exportColumns = {
         userId: mealReminderDeliveries.user_id,
     },
     roles: { role: userRoles.role, userId: userRoles.user_id },
+    scheduleTemplates: {
+        effectiveFrom: scheduleTemplates.effective_from,
+        template: scheduleTemplates.template,
+        userId: scheduleTemplates.user_id,
+    },
+    signupOrigins: {
+        method: userSignupOrigins.method,
+        userId: userSignupOrigins.user_id,
+    },
     zoneTimes: {
         effectiveFrom: mealZoneTimes.effective_from,
         time: mealZoneTimes.time,
