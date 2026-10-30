@@ -1,9 +1,13 @@
 import { Carousel } from '@mantine/carousel';
-import { useMediaQuery } from '@mantine/hooks';
 import { type EmblaCarouselType } from 'embla-carousel';
 /* oxlint-disable react/jsx-handler-names -- Mantine names this callback prop getEmblaApi. */
 import type { ReactElement } from 'react';
-import { type ButtonHTMLAttributes, useCallback, useState } from 'react';
+import {
+    type ButtonHTMLAttributes,
+    useCallback,
+    useEffect,
+    useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useCurrentWeek, useMeals } from '~store/hooks';
@@ -17,7 +21,7 @@ import { useMealSwap } from './meal-swap-board';
 import { useDragEdgeScroll } from './use-drag-edge-scroll';
 
 type Props = Readonly<{
-    onEditSchedule: (day?: string) => void;
+    onEditSchedule: (day: string) => void;
     zones: WeeklyMealZone[];
 }>;
 
@@ -26,9 +30,23 @@ export const Content = ({ onEditSchedule, zones }: Props): ReactElement => {
         null,
     );
     const [selectedSlide, setSelectedSlide] = useState(0);
-    const isMediumViewport = useMediaQuery('(min-width: 62em)');
-    const isLargeViewport = useMediaQuery('(min-width: 75em)');
-    const isExtraLargeViewport = useMediaQuery('(min-width: 88em)');
+    const [lastSlide, setLastSlide] = useState(0);
+    useEffect(() => {
+        if (!carouselApi) {
+            return;
+        }
+        const handleLayoutChange = (): void => {
+            setLastSlide(Math.max(0, carouselApi.scrollSnapList().length - 1));
+            setSelectedSlide(carouselApi.selectedScrollSnap());
+        };
+        handleLayoutChange();
+        carouselApi.on('reInit', handleLayoutChange);
+        carouselApi.on('select', handleLayoutChange);
+        return (): void => {
+            carouselApi.off('reInit', handleLayoutChange);
+            carouselApi.off('select', handleLayoutChange);
+        };
+    }, [carouselApi]);
     const { i18n, t } = useTranslation();
     const { currentWeek } = useCurrentWeek();
     const { meals } = useMeals();
@@ -42,14 +60,6 @@ export const Content = ({ onEditSchedule, zones }: Props): ReactElement => {
         'EEE dd/MM',
         i18n.language === 'gr' ? 'gr' : 'en',
     );
-    const visibleSlides = isExtraLargeViewport
-        ? 7
-        : isLargeViewport
-          ? 5
-          : isMediumViewport
-            ? 4
-            : 3;
-    const lastSlide = Math.max(0, days.length - visibleSlides);
     const activeEdge = useDragEdgeScroll(
         carouselApi,
         Boolean(swap?.selection?.dragging),
@@ -112,7 +122,6 @@ export const Content = ({ onEditSchedule, zones }: Props): ReactElement => {
             }}
             getEmblaApi={onCarouselReady}
             nextControlProps={nextControlProps}
-            onSlideChange={setSelectedSlide}
             previousControlProps={previousControlProps}
             slideGap="compact"
             slideSize={{

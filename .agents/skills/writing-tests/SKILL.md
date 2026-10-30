@@ -21,6 +21,7 @@ Follow applicable `AGENTS.md` instructions. Existing tests are examples, not exc
 - Use small, explicit fixtures with the actual application types. Never bypass types or use type casts; use type annotations or `satisfies` to check fixtures and mocks against their actual contracts.
 - Reuse existing helpers when they fit; extract shared setup only when it removes meaningful duplication without hiding the scenario. Do not suffix helper or other identifiers with `Harness`; name them for their purpose.
 - Use `it.each`/`test.each` for the same rule applied to different inputs, not unrelated scenarios. Keep expected results independent of the implementation being tested. Do not use snapshot unit tests.
+- Avoid conditionals in tests, including conditional suite registration, environment-dependent skips, and branches that change assertions. Use explicit cases for different behavior. Assert required values with `node:assert/strict` to fail clearly and narrow their types instead of branching or casting. Select environment-specific integration suites through test configuration and explicit commands; missing prerequisites must fail, not silently skip.
 
 ## Jest and React Testing Library
 

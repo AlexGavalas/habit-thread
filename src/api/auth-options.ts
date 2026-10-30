@@ -5,7 +5,8 @@ import GoogleProvider from 'next-auth/providers/google';
 import 'server-only';
 import invariant from 'tiny-invariant';
 
-import { createUser, fetchUserCredentials } from '~api/user';
+import { fetchUserCredentials } from '~api/user';
+import { createGoogleUser } from '~api/user-signup';
 import { loginSchema } from '~schemas/auth';
 import { makeSessionSerializable } from '~util/auth';
 import { verifyPassword } from '~util/password';
@@ -36,12 +37,12 @@ export const authOptions: AuthOptions = {
         session: ({ session }): Session => makeSessionSerializable(session),
     },
     events: {
-        signIn: async ({ user }): Promise<void> => {
-            if (!user.email || !user.name) {
+        signIn: async ({ account, user }): Promise<void> => {
+            if (account?.provider !== 'google' || !user.email || !user.name) {
                 return;
             }
 
-            await createUser({
+            await createGoogleUser({
                 email: user.email,
                 fullName: user.name,
                 language: user.locale ?? 'en',

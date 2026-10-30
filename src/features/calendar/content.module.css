@@ -4,12 +4,12 @@
     position: static;
 }
 
-.carouselViewport,
 .carouselSlide {
-    min-width: 0;
+    min-width: var(--meal-plan-day-min-width, 0);
 }
 
 .carouselViewport {
+    min-width: 0;
     isolation: isolate;
     position: relative;
 }
@@ -82,6 +82,22 @@
     min-height: 6rem;
 }
 
+.dayTitleContent {
+    align-items: center;
+    display: inline-flex;
+    gap: var(--mantine-spacing-xs);
+    white-space: nowrap;
+}
+
+.customScheduleIcon {
+    align-items: center;
+    color: var(--mantine-primary-color-filled);
+    display: inline-flex;
+    flex: none;
+    font-size: 1rem;
+    justify-content: center;
+}
+
 .nutritionButton {
     display: block;
     text-align: left;
@@ -122,6 +138,7 @@
     }
 
     .carouselSlide {
+        min-width: 0;
         padding: 0;
     }
 }

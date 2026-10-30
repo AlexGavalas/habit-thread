@@ -56,6 +56,12 @@ not real mobile devices.
 
 ## Adding coverage and handling failures
 
+- Use `AppDrawer`, `AppModal`, or `AppModalRoot` from `src/components/overlays`
+  for app dialogs, and `ContextModalsProvider` for managed/context modals. They
+  share one account-scoped overlay stack for z-index, focus, and Escape handling.
+  One Escape dismisses only the topmost dismissible layer; a layer that disables
+  Escape blocks dismissal of layers below it. Do not add independent window
+  Escape handlers for dialogs or bypass the shared wrappers.
 - Add `@a11y` to a relevant Playwright test and call `expectAccessible(page, state)`
   from `e2e/support/accessibility.ts` after asserting the intended state is ready.
 - Scan the whole page, not just a component subtree: dialogs and popovers use

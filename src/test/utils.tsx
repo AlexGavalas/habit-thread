@@ -9,6 +9,7 @@ import userEvent from '@testing-library/user-event';
 import type { ReactNode, ReactElement } from 'react';
 import { I18nextProvider } from 'react-i18next';
 
+import { OverlayEscapeProvider } from '~components/overlays/overlay-stack';
 import { i18n } from '~test/i18n';
 import { APP_THEME } from '~theme';
 
@@ -31,7 +32,11 @@ export const renderWithUser = (
                         theme={APP_THEME}
                         withCssVariables={false}
                     >
-                        <Wrapper>{children}</Wrapper>
+                        <Wrapper>
+                            <OverlayEscapeProvider>
+                                {children}
+                            </OverlayEscapeProvider>
+                        </Wrapper>
                     </MantineProvider>
                 </I18nextProvider>
             ),

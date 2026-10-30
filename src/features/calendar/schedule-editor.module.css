@@ -22,6 +22,20 @@
         var(--mantine-spacing-lg);
 }
 
+.fields {
+    border: 0;
+    margin: 0;
+    min-width: 0;
+    padding: 0;
+}
+
+.defaultEditor {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+}
+
 .zoneRow {
     align-items: end;
     display: grid;

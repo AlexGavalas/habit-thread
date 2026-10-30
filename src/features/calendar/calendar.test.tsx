@@ -43,6 +43,18 @@ const renderMealPlan = (): ReturnType<typeof renderWithUser> & {
             '/api/v1/weekly-meal-zones?weekStart=2026-01-19&ownerUserId=7',
             Response.json({ data: nextZones }),
         ],
+        [
+            '/api/v1/schedule-template?ownerUserId=7',
+            Response.json({
+                effectiveFrom: '2026-01-19',
+                template: {
+                    kind: 'daily',
+                    slots: [
+                        { key: 'morning', label: 'Breakfast', time: '08:00' },
+                    ],
+                },
+            }),
+        ],
     ]);
     jest.spyOn(global, 'fetch').mockImplementation(respondFrom(responses));
     const { Wrapper, queryClient } = createMealPlanTestContext();
@@ -81,6 +93,21 @@ const renderMealPlan = (): ReturnType<typeof renderWithUser> & {
 describe('meal-plan read recovery', () => {
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    it('opens the default editor without treating the click event as a date', async () => {
+        expect.hasAssertions();
+        const { cleanup, user } = renderMealPlan();
+        await user.click(
+            screen.getByRole('button', { name: 'Default schedule' }),
+        );
+        expect(
+            screen.getByRole('dialog', { name: 'Default schedule' }),
+        ).toBeInTheDocument();
+        await expect(
+            screen.findByLabelText('Name for meal slot 1'),
+        ).resolves.toHaveValue('Breakfast');
+        cleanup();
     });
 
     it('shows a failed next-week read instead of stale meals or an empty plan', async () => {

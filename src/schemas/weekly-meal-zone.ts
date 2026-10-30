@@ -4,15 +4,15 @@ import { z } from 'zod';
 import { MEAL_ZONE_KEYS } from '~constants/meal-zones';
 
 import { weekStartSchema } from './meal-plan';
-
-const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/u;
+import { scheduleSlotSchema } from './schedule-template';
 
 export const weeklyMealZoneSchema = z.object({
     day: z.iso.date(),
-    label: z.string().trim().min(1).max(40),
+    isOverride: z.boolean().optional(),
+    label: scheduleSlotSchema.shape.label,
     legacyKey: z.enum(MEAL_ZONE_KEYS).optional(),
     position: z.number().int().min(0).max(9),
-    time: z.string().regex(timePattern),
+    time: scheduleSlotSchema.shape.time,
     weekStart: z.iso.date(),
     zoneKey: z.string().min(1).max(100),
 });

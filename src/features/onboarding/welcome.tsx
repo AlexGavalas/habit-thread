@@ -3,6 +3,8 @@ import Image from 'next/image';
 import { type ChangeEvent, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { AppModalRoot } from '~components/overlays/overlays';
+
 import styles from './welcome.module.css';
 
 type WelcomeProps = Readonly<{
@@ -37,7 +39,7 @@ export const Welcome = ({
     };
 
     return (
-        <Modal.Root
+        <AppModalRoot
             centered
             closeOnClickOutside={false}
             closeOnEscape={false}
@@ -130,6 +132,6 @@ export const Welcome = ({
                     </Stack>
                 </Modal.Body>
             </Modal.Content>
-        </Modal.Root>
+        </AppModalRoot>
     );
 };

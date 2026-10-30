@@ -53,34 +53,3 @@ export const fetchMealZoneTimes = async ({
 
     return result;
 };
-
-export const saveMealZoneTimes = async ({
-    effectiveFrom,
-    times,
-    userId,
-}: {
-    effectiveFrom: string;
-    times: MealZoneTimes;
-    userId: number;
-}): Promise<void> => {
-    await getDb().transaction(async (db) => {
-        for (const key of MEAL_ZONE_KEYS) {
-            await db
-                .insert(mealZoneTimes)
-                .values({
-                    effective_from: effectiveFrom,
-                    time: times[key],
-                    user_id: userId,
-                    zone_key: key,
-                })
-                .onConflictDoUpdate({
-                    set: { time: times[key] },
-                    target: [
-                        mealZoneTimes.user_id,
-                        mealZoneTimes.effective_from,
-                        mealZoneTimes.zone_key,
-                    ],
-                });
-        }
-    });
-};

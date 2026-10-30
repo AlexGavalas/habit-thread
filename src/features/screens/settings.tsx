@@ -11,7 +11,6 @@ import { AccountExport } from '~features/account-export/account-export';
 import { AdvancedSettings } from '~features/advanced-settings';
 import { DeleteAccount } from '~features/delete-account';
 import { FoodPreferences } from '~features/food-preferences';
-import { MealZoneSettings } from '~features/meal-zone-settings';
 import { PersonalSettings } from '~features/personal-settings';
 
 import styles from './settings.module.css';
@@ -91,10 +90,6 @@ export const Settings = ({
                 <Tabs.Panel pt="md" value="personal">
                     <Card>
                         <PersonalSettings />
-                    </Card>
-                    <Space h="lg" />
-                    <Card>
-                        <MealZoneSettings />
                     </Card>
                     <Space h="lg" />
                     <Card>

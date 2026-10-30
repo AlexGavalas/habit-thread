@@ -1,16 +1,12 @@
 'use server';
 
-import { addWeeks, format, startOfWeek } from 'date-fns';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
 import { acceptConnectionRequest as acceptRequest } from '~api/connection';
 import { saveMealPlanChanges } from '~api/meal-plan';
-import { saveMealZoneTimes as saveZoneTimes } from '~api/meal-zone';
-import { ProfessionalError, requireMealPlanAccess } from '~api/professional';
-import { getCurrentUser, getRequestDate } from '~api/session';
+import { getCurrentUser } from '~api/session';
 import { updateProfile } from '~api/user';
-import { mealZoneTimesRequestSchema } from '~schemas/meal-zone';
 import { patchRequestSchema as profileSchema } from '~schemas/user';
 import { type ActionResult } from '~types/action-result';
 
@@ -57,53 +53,6 @@ export const saveMealPlan = async (input: unknown): Promise<ActionResult> => {
         revalidatePath('/meal-plan');
     }
     return result.ok ? { ok: true } : result;
-};
-
-export const saveMealZoneTimes = async (
-    input: unknown,
-): Promise<ActionResult<{ effectiveFrom: string }>> => {
-    const user = await getCurrentUser();
-
-    if (!user) {
-        return { ok: false, reason: 'unauthorized' };
-    }
-
-    const parsed = mealZoneTimesRequestSchema
-        .extend({ ownerUserId: z.number().int().positive().optional() })
-        .safeParse(input);
-
-    if (!parsed.success) {
-        return { ok: false, reason: 'invalid' };
-    }
-
-    const effectiveFrom = format(
-        addWeeks(startOfWeek(await getRequestDate(), { weekStartsOn: 1 }), 1),
-        'yyyy-MM-dd',
-    );
-
-    try {
-        const ownerUserId = parsed.data.ownerUserId ?? user.id;
-        await requireMealPlanAccess({
-            actorUserId: user.id,
-            ownerUserId,
-        });
-        await saveZoneTimes({
-            effectiveFrom,
-            times: parsed.data.times,
-            userId: ownerUserId,
-        });
-    } catch (error) {
-        if (error instanceof ProfessionalError) {
-            return { ok: false, reason: 'forbidden' };
-        }
-        throw error;
-    }
-
-    revalidatePath('/home');
-    revalidatePath('/meal-plan');
-    revalidatePath('/settings');
-
-    return { effectiveFrom, ok: true };
 };
 
 export const saveProfile = async (input: unknown): Promise<ActionResult> => {

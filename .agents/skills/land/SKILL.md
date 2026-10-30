@@ -59,9 +59,8 @@ landed.
    `origin/master` with a non-interactive merge when necessary; do not rewrite a
    published branch. Pause on conflicts as specified above.
 6. Verify the pinned runtime and package-manager versions in `.mise.toml`
-   (currently Node.js `24.16.0` and pnpm `12.3.1`; also see `package.json` and
-   `.nvmrc`). Run repository package commands through `mise exec -- pnpm`, never a
-   global pnpm. If dependencies are absent or stale, install with
+   (also see `package.json` and `.nvmrc`). Run repository package commands through
+   `mise exec -- pnpm`, never a global pnpm. If dependencies are absent or stale, install with
    `mise exec -- pnpm install --frozen-lockfile`; the package manager and lockfile
    are declared in `package.json` and `pnpm-lock.yaml`. Missing tools or credentials
    are blockers; do not silently install machine-wide tools.

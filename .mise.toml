@@ -1,4 +1,4 @@
 [tools]
 # Keep pnpm first so a pnpm installed inside Node's prefix cannot shadow it.
 pnpm = "12.3.1"
-node = "24.16.0"
+node = "26.13.0"
