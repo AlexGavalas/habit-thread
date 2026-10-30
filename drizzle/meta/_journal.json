@@ -78,6 +78,20 @@
             "when": 1793190471491,
             "tag": "0010_unify_profile_visibility",
             "breakpoints": true
+        },
+        {
+            "idx": 11,
+            "version": "7",
+            "when": 1793352357625,
+            "tag": "0011_track_signup_origin",
+            "breakpoints": true
+        },
+        {
+            "idx": 12,
+            "version": "7",
+            "when": 1793353201160,
+            "tag": "0012_backfill_password_signup_origin",
+            "breakpoints": true
         }
     ]
 }

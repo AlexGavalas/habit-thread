@@ -36,6 +36,8 @@ const config: Config = {
 
     testEnvironment: 'jsdom',
 
+    testMatch: ['**/?(*.)+(spec|test).[jt]s?(x)', '!**/*.integration.test.ts'],
+
     testPathIgnorePatterns: ['<rootDir>/e2e/', '<rootDir>/.delta/'],
 
     transform: {
