@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { MEAL_ZONE_KEYS } from '~constants/meal-zones';
 import { type MealZoneTimes } from '~types/meal-zone';
 
+export const mealZoneKeySchema = z.enum(MEAL_ZONE_KEYS);
+
 const timeSchema = z
     .string()
     .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Invalid time');

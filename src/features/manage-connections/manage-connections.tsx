@@ -8,8 +8,10 @@ import { useTranslation } from 'react-i18next';
 
 import { LoadingOverlay } from '~components/loading-overlay';
 import { useProfile } from '~hooks/use-profile';
+import { connectionsResponseSchema } from '~schemas/connection';
 import { type Connection, type ConnectionWithUser } from '~types/connection';
 import { showErrorNotification } from '~util/notification';
+import { parseResponse } from '~util/parse-response';
 
 import { ConnectionItem } from './connection';
 
@@ -24,11 +26,12 @@ export const ManageConnections = (): ReactElement => {
             queryFn: async (): Promise<ConnectionWithUser[]> => {
                 const response = await fetch('/api/v1/connection');
 
-                const { data } = (await response.json()) as {
-                    data?: ConnectionWithUser[];
-                };
+                const { data } = await parseResponse(
+                    response,
+                    connectionsResponseSchema,
+                );
 
-                return data ?? [];
+                return data;
             },
             queryKey: ['connections'],
         });

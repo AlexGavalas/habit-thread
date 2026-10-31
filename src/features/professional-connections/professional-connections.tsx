@@ -10,7 +10,12 @@ import { useTranslation } from 'react-i18next';
 
 import { LoadingOverlay } from '~components/loading-overlay';
 import { useProfile } from '~hooks/use-profile';
+import {
+    professionalConnectionsResponseSchema,
+    professionalSearchResponseSchema,
+} from '~schemas/professional';
 import { type ProfessionalSummary } from '~types/professional';
+import { parseResponse } from '~util/parse-response';
 
 import {
     ConnectionSections,
@@ -35,7 +40,10 @@ export const ProfessionalConnections = (): ReactElement => {
             if (!response.ok) {
                 throw new Error('Could not load professional connections');
             }
-            const result = (await response.json()) as { data: ConnectionState };
+            const result = await parseResponse(
+                response,
+                professionalConnectionsResponseSchema,
+            );
             return result.data;
         },
         queryKey: ['professional-connections', profile?.id],
@@ -49,10 +57,11 @@ export const ProfessionalConnections = (): ReactElement => {
                 type: 'search',
             });
             const response = await fetch(`/api/v1/professional?${query}`);
-            const result = (await response.json()) as {
-                data?: ProfessionalSummary[];
-            };
-            return result.data ?? [];
+            const result = await parseResponse(
+                response,
+                professionalSearchResponseSchema,
+            );
+            return result.data;
         },
         queryKey: ['professional-search', debouncedSearch],
     });

@@ -15,6 +15,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { foodSearchCountrySchema } from '~schemas/food-search';
 import {
     type FoodSearchCountry,
     type FoodSearchResult,
@@ -60,7 +61,7 @@ export const FoodDatabaseSearch = ({
     }) satisfies KeyboardEventHandler<HTMLInputElement>;
 
     const handleCountryChange = (value: string | null): void => {
-        setCountry((value ?? 'de') as FoodSearchCountry);
+        setCountry(foodSearchCountrySchema.parse(value ?? 'de'));
     };
 
     const hasSearched = query.length >= 2 && !isFetching;

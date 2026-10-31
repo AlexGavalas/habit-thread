@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { type EditedMeasurement } from '~types/measurement';
+import { type EditedMeasurement, type Measurement } from '~types/measurement';
 
 type MeasurementSchema = z.ZodType<EditedMeasurement>;
 
@@ -31,4 +31,16 @@ export const measurementSummarySchema = z.object({
 
 export const measurementSummaryResponseSchema = z.object({
     data: measurementSummarySchema,
+});
+
+export const measurementsResponseSchema = z.object({
+    data: z.array(
+        z.object({
+            date: z.string(),
+            fat_percentage: z.number().nullable(),
+            id: z.string(),
+            user_id: z.number(),
+            weight: z.number(),
+        }) satisfies z.ZodType<Measurement>,
+    ),
 });

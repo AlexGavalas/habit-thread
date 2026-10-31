@@ -22,7 +22,7 @@ const startupStyle = {
     placeItems: 'center',
     position: 'fixed',
     zIndex: 1000,
-} as CSSProperties;
+} satisfies CSSProperties & Record<`--startup-${string}`, string>;
 
 export const AppStartup = (): ReactElement => {
     return (

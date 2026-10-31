@@ -11,9 +11,12 @@ import { useTranslation } from 'react-i18next';
 import { LoadingOverlay } from '~components/loading-overlay';
 import { INITIAL_PAGE, PAGE_SIZE, Table } from '~components/table';
 import { useProfile } from '~hooks/use-profile';
+import { persistedActivitiesResponseSchema } from '~schemas/activity';
+import { countResponseSchema } from '~schemas/response';
 import { type Activity } from '~types/activity';
 import { useOpenContextModal } from '~util/modal';
 import { showErrorNotification } from '~util/notification';
+import { parseResponse } from '~util/parse-response';
 
 export const Activities = (): ReactElement => {
     const { t } = useTranslation();
@@ -24,10 +27,13 @@ export const Activities = (): ReactElement => {
 
     const { data: count = 0, isFetched: isCountFetched } = useQuery({
         enabled: Boolean(profile),
-        queryFn: async (): Promise<number | undefined> => {
+        queryFn: async (): Promise<number> => {
             const response = await fetch('/api/v1/activity?count=true');
 
-            const { count } = (await response.json()) as { count?: number };
+            const { count } = await parseResponse(
+                response,
+                countResponseSchema,
+            );
 
             return count;
         },
@@ -36,9 +42,7 @@ export const Activities = (): ReactElement => {
 
     const { data: activities = [], isFetching } = useQuery({
         enabled: Boolean(profile),
-        queryFn: async (): Promise<
-            { date: string; id: string; user_id: number; activity: string }[]
-        > => {
+        queryFn: async (): Promise<Activity[]> => {
             const start = (page - 1) * PAGE_SIZE;
             const end = page * PAGE_SIZE - 1;
 
@@ -46,9 +50,12 @@ export const Activities = (): ReactElement => {
                 `/api/v1/activity?end=${end}&start=${start}`,
             );
 
-            const { data } = (await response.json()) as { data?: Activity[] };
+            const { data } = await parseResponse(
+                response,
+                persistedActivitiesResponseSchema,
+            );
 
-            return data ?? [];
+            return data;
         },
         queryKey: ['activities', 'page', page],
     });

@@ -1,3 +1,6 @@
+import { booleanResponseSchema } from '~schemas/response';
+import { parseResponse } from '~util/parse-response';
+
 const urlBase64ToUint8Array = (value: string): Uint8Array<ArrayBuffer> => {
     const padding = '='.repeat((4 - (value.length % 4)) % 4);
     const base64 = `${value}${padding}`.replace(/-/g, '+').replace(/_/g, '/');
@@ -64,7 +67,10 @@ export const isSubscriptionSaved = async (
         return false;
     }
 
-    const { data: isSaved } = (await response.json()) as { data: boolean };
+    const { data: isSaved } = await parseResponse(
+        response,
+        booleanResponseSchema,
+    );
     return isSaved;
 };
 

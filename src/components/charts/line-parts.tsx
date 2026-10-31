@@ -2,12 +2,15 @@ import { Card } from '@mantine/core';
 import { format, isValid, parse } from 'date-fns';
 import type { ReactElement } from 'react';
 import { type TooltipContentProps, type XAxisTickContentProps } from 'recharts';
+import { z } from 'zod';
 
 export type ChartPoint = {
     date: string;
     index: number;
     value: number | null;
 };
+
+const pointMetadataSchema = z.object({ index: z.number() });
 
 const formatDate = (value: unknown): string => {
     if (typeof value !== 'string' && typeof value !== 'number') {
@@ -100,7 +103,8 @@ export const ChartTooltip = ({
         return null;
     }
 
-    const point = item.payload as ChartPoint | undefined;
+    const parsed = pointMetadataSchema.safeParse(item.payload);
+    const point = parsed.success ? parsed.data : undefined;
     const transforms = [];
 
     if (point?.index === 0) {

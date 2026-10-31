@@ -1,9 +1,11 @@
 import { type UseQueryResult, useQuery } from '@tanstack/react-query';
 
+import { foodSearchResponseSchema } from '~schemas/food-search';
 import {
     type FoodSearchCountry,
     type FoodSearchResponse,
 } from '~types/food-search';
+import { parseResponse } from '~util/parse-response';
 
 const emptyResponse: FoodSearchResponse = {
     data: { bls: [], openFoodFacts: [] },
@@ -27,7 +29,7 @@ export const useFoodSearch = ({
             if (!response.ok) {
                 throw new Error('Food search failed');
             }
-            return (await response.json()) as FoodSearchResponse;
+            return parseResponse(response, foodSearchResponseSchema);
         },
         queryKey: ['food-search', query, country],
         retry: false,

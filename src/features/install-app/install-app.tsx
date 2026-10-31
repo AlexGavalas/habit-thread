@@ -15,9 +15,13 @@ type BeforeInstallPromptEvent = Event & {
     userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 };
 
-type NavigatorWithStandalone = Navigator & {
-    standalone?: boolean;
-};
+const isInstallPromptEvent = (
+    event: Event,
+): event is BeforeInstallPromptEvent =>
+    'prompt' in event &&
+    typeof event.prompt === 'function' &&
+    'userChoice' in event &&
+    event.userChoice instanceof Promise;
 
 type InstallAppProps = Readonly<{
     placement?: 'landing' | 'menu';
@@ -29,7 +33,7 @@ const isIosDevice = (): boolean =>
 
 const isRunningStandalone = (): boolean =>
     window.matchMedia('(display-mode: standalone)').matches ||
-    (navigator as NavigatorWithStandalone).standalone === true;
+    ('standalone' in navigator && navigator.standalone === true);
 
 export const InstallApp = ({
     placement = 'landing',
@@ -46,8 +50,11 @@ export const InstallApp = ({
         }
 
         const handleBeforeInstallPrompt = (event: Event): void => {
+            if (!isInstallPromptEvent(event)) {
+                return;
+            }
             event.preventDefault();
-            setInstallPrompt(event as BeforeInstallPromptEvent);
+            setInstallPrompt(event);
         };
         const handleInstalled = (): void => {
             setInstallPrompt(null);

@@ -1,5 +1,6 @@
 import 'server-only';
 import webpush from 'web-push';
+import { z } from 'zod';
 
 import { fetchMealsForDay } from '~api/meal';
 import {
@@ -11,6 +12,8 @@ import {
     saveNotificationPreferences,
 } from '~api/push-notification';
 import { getNextReminderAt, getTomorrowInTimeZone } from '~util/meal-reminder';
+
+const pushErrorSchema = z.object({ statusCode: z.number() });
 
 const configureWebPush = (): void => {
     const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
@@ -78,7 +81,8 @@ const sendToSubscription = async ({
         );
         return true;
     } catch (error) {
-        const statusCode = (error as { statusCode?: number }).statusCode;
+        const parsed = pushErrorSchema.safeParse(error);
+        const statusCode = parsed.success ? parsed.data.statusCode : undefined;
 
         if (statusCode === 404 || statusCode === 410) {
             await deletePushSubscriptionByEndpoint(subscription.endpoint);

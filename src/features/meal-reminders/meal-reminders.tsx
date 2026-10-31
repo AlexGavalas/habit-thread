@@ -5,7 +5,7 @@ import type { ReactElement } from 'react';
 import { type ChangeEvent, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { NotificationPreferences } from '~types/push-notification';
+import { notificationPreferencesResponseSchema } from '~schemas/push-notification';
 import {
     showErrorNotification,
     showSuccessNotification,
@@ -57,9 +57,9 @@ export const MealReminders = (): ReactElement | null => {
                     return;
                 }
 
-                const { data } = (await preferencesResponse.json()) as {
-                    data: NotificationPreferences | null;
-                };
+                const { data } = notificationPreferencesResponseSchema.parse(
+                    await preferencesResponse.json(),
+                );
 
                 if (data) {
                     setIsMealReminderEnabled(data.meal_reminder_enabled);

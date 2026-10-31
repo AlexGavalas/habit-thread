@@ -29,10 +29,8 @@ export const DailyNutrition = (): ReactElement => {
                     .filter((meal) => meal.day === day)
                     .sort((a, b) => {
                         const zone = (meal: typeof a): number =>
-                            MEAL_ZONE_KEYS.indexOf(
-                                meal.section_key.split(
-                                    '_',
-                                )[0] as (typeof MEAL_ZONE_KEYS)[number],
+                            MEAL_ZONE_KEYS.findIndex(
+                                (key) => key === meal.section_key.split('_')[0],
                             );
                         return zone(a) - zone(b);
                     });
