@@ -4,8 +4,7 @@ import { type ChangeEventHandler } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
-    type ProfessionalClientSummary,
-    type ProfessionalInvitation,
+    type ProfessionalConnectionState,
     type ProfessionalSummary,
 } from '~types/professional';
 
@@ -16,11 +15,7 @@ import {
 import { InvitationActions } from './invitation-actions';
 import { Person } from './person';
 
-export type ConnectionState = {
-    currentProfessional: ProfessionalClientSummary | null;
-    incomingInvitations: ProfessionalInvitation[];
-    outgoingInvitations: ProfessionalInvitation[];
-};
+export type ConnectionState = ProfessionalConnectionState;
 
 type RunAction = (
     action: () => Promise<{ error?: string; ok: boolean }>,

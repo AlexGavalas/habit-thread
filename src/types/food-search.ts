@@ -1,29 +1,13 @@
-export type FoodSearchCountry = 'all' | 'de' | 'gr';
+import type { z } from 'zod';
 
-export type FoodNutrition = {
-    calories: number | null;
-    carbohydrates: number | null;
-    fat: number | null;
-    fiber: number | null;
-    protein: number | null;
-    salt: number | null;
-    sugar: number | null;
-};
+import type {
+    foodNutritionSchema,
+    foodSearchCountrySchema,
+    foodSearchResponseSchema,
+    foodSearchResultSchema,
+} from '~schemas/food-search';
 
-export type FoodSearchResult = {
-    alternativeName: string | null;
-    brand: string | null;
-    id: string;
-    name: string;
-    nutrition: FoodNutrition;
-    quantity: string | null;
-    source: 'bls' | 'open-food-facts';
-};
-
-export type FoodSearchResponse = {
-    data: {
-        bls: FoodSearchResult[];
-        openFoodFacts: FoodSearchResult[];
-    };
-    warnings: 'open-food-facts-unavailable'[];
-};
+export type FoodSearchCountry = z.infer<typeof foodSearchCountrySchema>;
+export type FoodNutrition = z.infer<typeof foodNutritionSchema>;
+export type FoodSearchResult = z.infer<typeof foodSearchResultSchema>;
+export type FoodSearchResponse = z.infer<typeof foodSearchResponseSchema>;

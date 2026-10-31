@@ -15,9 +15,12 @@ import { useTranslation } from 'react-i18next';
 import { LoadingOverlay } from '~components/loading-overlay';
 import { INITIAL_PAGE, PAGE_SIZE, Table } from '~components/table';
 import { useProfile } from '~hooks/use-profile';
+import { measurementsResponseSchema } from '~schemas/measurement';
+import { countResponseSchema } from '~schemas/response';
 import { type Measurement } from '~types/measurement';
 import { useOpenContextModal } from '~util/modal';
 import { showErrorNotification } from '~util/notification';
+import { parseResponse } from '~util/parse-response';
 
 import { getMeasurementHeaders } from './measurement-table';
 
@@ -30,10 +33,13 @@ export const Measurements = (): ReactElement => {
 
     const { data: count = 0, isFetched } = useQuery({
         enabled: Boolean(profile),
-        queryFn: async (): Promise<number | undefined> => {
+        queryFn: async (): Promise<number> => {
             const response = await fetch('/api/v1/measurement?count=true');
 
-            const { count } = (await response.json()) as { count?: number };
+            const { count } = await parseResponse(
+                response,
+                countResponseSchema,
+            );
 
             return count;
         },
@@ -43,15 +49,7 @@ export const Measurements = (): ReactElement => {
     const { data: measurements = [], isFetching } = useQuery({
         enabled: Boolean(profile),
         placeholderData: keepPreviousData,
-        queryFn: async (): Promise<
-            {
-                date: string;
-                id: string;
-                user_id: number;
-                fat_percentage: number | null;
-                weight: number;
-            }[]
-        > => {
+        queryFn: async (): Promise<Measurement[]> => {
             const start = (page - 1) * PAGE_SIZE;
             const end = page * PAGE_SIZE - 1;
 
@@ -59,11 +57,12 @@ export const Measurements = (): ReactElement => {
                 `/api/v1/measurement?end=${end}&start=${start}`,
             );
 
-            const { data } = (await response.json()) as {
-                data?: Measurement[];
-            };
+            const { data } = await parseResponse(
+                response,
+                measurementsResponseSchema,
+            );
 
-            return data ?? [];
+            return data;
         },
         queryKey: ['measurements', page],
     });

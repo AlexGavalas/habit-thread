@@ -8,6 +8,7 @@ import {
     useCanEditMealAnnotations,
     useMealPlanOwnerId,
 } from '~features/meal-plan-owner';
+import { mealZoneKeySchema } from '~schemas/meal-zone';
 import { useMeals } from '~store/hooks';
 import {
     type EditedMeal,
@@ -22,7 +23,6 @@ import { MEAL_MODAL_OPTIONS } from '../modals/meal/meal-modal-options';
 import styles from './mobile-content.module.css';
 import { MobileMealActions } from './mobile-meal-actions';
 import { MobileMealDetails } from './mobile-meal-details';
-import { type RowKey } from './types';
 
 type MobileMealProps = Readonly<{
     id: string;
@@ -53,9 +53,12 @@ export const MobileMeal = ({
     const openMealNoteModal = useOpenContextModal('meal-note');
     const openMealRatingModal = useOpenContextModal('meal-rating');
     const [rowKey] = id.split('_');
+    const parsedRowKey = mealZoneKeySchema.safeParse(rowKey);
     const Icon = legacyKey
         ? MEAL_ICON[legacyKey]
-        : (MEAL_ICON[rowKey as RowKey] ?? AppleHalf);
+        : parsedRowKey.success
+          ? MEAL_ICON[parsedRowKey.data]
+          : AppleHalf;
 
     const handleSave = async (newMeal: MealChange): Promise<void> => {
         if (!ownerUserId || !newMeal.meal) {

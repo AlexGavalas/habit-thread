@@ -1,3 +1,5 @@
+import assert from 'node:assert/strict';
+
 import { searchBlsFoods, searchOpenFoodFacts } from './food-search';
 
 describe('food search', () => {
@@ -70,7 +72,8 @@ describe('food search', () => {
             }),
         );
         const request = jest.mocked(fetch).mock.calls[0]?.[1];
-        const requestBody = request?.body as string;
+        const requestBody = request?.body;
+        assert(typeof requestBody === 'string');
         expect(JSON.parse(requestBody)).toMatchObject({
             page_size: 8,
             q: 'Greek yogurt countries_tags:"en:germany"',

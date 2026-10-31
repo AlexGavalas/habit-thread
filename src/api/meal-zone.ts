@@ -4,7 +4,8 @@ import 'server-only';
 import { DEFAULT_MEAL_ZONE_TIMES, MEAL_ZONE_KEYS } from '~constants/meal-zones';
 import { getDb } from '~db';
 import { mealZoneTimes } from '~db/schema';
-import { type MealZoneKey, type MealZoneTimes } from '~types/meal-zone';
+import { mealZoneKeySchema } from '~schemas/meal-zone';
+import { type MealZoneTimes } from '~types/meal-zone';
 
 const normalizeTime = (time: string): string => time.slice(0, 5);
 
@@ -46,8 +47,9 @@ export const fetchMealZoneTimes = async ({
             break;
         }
 
-        if (MEAL_ZONE_KEYS.some((key) => key === row.zoneKey)) {
-            result[row.zoneKey as MealZoneKey] = normalizeTime(row.time);
+        const zoneKey = mealZoneKeySchema.safeParse(row.zoneKey);
+        if (zoneKey.success) {
+            result[zoneKey.data] = normalizeTime(row.time);
         }
     }
 

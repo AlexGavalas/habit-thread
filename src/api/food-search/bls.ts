@@ -1,25 +1,21 @@
 import 'server-only';
+import { z } from 'zod';
 
+import { foodNutritionSchema } from '~schemas/food-search';
 import { type FoodNutrition, type FoodSearchResult } from '~types/food-search';
 
 import blsData from '../../data/bls-foods.json';
 
 const RESULT_LIMIT = 8;
 
-type BlsFood = {
-    calories: number | null;
-    carbohydrates: number | null;
-    englishName: string;
-    fat: number | null;
-    fiber: number | null;
-    id: string;
-    name: string;
-    protein: number | null;
-    salt: number | null;
-    sugar: number | null;
-};
+const blsFoodSchema = foodNutritionSchema.extend({
+    englishName: z.string(),
+    id: z.string(),
+    name: z.string(),
+});
+type BlsFood = z.infer<typeof blsFoodSchema>;
 
-const blsFoods = blsData.foods as BlsFood[];
+const blsFoods = z.array(blsFoodSchema).parse(blsData.foods);
 const normalize = (value: string): string =>
     value
         .normalize('NFKD')

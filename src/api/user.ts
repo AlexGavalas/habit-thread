@@ -3,7 +3,8 @@ import 'server-only';
 
 import { getDb } from '~db';
 import { userRoles, users } from '~db/schema';
-import { type User, type UserProfile, type UserRole } from '~types/user';
+import { userRoleSchema } from '~schemas/user';
+import { type User, type UserProfile } from '~types/user';
 
 const MAX_QUERY_RESULTS = 5;
 
@@ -36,7 +37,7 @@ export const fetchUser = async ({
 
     return {
         ...user,
-        roles: roles.map(({ role }) => role as UserRole),
+        roles: roles.map(({ role }) => userRoleSchema.parse(role)),
     };
 };
 

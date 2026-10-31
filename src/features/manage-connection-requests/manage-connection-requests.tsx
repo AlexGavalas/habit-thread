@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 
 import { LoadingOverlay } from '~components/loading-overlay';
 import { useProfile } from '~hooks/use-profile';
+import { connectionRequestsResponseSchema } from '~schemas/notification';
 import {
     type Notification,
     type NotificationWithUser,
@@ -16,6 +17,7 @@ import {
     showErrorNotification,
     showSuccessNotification,
 } from '~util/notification';
+import { parseResponse } from '~util/parse-response';
 
 import { acceptConnectionRequest } from '../../app/actions';
 import { ConnectionRequest } from './connection-request';
@@ -35,11 +37,12 @@ export const ManageConnectionRequests = (): ReactElement => {
                 '/api/v1/notification?type=connection_request',
             );
 
-            const { data } = (await response.json()) as {
-                data?: NotificationWithUser[];
-            };
+            const { data } = await parseResponse(
+                response,
+                connectionRequestsResponseSchema,
+            );
 
-            return data ?? [];
+            return data;
         },
         queryKey: ['connection-requests', profile?.id],
     });

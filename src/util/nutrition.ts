@@ -16,46 +16,48 @@ export type NutritionTotals = FoodNutrition & {
     complete: Record<NutrientKey, boolean>;
 };
 
+const mapNutrients = <Value>(
+    getValue: (key: NutrientKey) => Value,
+): Record<NutrientKey, Value> => ({
+    calories: getValue('calories'),
+    carbohydrates: getValue('carbohydrates'),
+    fat: getValue('fat'),
+    fiber: getValue('fiber'),
+    protein: getValue('protein'),
+    salt: getValue('salt'),
+    sugar: getValue('sugar'),
+});
+
 export const scaleNutrition = (
     item: MealItem | EditedMealItem,
 ): FoodNutrition => {
     const factor = item.quantity_grams / (item.basis_grams ?? 100);
-    return Object.fromEntries(
-        NUTRIENT_KEYS.map((key): [NutrientKey, number | null] => [
-            key,
-            item[key] === null || item[key] === undefined
-                ? null
-                : item[key] * factor,
-        ]),
-    ) as FoodNutrition;
+    return mapNutrients((key) =>
+        item[key] === null || item[key] === undefined
+            ? null
+            : item[key] * factor,
+    );
 };
 
 export const totalNutrition = (
     items: readonly (MealItem | EditedMealItem)[],
 ): NutritionTotals => {
     const scaled = items.map(scaleNutrition);
-    const totals = Object.fromEntries(
-        NUTRIENT_KEYS.map((key): [NutrientKey, number | null] => {
-            const known = scaled.flatMap((value) =>
-                value[key] === null ? [] : [value[key]],
-            );
-            return [
-                key,
-                known.length
-                    ? known.reduce((sum, value) => sum + value, 0)
-                    : null,
-            ];
-        }),
-    ) as FoodNutrition;
+    const totals = mapNutrients((key) => {
+        const known = scaled.flatMap((value) =>
+            value[key] === null ? [] : [value[key]],
+        );
+        return known.length
+            ? known.reduce((sum, value) => sum + value, 0)
+            : null;
+    });
     return {
         ...totals,
-        complete: Object.fromEntries(
-            NUTRIENT_KEYS.map((key): [NutrientKey, boolean] => [
-                key,
+        complete: mapNutrients(
+            (key) =>
                 scaled.length > 0 &&
-                    scaled.every((value) => value[key] !== null),
-            ]),
-        ) as Record<NutrientKey, boolean>,
+                scaled.every((value) => value[key] !== null),
+        ),
     };
 };
 

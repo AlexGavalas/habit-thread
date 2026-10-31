@@ -15,7 +15,7 @@ import { z } from 'zod';
 import { AppModal } from '~components/overlays/overlays';
 import { useLocalizedPath } from '~hooks/use-localized-path';
 
-import { AUTH_DIALOG_EVENT, type AuthDialogMode } from './auth-dialog-event';
+import { AUTH_DIALOG_EVENT, authDialogModeSchema } from './auth-dialog-event';
 import { AuthForm } from './auth-form';
 
 const loginSchema = z.object({
@@ -44,8 +44,14 @@ export const AuthDialog = (): ReactElement => {
 
     useEffect(() => {
         const handleOpen = (event: Event): void => {
-            const mode = (event as CustomEvent<AuthDialogMode>).detail;
-            setIsRegistering(mode === 'register');
+            if (!(event instanceof CustomEvent)) {
+                return;
+            }
+            const mode = authDialogModeSchema.safeParse(event.detail);
+            if (!mode.success) {
+                return;
+            }
+            setIsRegistering(mode.data === 'register');
             setError(null);
             setIsOpen(true);
         };

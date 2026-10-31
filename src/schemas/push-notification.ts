@@ -29,3 +29,15 @@ export const notificationPreferencesSchema = z.object({
         .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Invalid reminder time'),
     timezone: z.string().refine(validTimeZone, 'Invalid timezone'),
 });
+
+export const notificationPreferencesResponseSchema = z.object({
+    data: z
+        .object({
+            meal_reminder_enabled: z.boolean(),
+            meal_reminder_time: z.string(),
+            next_notification_at: z.string().nullable(),
+            timezone: z.string(),
+            user_id: z.number(),
+        })
+        .nullable(),
+});

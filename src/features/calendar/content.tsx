@@ -25,6 +25,10 @@ type Props = Readonly<{
     zones: WeeklyMealZone[];
 }>;
 
+type CarouselControlProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+    'data-inactive': true | undefined;
+};
+
 export const Content = ({ onEditSchedule, zones }: Props): ReactElement => {
     const [carouselApi, setCarouselApi] = useState<EmblaCarouselType | null>(
         null,
@@ -79,7 +83,7 @@ export const Content = ({ onEditSchedule, zones }: Props): ReactElement => {
             carouselApi?.scrollTo(Math.min(selectedSlide + 1, lastSlide));
         },
         tabIndex: canScrollNext ? 0 : -1,
-    } as ButtonHTMLAttributes<HTMLButtonElement>;
+    } satisfies CarouselControlProps;
     const previousControlProps = {
         'aria-disabled': !canScrollPrevious,
         'aria-label': t('meal_plan.scroll_days_back'),
@@ -89,7 +93,7 @@ export const Content = ({ onEditSchedule, zones }: Props): ReactElement => {
             carouselApi?.scrollTo(Math.max(selectedSlide - 1, 0));
         },
         tabIndex: canScrollPrevious ? 0 : -1,
-    } as ButtonHTMLAttributes<HTMLButtonElement>;
+    } satisfies CarouselControlProps;
 
     return (
         <Carousel

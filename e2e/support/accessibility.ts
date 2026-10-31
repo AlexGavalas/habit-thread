@@ -9,6 +9,23 @@ export const expectAccessible = async (
     page: Page,
     state: string,
 ): Promise<void> => {
+    // Mantine schedules its fade across animation frames, so getAnimations()
+    // can still be empty after a dialog becomes visible. Wait for the rendered
+    // state as well, rather than relying only on already-started animations.
+    await expect
+        .poll(
+            () =>
+                page
+                    .getByRole('dialog')
+                    .evaluateAll((dialogs) =>
+                        dialogs.every(
+                            (dialog) =>
+                                getComputedStyle(dialog).opacity === '1',
+                        ),
+                    ),
+            { message: `${state}: dialogs have finished fading in` },
+        )
+        .toBe(true);
     await page.evaluate(async () => {
         await document.fonts.ready;
         // Visibility alone does not mean a dialog's fade/slide has finished.

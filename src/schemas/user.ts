@@ -4,6 +4,21 @@ import { type EditedUser, type UserProfile } from '~types/user';
 
 type UserSchema = z.ZodType<EditedUser>;
 
+export const userRoleSchema = z.literal('professional');
+
+export const userSummarySchema = z.object({
+    full_name: z.string(),
+    id: z.number().int().positive(),
+});
+
+export const userSummaryResponseSchema = z.object({
+    data: z.array(userSummarySchema),
+});
+
+export const userSearchResponseSchema = z.object({
+    data: z.array(z.object({ label: z.string(), value: z.string() })),
+});
+
 export const profileResponseSchema = z.object({
     data: z.object({
         created_at: z.string(),
@@ -16,7 +31,7 @@ export const profileResponseSchema = z.object({
         id: z.number().int().positive(),
         is_discoverable: z.boolean(),
         language: z.string(),
-        roles: z.array(z.literal('professional')),
+        roles: z.array(userRoleSchema),
         target_weight: z.number().nullable(),
     }) satisfies z.ZodType<UserProfile>,
 });

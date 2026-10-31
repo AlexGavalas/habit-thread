@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { type EditedActivity } from '~types/activity';
+import { type Activity, type EditedActivity } from '~types/activity';
 
 type ActivitySchema = z.ZodType<EditedActivity>;
 
@@ -18,4 +18,15 @@ export const patchRequestSchema = z.object({
 
 export const activitiesResponseSchema = z.object({
     data: z.array(activitySchema),
+});
+
+export const persistedActivitiesResponseSchema = z.object({
+    data: z.array(
+        z.object({
+            activity: z.string(),
+            date: z.string(),
+            id: z.string(),
+            user_id: z.number(),
+        }) satisfies z.ZodType<Activity>,
+    ),
 });

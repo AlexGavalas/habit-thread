@@ -16,11 +16,17 @@ import { type MouseEventHandler, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useProfile } from '~hooks/use-profile';
-import { type User } from '~types/user';
+import { booleanResponseSchema } from '~schemas/response';
+import {
+    userSearchResponseSchema,
+    userSummaryResponseSchema,
+} from '~schemas/user';
+import { type UserSummary } from '~types/user';
 import {
     showErrorNotification,
     showSuccessNotification,
 } from '~util/notification';
+import { parseResponse } from '~util/parse-response';
 
 import styles from './find-users.module.css';
 
@@ -39,11 +45,8 @@ export const FindUsers = (): ReactElement => {
                 `/api/v1/user?type=search&fullName=${debouncedSearchQuery}`,
             );
 
-            const { data } = (await response.json()) as {
-                data?: { label: string; value: string }[];
-            };
-
-            return data ?? [];
+            return (await parseResponse(response, userSearchResponseSchema))
+                .data;
         },
         queryKey: ['users', debouncedSearchQuery],
     });
@@ -51,14 +54,14 @@ export const FindUsers = (): ReactElement => {
     const { data: selectedUser, isFetching: isFetchingSelectedUser } = useQuery(
         {
             enabled: Boolean(selectedUserId),
-            queryFn: async (): Promise<User[] | undefined> => {
+            queryFn: async (): Promise<UserSummary[]> => {
                 const response = await fetch(
                     `/api/v1/user?type=profile&id=${selectedUserId}`,
                 );
 
-                const { data } = (await response.json()) as { data?: User[] };
-
-                return data;
+                return (
+                    await parseResponse(response, userSummaryResponseSchema)
+                ).data;
             },
             queryKey: ['connection', selectedUserId],
         },
@@ -80,9 +83,10 @@ export const FindUsers = (): ReactElement => {
                 `/api/v1/notification?requestUserId=${profile.id}&targetUserId=${selectedUserProfileId}`,
             );
 
-            const { data: hasAlreadySentRequest } = (await response.json()) as {
-                data?: boolean;
-            };
+            const { data: hasAlreadySentRequest } = await parseResponse(
+                response,
+                booleanResponseSchema,
+            );
 
             return hasAlreadySentRequest;
         },
