@@ -1,0 +1,21 @@
+{
+    "$schema": "https://unpkg.com/knip@6/schema-jsonc.json",
+    // Next.js, Jest, Drizzle, and repository tooling use auto-detected plugins.
+    // Analyze Playwright statically: loading its config requires E2E credentials.
+    "playwright": false,
+    "entry": [
+        "playwright.config.ts",
+        "e2e/**/*.spec.ts",
+        "e2e/global.setup.ts",
+        "e2e/fixtures.{setup,teardown}.ts",
+        "public/sw.js",
+        // The integration script runs tests excluded by Jest's default testMatch.
+        "src/**/*.integration.test.ts",
+    ],
+    "ignoreDependencies": [
+        // Next.js resolves this marker internally; no npm package is required.
+        "server-only",
+        // Jest loads jest.config.ts through ts-node at runtime.
+        "ts-node",
+    ],
+}

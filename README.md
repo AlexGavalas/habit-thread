@@ -77,6 +77,23 @@ conventions and its [E2E setup guide](.agents/skills/writing-tests/references/e2
 for local and preview commands, isolated fixtures, cleanup, and meal-import checks.
 Never run the browser suite against production or a development database.
 
+## Dependency analysis
+
+Run `mise exec -- pnpm knip` to find unused dependencies and devDependencies,
+unlisted dependencies, missing binaries, and unresolved imports with [Knip](https://knip.dev/).
+The command exits nonzero when it finds issues; review the findings before removing packages.
+It runs separately from `validate` so existing findings do not block unrelated changes.
+
+The configuration in `knip.jsonc` relies on automatic framework and tooling plugins,
+including Next.js App Router routes, Jest tests, and Drizzle schemas. Playwright entry
+points are listed explicitly and its configuration is analyzed without executing it,
+so no E2E credentials, database, or running app are needed. The only dependency
+exceptions are Next.js's internally resolved `server-only` marker and Jest's runtime
+`ts-node` configuration loader.
+
+For a broader audit of unused files and exports, run `mise exec -- pnpm exec knip`.
+Keep explicit Playwright entry points in sync if its setup or teardown files change.
+
 ## Accessibility
 
 Run `mise exec -- pnpm test:a11y` with the local environment in the E2E setup guide.
