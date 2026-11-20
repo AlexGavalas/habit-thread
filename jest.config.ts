@@ -48,7 +48,6 @@ const config: Config = {
             },
         ],
     },
-    transformIgnorePatterns: ['<rootDir>/node_modules/.pnpm/(?!(jotai)@)'],
 };
 
 export default config;

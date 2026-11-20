@@ -1,5 +1,5 @@
 import 'server-only';
-import webpush from 'web-push';
+import { setVapidDetails, sendNotification } from 'web-push';
 import { z } from 'zod';
 
 import { fetchMealsForDay } from '~api/meal';
@@ -24,7 +24,7 @@ const configureWebPush = (): void => {
         throw new Error('VAPID environment variables are not configured');
     }
 
-    webpush.setVapidDetails(subject, publicKey, privateKey);
+    setVapidDetails(subject, publicKey, privateKey);
 };
 
 const getNotificationCopy = ({
@@ -69,7 +69,7 @@ const sendToSubscription = async ({
     };
 }): Promise<boolean> => {
     try {
-        await webpush.sendNotification(
+        await sendNotification(
             {
                 endpoint: subscription.endpoint,
                 keys: {
