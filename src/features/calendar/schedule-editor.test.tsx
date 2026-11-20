@@ -47,7 +47,7 @@ describe('date-specific schedule editor', () => {
                 zones={zones}
             />,
         );
-        const name = screen.getByLabelText('Name for meal slot 1');
+        const name = await screen.findByLabelText('Name for meal slot 1');
         await user.clear(name);
         await user.type(name, 'Late breakfast');
         await user.click(screen.getByRole('button', { name: 'Save this day' }));
@@ -78,7 +78,7 @@ describe('date-specific schedule editor', () => {
                 zones={zones}
             />,
         );
-        const name = screen.getByLabelText('Name for meal slot 1');
+        const name = await screen.findByLabelText('Name for meal slot 1');
         await user.clear(name);
         await user.type(name, 'My breakfast');
         await user.click(screen.getByRole('button', { name: 'Save this day' }));

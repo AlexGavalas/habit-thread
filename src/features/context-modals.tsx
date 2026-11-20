@@ -1,24 +1,18 @@
 'use client';
 
-import { Center, Loader } from '@mantine/core';
 import { ModalsProvider, useModals } from '@mantine/modals';
 import { useAtomValue } from 'jotai';
 import dynamic from 'next/dynamic';
 import { type ReactElement, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { CenterLoader } from '~components/center-loader';
 import {
     OverlayEscapeProvider,
     getOverlayZIndex,
     overlayLayersAtom,
     useOverlayLayer,
 } from '~components/overlays/overlay-stack';
-
-const CenterLoader = (): ReactElement => (
-    <Center py="md">
-        <Loader />
-    </Center>
-);
 
 export const modals = {
     activity: dynamic(

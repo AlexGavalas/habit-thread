@@ -1,5 +1,4 @@
 import { endOfWeek, format, startOfWeek } from 'date-fns';
-import { partition } from 'lodash/fp';
 
 import {
     type EditedMeal,
@@ -60,17 +59,29 @@ export const getMealPlanChanges = (
     unsavedChanges: Record<string, Meal | EditedMeal>,
     ownerUserId: number | undefined,
 ): MealPlanChanges => {
-    const [changedMeals, newMeals] = partition(
-        'id',
-        Object.values(unsavedChanges),
-    );
-    const [editedMeals, deletedMeals] = partition('meal', changedMeals);
+    const deletedIds: string[] = [];
+    const editedMeals: EditedMeal[] = [];
+    const newMeals: EditedMeal[] = [];
+
+    for (const meal of Object.values(unsavedChanges)) {
+        if (!meal.id) {
+            // Empty drafts mask the saved source after a move.
+            if (meal.meal) {
+                newMeals.push(meal);
+            }
+            continue;
+        }
+        if (!meal.meal) {
+            deletedIds.push(meal.id);
+            continue;
+        }
+        editedMeals.push(meal);
+    }
 
     return {
-        deletedIds: deletedMeals.flatMap(({ id }) => (id ? [id] : [])),
+        deletedIds,
         editedMeals,
-        // Empty drafts mask the saved source after a move, but are not new meals.
-        newMeals: newMeals.filter((meal) => meal.meal),
+        newMeals,
         ...(ownerUserId ? { ownerUserId } : {}),
     };
 };
