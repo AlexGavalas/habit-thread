@@ -1,13 +1,22 @@
+import dynamic from 'next/dynamic';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { CenterLoader } from '~components/center-loader';
 import { AppDrawer } from '~components/overlays/overlays';
 import { useMealPlanOwnerId } from '~features/meal-plan-owner';
 import { useMealMutationState } from '~store/hooks/meal-mutation-state';
 
 import styles from '../calendar/schedule-editor.module.css';
-import { MealZoneSettings } from './meal-zone-settings';
 import { useDefaultSchedule } from './use-default-schedule';
+
+const MealZoneSettings = dynamic(
+    () =>
+        import('./meal-zone-settings').then(
+            (module) => module.MealZoneSettings,
+        ),
+    { loading: CenterLoader },
+);
 
 type DefaultScheduleDrawerProps = Readonly<{
     onClose: () => void;

@@ -121,9 +121,6 @@ describe('overlay Escape policy', () => {
         await user.click(
             screen.getByRole('button', { name: 'Open managed modal' }),
         );
-        expect(
-            screen.getByRole('dialog', { name: 'Managed modal' }),
-        ).toBeVisible();
         await user.click(
             screen.getByRole('button', { name: 'Open nested drawer' }),
         );

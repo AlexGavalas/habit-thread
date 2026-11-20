@@ -69,10 +69,11 @@ for (const viewport of [
                     name: 'Schedule for 12/01/2026',
                 });
                 await expect(dialog).toBeVisible();
-                await expectDialogFocusContained(
-                    page,
-                    dialog.getByRole('button', { name: 'Save this day' }),
-                );
+                const saveButton = dialog.getByRole('button', {
+                    name: 'Save this day',
+                });
+                await expect(saveButton).toBeVisible();
+                await expectDialogFocusContained(page, saveButton);
                 await expectAccessible(page, 'schedule-drawer');
                 await page.keyboard.press('Escape');
                 await expect(dialog).toBeHidden();
